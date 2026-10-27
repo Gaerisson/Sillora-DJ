@@ -47,9 +47,15 @@ Améliorer en priorité le résultat audio et la continuité de lecture. Préser
 - La comparaison d'écoute avec les vidéos n'est pas validée dans ce lot.
 - Une régression d'initialisation et un verrouillage des boutons A/B pendant l'import ont été détectés par les essais Electron et corrigés avant livraison.
 
-## En cours
+## Livraison du premier lot
 
-Validation de la distribution Windows 0.17.0. Voir les détails dans [CHANGELOG-0.17.0.md](docs/CHANGELOG-0.17.0.md).
+La distribution Windows 0.17.0 est construite et vérifiée : installateur et portable embarquent le même contenu ; l'archive de 7 215 fichiers passe son contrôle d'intégrité. Les 14 fichiers de code modifiés présents dans le paquet correspondent aux sources testées. L'installation sur le profil utilisateur n'a pas été effectuée automatiquement.
+
+Les 191 fichiers du dépôt publiés avec le premier lot ont été comparés aux sources locales. Voir [CHANGELOG-0.17.0.md](docs/CHANGELOG-0.17.0.md).
+
+## Prochain lot
+
+Terminer la bibliothèque (découverte immédiate dans la table, annulation/reprise, réanalyse), puis approfondir le planificateur musical et comparer les transitions aux références audio/vidéo. Les phases audio avancé, interface et distribution restent dans le plan ci-dessus.
 
 ## Limites et validations restantes
 
