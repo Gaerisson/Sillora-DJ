@@ -1,27 +1,33 @@
 <p align="center"><img src="docs/images/sillora-banner.svg" alt="Sillora DJ — Le mix, dans son mouvement. Par Gaerisson." width="100%"></p>
 
-<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix musical, stems et télécommande Web.</p>
+<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix, stems et télécommande Web.<br><sub>Version de développement 0.16.1 · Par Gaerisson</sub></p>
 
-<p align="center"><a href="#le-studio">Découvrir</a> · <a href="docs/SCREENSHOTS.md">Galerie</a> · <a href="#prise-en-main">Prise en main</a> · <a href="docs/INSTALLATION.md">Installation &amp; build</a> · <a href="docs/CHANGELOG-0.16.1.md">Nouveautés</a></p>
+<p align="center"><a href="#le-studio">Découvrir</a> · <a href="docs/SCREENSHOTS.md">Galerie</a> · <a href="#prise-en-main">Démarrer</a> · <a href="#feuille-de-route">Feuille de route</a> · <a href="#validation-et-limites-actuelles">État &amp; limites</a></p>
 
 ![Sillora DJ avec deux titres chargés, leurs pochettes et leurs ondes RGB](docs/images/studio.jpg)
 
 ## Le studio
 
-**Sillora DJ** réunit le mixage d’une collection locale et la gestion d’une petite régie dans une même application. Développé par **Gaerisson**, le projet prend la suite de Gaerisson DJ Studio et de Sillage Studio.
+**Sillora DJ** réunit le mixage d’une collection locale et la gestion d’une petite régie dans une même application. Développé par **Gaerisson**, le projet vise une lecture continue et des transitions adaptées au rythme, à la tonalité et à l’énergie des morceaux.
+
+La priorité de la prochaine refonte est le **résultat audio**, puis la stabilité, l’ergonomie et la finition visuelle. Les fonctions ci-dessous sont présentes dans la version actuelle ; les évolutions de la feuille de route restent à implémenter et à valider.
+
+### Fonctions présentes en 0.16.1
 
 | Mixer | Préparer et diffuser |
 | :--- | :--- |
 | Deux platines, pochettes et ondes RGB déroulantes | Bibliothèque par dossiers, favoris et tri BPM / clé |
 | Scratch à la souris, Hot Cues, boucles et beat jump | Suggestions dans le dossier du set et file Automix |
-| 27 choix de transition, filtres, échos et textures | Variation commune du tempo pendant les passages |
+| Transitions par filtres, EQ, échos et textures | Variation commune du tempo pendant les passages |
 | Sidechain léger activable et réduction visible | Quatre entrées micro / ligne et autoduck configurable |
 | Stems voix, batterie, basse et instruments | Gate, compresseur, EQ, limiteur et filtres anti-larsen |
 | Sampler huit pads et enregistrement du programme | Remote Web, visuels et fenêtres média séparées |
 
 ### Un passage construit autour de la musique
 
-L’Automix utilise le tempo mesuré, la grille, l’énergie, la tonalité estimée et les derniers effets pour proposer le passage suivant. Le tempo progressif fait évoluer les deux platines ensemble, puis laisse le titre entrant à sa vitesse native. **Mixer maintenant** déclenche le relais sans attendre une sortie lointaine.
+Le sélecteur Automix actuel utilise le tempo mesuré, la grille, l’énergie, la tonalité estimée et l’historique des effets pour proposer un passage. Le tempo progressif fait évoluer les deux platines ensemble, puis laisse le titre entrant à sa vitesse native. **Mixer maintenant** permet de demander le relais.
+
+Le catalogue actuel propose notamment fondu, filtre, échange de graves, Echo Out, Whoosh, Sweep et transitions à stems. Leur présence ne signifie pas que leur qualité musicale est acquise : le calage, le déclenchement au point OUT et le rendu des effets font partie des priorités de correction.
 
 Le bouton **PUMP** ajoute un sidechain discret sur les attaques graves de la musique. Son dosage, son relâchement et sa détection restent réglables ; le micro conserve son propre traitement.
 
@@ -56,21 +62,51 @@ npm start
 
 Node.js 24 est utilisé pour le développement. `npm run dev` démarre le lecteur dans le navigateur ; les fichiers natifs, imports et stems utilisent Electron. [Installation et construction Windows](docs/INSTALLATION.md).
 
-## État du projet
+## Feuille de route
 
-Version **0.16.1**, Windows x64, Electron et Web Audio. La suite locale compte **200 tests réussis**. Les vérifications fonctionnelles couvrent les vrais fichiers audio, le sidechain, Remote, les pochettes, le sampler et les entrées micro simulées.
+La refonte est organisée dans cet ordre. **Ces objectifs ne sont pas annoncés comme livrés dans la version 0.16.1.**
+
+| Priorité | Objectifs | Validation attendue |
+| :--- | :--- | :--- |
+| **1 · Fiabilité audio** | Horloge audio commune, commandes et boucles immédiates ou quantifiées, préparation avant OUT, relais de secours | Lecture continue, absence de silence ou clic involontaire, mesures de latence et de dérive |
+| **2 · Analyse & bibliothèque** | Import non bloquant, analyses prioritaires en arrière-plan, cache persistant versionné, préparation du prochain titre | Import et analyse pendant la lecture, reprise après redémarrage, absence de recalcul inutile |
+| **3 · Automix musical** | Planificateur distinct de l’exécution, phrases et points de passage, compatibilité rythmique/harmonique, courbes de tempo et échanges de basses | Comparaisons de rendus audio entre BPM proches ou éloignés, transitions au bon moment et continuité au point OUT |
+| **4 · Audio avancé** | Préparation anticipée des stems, scratch vinyle et waveform, sidechain configurable, VU-mètres L/R en dBFS avec peak hold | Mesures du signal réel, transitions avec et sans stems, réponse du scratch et des boucles |
+| **5 · Interface & Remote** | Modules affichables, panneau micro masqué par défaut, ondes fluides, vinyles proportionnés, visualisations séparées pour écran externe, copie du lien Remote fiable | Contrôle local/distant cohérent, affichage synchronisé avec l’audio, adaptation aux tailles d’écran |
+| **6 · Distribution** | File d’import de playlists, détection des doublons, mises à jour vérifiées et migrations préservant les données | Installation et récupération testées, aucune mise à jour interrompant une session |
+
+### Transitions et modes visés
+
+Les familles à construire ou approfondir sont **Smooth Beatmatch**, **EQ / Bass Swap**, **Build & Drop**, **Tempo Morph**, **Echo Out / Filter Sweep**, **Spinback / Vinyl Brake**, **Beat Roll / Loop** et **Stems Fusion**. Les presets peu convaincants, dont Tremolo, doivent quitter la sélection par défaut ; les effets manuels réutilisables peuvent rester disponibles.
+
+Les modes **Smart**, **Smooth**, **Club**, **Festival**, **Creative** et **Custom**, avec intensité réglable, sont prévus dans cette refonte. La détection avancée des phrases, voix, buildups et drops reste un objectif : le sélecteur actuel repose sur des estimations et des heuristiques.
+
+Une transition devra être préparée en amont, démarrer sur un repère musical pertinent, maîtriser les basses et les niveaux, puis laisser le morceau entrant poursuivre sa lecture. Un souffle suivi d’un changement de titre ne suffit pas à valider un passage avancé.
+
+## Validation et limites actuelles
+
+Version **0.16.1**, Windows x64, Electron et Web Audio. La dernière suite locale enregistrée compte **200 tests réussis**. Les rapports existants comprennent des contrôles Electron, des rendus sur fichiers audio réels et des essais avec entrées micro simulées. Ces vérifications techniques ne constituent pas une validation d’écoute de tous les presets ni une garantie de stabilité sur de longues sessions.
+
+Les problèmes signalés à reproduire et corriger concernent notamment le déclenchement Automix au point OUT, le retard de certaines boucles, la fluidité des ondes, les analyses pendant la lecture et la copie du lien Remote. Les essais de non-régression doivent couvrir ces cas, les transitions avec ou sans stems et les sessions prolongées.
 
 - BPM, tonalités et repères IN/OUT : estimations modifiables.
 - Stems précalculés sur CPU ; runtime et modèle embarqués dans les distributions préparées, hors du dépôt source.
 - YouTube et SoundCloud : import de liens publics compatibles ; catalogue abonné SoundCloud Go+ non intégré.
 - ASIO, MIDI et préécoute casque séparée non proposés dans cette version. Les réglages anti-larsen dépendent de la salle.
+- Les mises à jour automatiques et les nouveaux modes décrits dans la feuille de route ne sont pas encore livrés.
+
+La validation de chaque lot devra préciser les fonctions testées, les mesures disponibles, les résultats d’écoute et les limites restantes. Les fichiers musicaux et enregistrements de test personnels restent hors du dépôt.
 
 ## Documentation et contributions
 
 [Installation](docs/INSTALLATION.md) · [Galerie](docs/SCREENSHOTS.md) · [Identité visuelle](docs/BRAND.md) · [Historique](docs/CHANGELOG-0.16.1.md) · [Données & réseau](docs/PRIVACY.md) · [Dépendances](THIRD_PARTY.md)
 
-Un bug, une transition à améliorer ou une idée ? [Ouvrir une issue](https://github.com/Gaerisson/gaerisson-dj-studio/issues/new/choose) ou consulter [le guide de contribution](CONTRIBUTING.md).
+Un bug, une transition à améliorer ou une idée ? [Ouvrir une issue](https://github.com/Gaerisson/Sillora-DJ/issues/new/choose) ou consulter [le guide de contribution](CONTRIBUTING.md). Pour un problème audio, préciser la version, les réglages, le point de déclenchement et les étapes permettant de le reproduire.
+
+## Crédits
+
+**Sillora DJ** est développé par **Gaerisson**, avec assistance IA / vibe coding, notamment avec **ChatGPT d’OpenAI**. Le copyright du projet appartient à Gaerisson. Les auteurs et licences des dépendances sont conservés dans [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ---
 
-**Sillora DJ — par Gaerisson.** © 2026 Gaerisson. Les dépendances conservent leurs licences respectives. Le dépôt conserve son adresse historique `gaerisson-dj-studio`.
+**Sillora DJ — par Gaerisson.** © 2026 Gaerisson. [Dépôt GitHub](https://github.com/Gaerisson/Sillora-DJ).
