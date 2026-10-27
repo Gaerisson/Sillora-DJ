@@ -183,3 +183,10 @@ body[data-pro-waveform=vertical] .central-wave-pair{display:grid}body[data-pro-w
 @media(max-width:850px){:root body.pro-console .deck .deck-visual{height:215px}.pro-console .deck-focus-toolbar{font-size:7px}.pro-console .deck-tempo-ramp{font-size:8px}.pro-console .deck-focus-wave{height:73px}.pro-console .control.play{min-width:52px}}
 @media(max-width:650px){.pro-console .deck-a{grid-column:1;grid-row:1}.pro-console .deck-b{grid-column:2;grid-row:1}:root body.pro-console .deck .deck-visual{height:178px}.pro-console .deck-focus{margin-bottom:11px}.pro-console .deck-focus-toolbar>span{display:none}.pro-console .deck-focus-toolbar{gap:3px}.pro-console .deck-focus-toolbar select{font-size:8px;padding-inline:4px}.pro-console .deck-focus-wave{height:66px}.pro-console .deck-tempo-ramp{font-size:7px}.pro-console .waveform-wrap,.pro-console .waveform{height:45px}.pro-console .control{font-size:9px;min-height:38px;height:38px}.pro-console .control.play{min-width:41px}.pro-console .automix-hero canvas{height:84px}}
 @media(max-width:420px){.pro-console .deck-tempo-ramp{font-size:6px}.pro-console .deck-focus-toolbar select{font-size:7px}.pro-console .deck-focus-wave{height:61px}.pro-console .console-live-panel{height:460px;max-height:460px}}
+.pro-console-frame[data-live=false]{grid-template-columns:minmax(0,1fr)}
+.console-live-panel[hidden]{display:none!important}
+#live-panel-toggle[aria-expanded=true]{color:var(--a);border-color:var(--a)}
+.analysis-badge{color:var(--muted);font-size:.9em}.analysis-badge[data-state=analyzing]{color:var(--a)}.analysis-badge[data-state=error]{color:var(--b)}
+.pro-console button,.pro-console label,.pro-console summary,.pro-console .knob,.pro-console .vinyl{user-select:none}
+.pro-console button,.pro-console summary,.pro-console select{cursor:pointer}
+.pro-console input[type=text],.pro-console input[type=search],.pro-console textarea{user-select:text;cursor:text}

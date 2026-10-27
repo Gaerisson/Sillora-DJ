@@ -1,4 +1,4 @@
-const {app,BrowserWindow,session,ipcMain,dialog,powerSaveBlocker,nativeImage}=require('electron');
+const {app,BrowserWindow,session,ipcMain,dialog,powerSaveBlocker,nativeImage,clipboard}=require('electron');
 const path=require('node:path');const fs=require('node:fs/promises');const {randomUUID}=require('node:crypto');const {pathToFileURL}=require('node:url');
 const {StemService}=require('./stem-service.cjs');
 const {FolderLibrary}=require('./folder-library.cjs');
@@ -37,6 +37,7 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   ipcMain.handle('remote:start',event=>{permitted(event);return remote.start();});
   ipcMain.handle('remote:stop',event=>{permitted(event);return remote.stop();});
   ipcMain.handle('remote:status',event=>{permitted(event);return remote.status();});
+  ipcMain.handle('remote:copy-link',(event,value)=>{permitted(event);if(typeof value!=='string'||!remote.status().links.some(link=>link.url===value))throw new Error('Lien Remote inactif.');clipboard.writeText(value);return true;});
   ipcMain.handle('remote:artwork',(event,value)=>{permitted(event);return remote.storeArtwork(value);});
   ipcMain.handle('remote:recording',(event,value)=>{permitted(event);return remote.storeRecording(value);});
   ipcMain.on('remote:state',(event,state)=>{if(trusted(event))remote.publish(state);});

@@ -1,7 +1,8 @@
 import {ProgramBus,programOptions} from './program-bus.js';
 import {PumpingBus} from './pumping-bus.mjs';
 import {scheduleReferenceFx,stopReferenceFx} from './reference-fx.mjs';
-import {analysisKey,cachedAnalysis,cacheAnalysis} from './analysis-cache.mjs';
+import {contentAnalysisKey,cachedAnalysis,cacheAnalysis} from './analysis-cache.mjs';
+import {AnalysisQueue} from './analysis-queue.mjs';
 import {DeckEffects,TextureBus,impulse} from './performance-fx.js';
 import {faderCurves,transitionProgress,textureNames} from './transition-design.mjs';
 import {eqCurves} from './transition-envelopes.mjs';
@@ -17,6 +18,7 @@ export class StudioEngine extends EventTarget {
     super();let program={};try{program=JSON.parse(globalThis.localStorage?.getItem('sillage:program-v13')||'{}');}catch{}this.programOptions=programOptions({...program,muted:false,dim:false}); this.context = null; this.crossfade = 0; this.masterVolume = 0.7;
     this.decks = [0, 1].map(id => ({ id, track: null, source: null, playing: false, offset: 0, started: 0, rate: 1, volume: 0.85, cue: 0, loop: null, eq: [0, 0, 0], filter: 0 }));
     this.transitionHistory=[]; this.performanceLog=[]; this.transition = null; this.keyLock = true; this.keyLockAvailable = false; this.starting = false;
+    this.analysisQueue=new AnalysisQueue();
     this.clockTimer = setInterval(() => this.tick(), 25); this.clockTimer.unref?.();
   }
   async init() {
@@ -109,25 +111,49 @@ export class StudioEngine extends EventTarget {
     if (d.loop && pos >= d.loop.end) pos = d.loop.start + (pos - d.loop.start) % (d.loop.end - d.loop.start);
     return clamp(pos, 0, d.track?.buffer.duration || 0);
   }
-  async importFile(file) {
+  async importFile(file,{deferAnalysis=false,priority=50}={}) {
     await this.init();
-    const buffer = await this.context.decodeAudioData(await file.arrayBuffer());
-    const cacheKey=analysisKey(file);let analysis=await cachedAnalysis(cacheKey);const cacheHit=Boolean(analysis);
-    if(!analysis&&typeof Worker!=='undefined') {
-      analysis=await new Promise((resolve,reject)=>{
-        const worker=new Worker('/analysis-worker.js',{type:'module'}), channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i).slice().buffer);
-        worker.onmessage=({data})=>{worker.terminate();data.error?reject(new Error(data.error)):resolve(data.result);};
-        worker.onerror=()=>{worker.terminate();reject(new Error('Analyse audio impossible.'));};
+    const began=performance.now(),bytes=await file.arrayBuffer();
+    // Hash encoded bytes before decodeAudioData detaches their ArrayBuffer.
+    const cacheKey=await contentAnalysisKey(bytes);
+    const buffer=await this.context.decodeAudioData(bytes);
+    const parts=file.name.replace(/\.[^.]+$/,'').split(' - ');
+    const track={id:crypto.randomUUID(),title:parts.length>1?parts.slice(1).join(' - '):parts[0],artist:parts.length>1?parts[0]:'Fichier local',buffer,source:'local',color:Math.random()*360,bpm:null,peaks:[],mixIn:0,mixOut:Math.max(0,buffer.duration-8),audibleEnd:buffer.duration,confidence:'low',analysisStatus:'queued',decodeMs:performance.now()-began};
+    let analysis=cacheKey?await cachedAnalysis(cacheKey):null;
+    if(analysis?.waveformVersion!==2||!analysis?.regionAnalysisVersion)analysis=null;
+    const apply=result=>{
+      const preserved={};
+      if(track.manualRegions)for(const key of ['manualRegions','mixIn','mixOut'])preserved[key]=track[key];
+      if(track.manualGrid)for(const key of ['manualGrid','bpm','downbeat','beatOffset','confidence'])preserved[key]=track[key];
+      if(track.manualKey)for(const key of ['manualKey','key','keyRoot','keyMode','keyConfidence'])preserved[key]=track[key];
+      Object.assign(track,result,preserved,{analysis:result,analysisStatus:'ready'});
+      for(const deck of this.decks)if(deck.track===track&&deck.input){
+        const now=this.context.currentTime;deck.input.gain.cancelScheduledValues(now);
+        deck.input.gain.setTargetAtTime(track.autoGain||1,now,.35);
+      }
+      this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));return track;
+    };
+    if(analysis){track.cacheHit=true;apply(analysis);return track;}
+    track.cacheHit=false;
+    track.analysisTask=this.analysisQueue.enqueue(track.id,async signal=>{
+      track.analysisStatus='analyzing';this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));
+      const start=performance.now();
+      const result=typeof Worker==='undefined'?analyzeAudio(Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i)),buffer.sampleRate):await new Promise((resolve,reject)=>{
+        const worker=new Worker('/analysis-worker.js',{type:'module'});
+        const stop=()=>{worker.terminate();reject(new DOMException('Analyse annulée','AbortError'));};
+        const finish=()=>{signal.removeEventListener('abort',stop);worker.terminate();};
+        signal.addEventListener('abort',stop,{once:true});
+        worker.onmessage=({data})=>{finish();data.error?reject(new Error(data.error)):resolve(data.result);};
+        worker.onerror=()=>{finish();reject(new Error('Analyse audio impossible.'));};
+        const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i).slice().buffer);
         worker.postMessage({id:1,channels,sampleRate:buffer.sampleRate},channels);
       });
-    } else if(!analysis) analysis=analyzeAudio(Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i)),buffer.sampleRate);
-    const upgrade=cacheHit&&(analysis.waveformVersion!==2||!analysis.regionAnalysisVersion);
-    analysis=prepareAnalysisRegions(analysis,buffer.duration);
-    if(analysis.waveformVersion!==2)analysis={...analysis,...analyzeWaveDetail(Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i)),buffer.sampleRate)};
-    if(!cacheHit||upgrade)await cacheAnalysis(cacheKey,analysis);
-    const name = file.name.replace(/\.[^.]+$/, '');
-    const parts = name.split(' - ');
-    return { id: crypto.randomUUID(), title: parts.length > 1 ? parts.slice(1).join(' - ') : name, artist: parts.length > 1 ? parts[0] : 'Fichier local', buffer, ...analysis, analysis, cacheHit, source: 'local', color: Math.random() * 360 };
+      if(signal.aborted)throw new DOMException('Analyse annulée','AbortError');
+      if(cacheKey)await cacheAnalysis(cacheKey,result);
+      if(signal.aborted)throw new DOMException('Analyse annulée','AbortError');
+      track.analysisMs=performance.now()-start;return apply(result);
+    },{priority}).catch(error=>{track.analysisStatus=error.name==='AbortError'?'cancelled':'error';track.analysisError=error.message;this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));if(!deferAnalysis)throw error;return track;});
+    if(!deferAnalysis)await track.analysisTask;return track;
   }
   stopSource(d){
     this.clearBrake(d);
@@ -139,12 +165,13 @@ export class StudioEngine extends EventTarget {
   }
   load(id, track) {
     this.cancelTransition();
+    this.analysisQueue.promote(track.id,0);
     if(!track.manualRegions&&track.envelope?.length){const regions=prepareAnalysisRegions(track,track.buffer.duration);Object.assign(track,{mixIn:regions.mixIn,mixOut:regions.mixOut,introEnd:regions.introEnd,regionAnalysisVersion:regions.regionAnalysisVersion});if(track.analysis)Object.assign(track.analysis,{mixIn:regions.mixIn,mixOut:regions.mixOut,introEnd:regions.introEnd,regionAnalysisVersion:regions.regionAnalysisVersion});}
     const d = this.decks[id]; this.stopSource(d);
     d.fx?.reset();d.roll=null;
     if(d.echoSend){const now=this.context.currentTime;d.echoSend.gain.cancelScheduledValues(now);d.echoSend.gain.setValueAtTime(0,now);d.manualEchoSend.gain.setValueAtTime(0,now);d.verbSend.gain.cancelScheduledValues(now);d.verbSend.gain.setValueAtTime(0,now);d.trim.gain.cancelScheduledValues(now);d.trim.gain.setValueAtTime(1,now);}
     const preserveTail=(d.echoTailUntil||0)>(this.context?.currentTime||0);
-    Object.assign(d, { track, playing: false, offset: track.mixIn || 0, rate: 1, cue: track.mixIn ?? track.downbeat ?? track.beatOffset ?? 0, loop: null, rateRamp:null });
+    Object.assign(d, { track, playing: false, endedNaturally:false, offset: track.mixIn || 0, rate: 1, cue: track.mixIn ?? track.downbeat ?? track.beatOffset ?? 0, loop: null, rateRamp:null });
     if(d.input) d.input.gain.value=track.autoGain||1;
     this.setEQ(id, 0, 0); this.setEQ(id, 1, 0); this.setEQ(id, 2, 0); this.setFilter(id, 0); if(!preserveTail)this.setEcho(id, false);else d.echo=false;
     this.dispatchEvent(new Event('change'));
@@ -174,10 +201,10 @@ export class StudioEngine extends EventTarget {
       d.pitchNode=new this.SoundTouchNode({context:this.context}); d.pitchNode.playbackRate.value=d.rate; d.pitchNode.pitch.value=1;
       signal.connect(d.pitchNode).connect(d.voiceGain);
     } else signal.connect(d.voiceGain);
-    d.source=source;d.latency=d.pitchNode?(this.keyLockLatency||0):0;const sourceStart=Math.max(this.context.currentTime,(when??this.context.currentTime+d.latency)-d.latency);d.started=sourceStart+d.latency;d.playing=true;
+    d.source=source;d.endedNaturally=false;d.latency=d.pitchNode?(this.keyLockLatency||0):0;const sourceStart=Math.max(this.context.currentTime,(when??this.context.currentTime+d.latency)-d.latency);d.started=sourceStart+d.latency;d.playing=true;
     d.voiceGain.gain.setValueAtTime(0,sourceStart);d.voiceGain.gain.setValueAtTime(0,Math.max(sourceStart,d.started-.005));d.voiceGain.gain.linearRampToValueAtTime(1,d.started+.005);
     const voice=d.voiceGain,pitch=d.pitchNode,stemNodes=d.stemNodes;
-    source.onended=()=>{if(d.source===source){if(d.braking?.source===source)this.pause(id);else{d.playing=false;d.offset=d.track.buffer.duration;d.source=null;d.stemGains=null;d.stemTransitionGains=null;this.dispatchEvent(new Event('change'));}}setTimeout(()=>{source.disconnect();voice.disconnect();for(const n of stemNodes||[])n.disconnect();if(pitch){pitch.disconnect();pitch.port.close();}if(d.pitchNode===pitch)d.pitchNode=null;if(d.voiceGain===voice)d.voiceGain=null;if(d.stemNodes===stemNodes)d.stemNodes=null;},Math.ceil((d.latency+.1)*1000));};
+    source.onended=()=>{if(d.source===source){if(d.braking?.source===source)this.pause(id);else{d.playing=false;d.endedNaturally=true;d.offset=d.track.buffer.duration;d.source=null;d.stemGains=null;d.stemTransitionGains=null;this.dispatchEvent(new Event('naturalend'));this.dispatchEvent(new Event('change'));}}setTimeout(()=>{source.disconnect();voice.disconnect();for(const n of stemNodes||[])n.disconnect();if(pitch){pitch.disconnect();pitch.port.close();}if(d.pitchNode===pitch)d.pitchNode=null;if(d.voiceGain===voice)d.voiceGain=null;if(d.stemNodes===stemNodes)d.stemNodes=null;},Math.ceil((d.latency+.1)*1000));};
     source.start(sourceStart, d.offset);
     this.dispatchEvent(new Event('change'));
   }
@@ -255,13 +282,13 @@ export class StudioEngine extends EventTarget {
   async activateStems(id){const d=this.decks[id];if(!d.track?.stemBuffer||!d.playing)return;this.cancelTransition();this.pause(id);await this.play(id);}
   unload(id) {
     this.cancelTransition(); const d=this.decks[id]; this.stopSource(d);
-    Object.assign(d,{track:null,playing:false,offset:0,rate:1,cue:0,loop:null,rateRamp:null});this.setEcho(id,false);
+    Object.assign(d,{track:null,playing:false,endedNaturally:false,offset:0,rate:1,cue:0,loop:null,rateRamp:null});this.setEcho(id,false);
     this.dispatchEvent(new Event('change'));
   }
   pause(id) {
     const d = this.decks[id], position=this.position(id);if(d.roll)d.loop=null;d.roll=null;
     if(d.rateRamp) d.rate=this.currentRate(id);
-    d.offset=position; d.rateRamp=null; d.playing = false; this.stopSource(d); this.dispatchEvent(new Event('change'));
+    d.offset=position; d.rateRamp=null; d.playing = false;d.endedNaturally=false; this.stopSource(d); this.dispatchEvent(new Event('change'));
   }
   clearBrake(d){
     const brake=d.braking;if(!brake)return;
@@ -366,19 +393,22 @@ export class StudioEngine extends EventTarget {
     d.wet.gain.cancelScheduledValues(now);d.wet.gain.setTargetAtTime(enabled?.55:0,now,.08);
     if(d.delay&&!d.echoTailUntil)d.delay.delayTime.setTargetAtTime(30/(d.track?.bpm||120)/d.rate,now,.05);
   }
-  loop(id, beats) {
+  loop(id, beats,{quantize=false}={}) {
     const d = this.decks[id]; if (!d.track) return;
     this.cancelTransition();
     if (d.loop) {
       // Native BufferSource continues from its audible loop position on release.
       // Rebase the UI clock there too; a slip roll has its own continuing clock.
-      const position=this.position(id);d.loop = null;d.offset=position;d.started=this.context?.currentTime||0;
+      const position=this.position(id);this.settleRate(id);d.loop = null;d.offset=position;d.started=this.context?.currentTime||0;
       if (d.source) d.source.loop = false;
     }
     else {
       if(!Number.isFinite(beats)||beats<=0)return;
-      const beat = 60 / (d.track.bpm || 120), pos = this.position(id);
-      const start = Math.max(0, Math.floor((pos - (d.track.beatOffset || 0)) / beat) * beat + (d.track.beatOffset || 0));
+      const beat = 60 / (d.track.bpm || 120), pos = this.position(id),offset=d.track.downbeat??d.track.beatOffset??0;
+      // Quantized capture starts on the next beat/subdivision. Immediate
+      // capture preserves the audible cursor instead of jumping back a beat.
+      const start=quantize?Math.max(0,nextMusicalTime(pos+(d.latency||0)*d.rate,d.track.bpm||120,offset,Math.min(1,beats))):pos;
+      if(start>=d.track.buffer.duration-.005)return;
       d.loop = { start, end: Math.min(start + beats * beat, d.track.buffer.duration) };
       if (d.source) { d.source.loopStart = d.loop.start; d.source.loopEnd = d.loop.end; d.source.loop = true; }
     }
@@ -416,7 +446,7 @@ export class StudioEngine extends EventTarget {
     this.transition = null;this.settleRate(0);this.settleRate(1);
     const beatProgress=t.tempoBlend?tempoBeats(p*t.duration,t.bpmA,t.bpmB,t.duration)/tempoBeats(t.duration,t.bpmA,t.bpmB,t.duration):p;
     this.crossfade = t.from + (t.to - t.from) * transitionProgress(t.style,beatProgress,t.duration);
-    if(['bridge','landing','clean'].includes(t.style)&&t.incomingStart>this.context.currentTime){this.pause(t.target);this.crossfade=t.from;}
+    if(t.incomingStart>this.context.currentTime){this.pause(t.target);this.crossfade=t.from;}
     this.setCrossfade(this.crossfade, false);
     this.restoreTransition(t,false);
   }
@@ -430,19 +460,21 @@ export class StudioEngine extends EventTarget {
     const a = this.decks[source], b = this.decks[target];
     if (!a.track || !b.track) throw new Error('Charge un morceau sur chaque platine.');
     if(a.braking)this.pause(source);if(b.braking)this.pause(target);
-    if (!a.playing) await this.play(source);
+    const recovering=Boolean(options.automix&&a.endedNaturally);
+    if (!a.playing&&!recovering) await this.play(source);
     // A scheduled transition leaves the loop before calculating its start.
     if(a.roll)await this.endRoll(source);if(b.roll)await this.endRoll(target);
     if (a.loop) this.loop(source, 4);
     if (b.loop) this.loop(target, 4);
     const plan=makeTransitionPlan(a,b,{...options,tempoBlend,history:this.transitionHistory,position:this.position(source),stemsAvailable:Boolean(a.stemGains&&b.track.stemBuffer)});
+    if(recovering)Object.assign(plan,{style:'linear',sync:false,tempoBlend:false,seconds:.2,beats:0,reason:'Titre sortant terminé : reprise du prochain titre sans relancer le précédent.'});
     const style=plan.style,bridge=['bridge','landing'].includes(style),clean=style==='clean';
     if(plan.sync) await this.setRate(target,plan.rate);
     else await this.setRate(target,1);
     const now = this.context.currentTime;
     const pos=this.position(source), lookahead=Math.max(.12,(this.keyLockLatency||0)+.04);
-    const requestedPoint=options.automix&&!options.startNow?(plan.outPoint??a.track.mixOut??0):0;
-    const alignStart=quantize&&a.track.bpm&&(!plan.automatic||plan.trustworthy||plan.quantizeHandoff||plan.tempoBlend)&&!(options.automix&&a.track.manualRegions);
+    const requestedPoint=options.automix&&!options.startNow&&!recovering?(options.plannedPoint??plan.outPoint??a.track.mixOut??0):0;
+    const alignStart=!recovering&&quantize&&a.track.bpm&&(!plan.automatic||plan.trustworthy||plan.quantizeHandoff||plan.tempoBlend)&&!(options.automix&&a.track.manualRegions);
     const targetPosition=alignStart?nextMusicalTime(Math.max(pos+lookahead*a.rate,requestedPoint),a.track.bpm,a.track.downbeat??a.track.beatOffset??0,options.quantizeBeats||(options.startNow?1:4)):Math.max(pos+lookahead*a.rate,requestedPoint);
     const endPosition=Math.min(a.track.audibleEnd||a.track.buffer.duration,a.track.buffer.duration);
     const remaining=(endPosition-pos)/a.rate;
@@ -450,7 +482,7 @@ export class StudioEngine extends EventTarget {
     // Prefer a short immediate handover when the next measure is past the ending.
     const transportWait=Math.max(0,a.started-now);
     const start=now+transportWait+(delay+0.1<remaining?delay:Math.max(0,Math.min(lookahead,remaining-0.1)));
-    const availableA=(endPosition-pos)/Math.max(a.rate,plan.tempoBlend?plan.bpmB/(a.track.bpm||120):a.rate)-(start-now)-0.02;
+    const availableA=recovering?Infinity:(endPosition-pos)/Math.max(a.rate,plan.tempoBlend?plan.bpmB/(a.track.bpm||120):a.rate)-Math.max(0,start-now-transportWait)-0.02;
     let incomingCue=plan.inPoint??b.track.mixIn??b.cue;
     if(quantize&&plan.sync&&b.track.bpm&&!plan.preserveInPoint&&!b.track.manualRegions){
       const quantum=plan.incomingQuantizeBeats||4,rawBeat=(targetPosition-(a.track.downbeat??a.track.beatOffset??0))*(a.track.bpm||120)/60,sourceBeat=Math.abs(rawBeat-Math.round(rawBeat))<1e-6?Math.round(rawBeat):rawBeat,phase=((sourceBeat%4)+4)%4/4;
@@ -468,7 +500,7 @@ export class StudioEngine extends EventTarget {
     const from = this.crossfade, to = target;
     this.transition = { source, target, from, to, start, duration, style, fallback:plan.fallback,tempoBlend:plan.tempoBlend };
     if(plan.tempoBlend) {this.scheduleRate(source,plan.bpmB/(a.track.bpm||120),start,duration);this.scheduleRate(target,1,start,duration);}
-    const t=this.transition;t.reason=plan.reason;t.stages=plan.stages;t.incomingStart=incomingStart;t.inPoint=incomingCue;t.outPoint=pos+(start-now)*a.rate;t.beats=plan.beats;t.profile=plan.profile;t.effectSelection=plan.effectSelection;t.titleA=a.track.title;t.titleB=b.track.title;t.intensity=clamp(Number(options.intensity??0.45),0,1);t.previousEcho=Boolean(a.echo);t.previousDelay=a.delay.delayTime.value;t.previousFeedback=a.feedback.gain.value;t.voices=[];t.trimDb=plan.trimDb;t.sync=plan.sync;t.bpmA=plan.bpmA;t.bpmB=plan.bpmB;
+    const t=this.transition;t.reason=plan.reason;t.stages=plan.stages;t.incomingStart=incomingStart;t.inPoint=incomingCue;t.outPoint=pos+Math.max(0,start-now-transportWait)*a.rate;t.beats=plan.beats;t.profile=plan.profile;t.effectSelection=plan.effectSelection;t.titleA=a.track.title;t.titleB=b.track.title;t.intensity=clamp(Number(options.intensity??0.45),0,1);t.previousEcho=Boolean(a.echo);t.previousDelay=a.delay.delayTime.value;t.previousFeedback=a.feedback.gain.value;t.voices=[];t.trimDb=plan.trimDb;t.sync=plan.sync;t.bpmA=plan.bpmA;t.bpmB=plan.bpmB;
     const at=fraction=>start+(plan.tempoBlend?tempoFraction(fraction,plan.bpmA,plan.bpmB,duration):duration*fraction);
     if(clean)Object.assign(t,timing,{handoffPosition:t.outPoint+duration*timing.handoffFraction*a.rate});
     b.trim.gain.cancelScheduledValues(now);b.trim.gain.setValueAtTime(10**(plan.trimDb/20),now);b.trim.gain.setValueAtTime(10**(plan.trimDb/20),start+duration);b.trim.gain.linearRampToValueAtTime(1,start+duration+8);

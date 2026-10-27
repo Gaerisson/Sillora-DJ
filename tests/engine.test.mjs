@@ -30,6 +30,35 @@ class Context {
 globalThis.AudioContext = Context;
 const track = (id, bpm = 120, duration = 60) => ({ id, bpm, beatOffset: 0, buffer: { duration }, peaks: [] });
 
+test('a future scheduled passage can be cancelled for every family without ghost playback',async()=>{
+ for(const style of ['bass','riser','echo','clean']){
+  const e=new StudioEngine();await e.init();e.load(0,{...track('a'),manualRegions:true,mixOut:20});e.load(1,track('b'));
+  await e.play(0);e.context.currentTime=16;await e.startTransition({style,automix:true,quantize:false,beats:4});
+  const pending=e.decks[1].source;assert.ok(e.transition.incomingStart>16);e.cancelTransition();assert.equal(e.decks[1].playing,false);assert.equal(pending.stopped,true);assert.equal(e.crossfade,0);
+ }
+});
+
+test('Automix recovers natural EOF without restarting the outgoing song',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('a',120,5));e.load(1,track('b'));
+ await e.play(0);const outgoing=e.decks[0].source;e.context.currentTime=5;outgoing.onended();
+ assert.equal(e.decks[0].endedNaturally,true);await e.startTransition({style:'auto',profile:'musical',automix:true});
+ assert.equal(e.decks[0].source,null);assert.equal(e.transition.style,'linear');assert.ok(e.transition.duration<=.2);assert.ok(e.decks[1].source.startTime<5.2);
+});
+
+test('a sub-beat loop contains the current cursor and loop release settles a tempo ramp',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('a'));await e.play(0);e.context.currentTime=1.37;e.loop(0,.25);
+ assert.ok(e.decks[0].loop.start<=1.37&&e.decks[0].loop.end>1.37);
+ e.scheduleRate(0,1.2,e.context.currentTime,2);e.context.currentTime+=3;const before=e.position(0);e.loop(0,.25);const rate=e.decks[0].rate;
+ assert.ok(Math.abs(e.position(0)-before)<1e-9);assert.equal(e.decks[0].rateRamp,null);e.context.currentTime+=.5;assert.ok(Math.abs(e.position(0)-before-.5*rate)<1e-9);
+});
+
+test('quantized loops start at the next grid point while immediate loops keep the exact cursor',async()=>{
+ for(const quantize of [false,true]){
+  const e=new StudioEngine();await e.init();e.load(0,{...track('a'),downbeat:.1});await e.play(0);e.context.currentTime=1.37;
+  e.loop(0,.25,{quantize});assert.ok(Math.abs(e.decks[0].loop.start-(quantize?1.475:1.37))<1e-9);assert.ok(Math.abs(e.decks[0].loop.end-e.decks[0].loop.start-.125)<1e-9);
+ }
+});
+
 test('musical clean handoff keeps the groove, starts the next track at its gain edge and cancels future transport',async()=>{
  const engine=new StudioEngine();await engine.init();engine.load(0,track('a',120));engine.load(1,track('b',142));
  await engine.startTransition({style:'auto',profile:'musical',sync:true,quantize:false,beats:32});const t=engine.transition,a=engine.decks[0],b=engine.decks[1];

@@ -5,11 +5,11 @@ export class RemotePanel{
   root.innerHTML='<p>Retrouvez le studio complet sur PC, tablette ou téléphone : platines, mixer, dossiers, file, effets et audio. Connectez-vous au même réseau local ; le son reste sur ce PC.</p><div class="remote-panel-actions"><button class="button import remote-enable">Activer la télécommande</button><button class="button remote-disable" hidden>Arrêter et révoquer le lien</button></div><div class="remote-pairing" hidden><label>ADRESSE DU PC<select class="remote-address" aria-label="Adresse réseau du studio"></select></label><canvas class="remote-qr" width="280" height="280" aria-label="QR code d’appairage à scanner"></canvas><label>LIEN D’APPAIRAGE<input class="remote-link" type="text" readonly spellcheck="false" aria-label="Lien d’appairage du téléphone"></label><button class="button remote-copy">Copier le lien</button><p>Scannez le QR code avec le téléphone, ou ouvrez ce lien sur un autre ordinateur. Il donne accès au studio. Gardez-le privé ; Arrêter le rend inutilisable.</p></div><p class="remote-panel-status" role="status">Télécommande arrêtée.</p>';
   root.querySelector('.remote-enable').onclick=()=>this.change(true);root.querySelector('.remote-disable').onclick=()=>this.change(false);
   root.querySelector('.remote-address').onchange=()=>this.updateLink();
-  root.querySelector('.remote-copy').onclick=async()=>{const input=root.querySelector('.remote-link');try{await navigator.clipboard.writeText(input.value);this.message('Lien copié. Ouvrez-le sur le téléphone connecté au même Wi-Fi.');}catch{input.focus();input.select();this.message('Lien sélectionné : utilisez Ctrl + C pour le copier.');}};
+  root.querySelector('.remote-copy').onclick=async()=>{const input=root.querySelector('.remote-link');try{if(window.sillageDesktop?.copyRemoteLink)await window.sillageDesktop.copyRemoteLink(input.value);else await navigator.clipboard.writeText(input.value);this.message('Lien copié. Ouvrez-le sur le téléphone connecté au même Wi-Fi.');}catch{input.focus();input.select();this.message('Lien sélectionné : utilisez Ctrl + C pour le copier.');}};
  }
  message(value){this.root.querySelector('.remote-panel-status').textContent=value;}
  async open(){
-  if(!window.sillageDesktop?.remoteStatus){this.message('La télécommande nécessite l’application Windows Sillage 0.12.');this.root.querySelector('.remote-enable').disabled=true;return;}
+  if(!window.sillageDesktop?.remoteStatus){this.message('La télécommande nécessite l’application Windows Sillora DJ.');this.root.querySelector('.remote-enable').disabled=true;return;}
   try{this.state=await window.sillageDesktop.remoteStatus();this.render();}catch(error){this.message(error.message);}
  }
  async change(enabled){

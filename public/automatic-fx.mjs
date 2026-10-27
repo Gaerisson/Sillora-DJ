@@ -65,7 +65,7 @@ export function selectMusicalFx({source, target, sync, trustworthy = true, harmo
   if(tempoBlend && tempoDistance>.02){scores.riser=12;scores.sweep=11;scores.filter=10;maximum=Math.min(16,maximum);context='Les tempos évoluent ensemble : souffle ou balayage sur le même relais musical.';}
   if(energyDelta!==null && energyDelta>.12){scores.sweep+=3;if(tempoBlend||energetic)scores.riser=(scores.riser||6)+2;context+=' Énergie montante : préparer l’arrivée du prochain groove.';}
   if(energyDelta!==null && energyDelta<-.12){scores.echo+=4;if(keyKnown)scores.lunarecho+=3;context+=' Énergie descendante : laisser respirer une queue d’écho.';}
-  if(energetic&&amount>=.55){scores.tremolo=7;if(amount>=.7)scores.hydrant=energyDelta!==null&&energyDelta>.05?14:7;}
+  if(energetic&&amount>=.7)scores.hydrant=energyDelta!==null&&energyDelta>.05?14:7;
   if(stemsAvailable){scores.stemfade=11;scores.stemecho=8;if(keyKnown)scores.stemsustain=9;}
  }
  const eligibility=recentCandidates(scores,history),seed=[identity(source),identity(target)].join('→');
@@ -81,7 +81,7 @@ export function selectAutomaticFx({source, target, sync, dense = false, harmonic
   let weighted = ['dissolve', 'dissolve', 'dissolve', 'lowpass', 'stutter', 'bass', 'bass'];
   if (source?.bpm > AUTOMATIC_FX_ENERGETIC_BPM && target?.bpm > AUTOMATIC_FX_ENERGETIC_BPM) {
     weighted.push('space', 'riser', 'downlift', 'sweep', 'lunarecho');
-    if(intensity>=.7)weighted.push('hydrant','tremolo');
+    if(intensity>=.7)weighted.push('hydrant');
   }
   if(stemsAvailable)weighted.push('stemfade','stemfade','stemecho','stemecho',...(harmonic&&source?.keyConfidence>.35&&target?.keyConfidence>.35?['stemsustain','stemsustain']:[]));
   // Constrain candidates to the supported playback conditions.

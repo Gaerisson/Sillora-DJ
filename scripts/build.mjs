@@ -19,5 +19,5 @@ for(const resource of ['stems/runtime-manifest.json','stems/python/python.exe','
 await import('./vendor-qr.mjs');
 const {build,Platform,Arch}=require('electron-builder');
 const targets=process.argv.includes('--installer')?['portable','nsis']:['portable'];
-try{await build({projectDir:root,targets:Platform.WINDOWS.createTarget(targets,Arch.x64)});}
+try{await build({projectDir:root,targets:Platform.WINDOWS.createTarget(targets,Arch.x64),...(process.env.SILLORA_BUILD_OUTPUT?{config:{directories:{output:path.resolve(root,process.env.SILLORA_BUILD_OUTPUT)}}}:{})});}
 catch(error){console.error(error);process.exitCode=1;}

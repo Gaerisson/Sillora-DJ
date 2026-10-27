@@ -39,13 +39,13 @@ export class FolderBrowser{
   this.bindDirectories();list.querySelectorAll('[data-file]').forEach(button=>button.onclick=()=>this.import([files[Number(button.dataset.file)]],button.dataset.target==='queue'?null:Number(button.dataset.target),button.dataset.target==='queue'));
  }
  async import(entries,target,queue){
-  if(this.busy||!entries.length)return;const scope=this.scope;this.setBusy(true,'Analyse et chargement des fichiers…');
-  try{return await this.onImport(entries,target,queue,scope);}catch(error){this.onError(error.message);}finally{this.setBusy(false);}
+  if((this.busy&&target===null)||!entries.length)return;const scope=this.scope,ownsBusy=!this.busy;if(ownsBusy)this.setBusy(true,'Import et chargement des fichiers…');
+  try{return await this.onImport(entries,target,queue,scope);}catch(error){this.onError(error.message);}finally{if(ownsBusy)this.setBusy(false);}
  }
- setBusy(value,status){this.busy=value;this.root.querySelectorAll('button,select').forEach(control=>control.disabled=value);if(status)this.root.querySelector('.folder-status').textContent=status;else this.render();}
+ setBusy(value,status){this.busy=value;this.root.querySelectorAll('.folder-import,.folder-automix,.folder-add,.folder-mode').forEach(control=>control.disabled=value);if(status)this.root.querySelector('.folder-status').textContent=status;else this.render();}
  async startAutomix(){
   const scope=this.scope;if(this.busy||!this.onAutomix||!scope?.files.length)return;
-  const mode=this.mode;this.setBusy(true,'Analyse du dossier et préparation du premier passage…');
+  const mode=this.mode;this.setBusy(true,'Import du dossier · analyse en arrière-plan…');
   try{await this.onAutomix(scope.files,scope,mode);}catch(error){this.onError(error.message);}finally{this.setBusy(false);}
  }
 }

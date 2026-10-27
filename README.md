@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/images/sillora-banner.svg" alt="Sillora DJ — Le mix, dans son mouvement. Par Gaerisson." width="100%"></p>
 
-<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix, stems et télécommande Web.<br><sub>Version de développement 0.16.1 · Par Gaerisson</sub></p>
+<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix, stems et télécommande Web.<br><sub>Version de développement 0.17.0 · Par Gaerisson</sub></p>
 
 <p align="center"><a href="#le-studio">Découvrir</a> · <a href="docs/SCREENSHOTS.md">Galerie</a> · <a href="#prise-en-main">Démarrer</a> · <a href="#feuille-de-route">Feuille de route</a> · <a href="#validation-et-limites-actuelles">État &amp; limites</a></p>
 
@@ -10,9 +10,9 @@
 
 **Sillora DJ** réunit le mixage d’une collection locale et la gestion d’une petite régie dans une même application. Développé par **Gaerisson**, le projet vise une lecture continue et des transitions adaptées au rythme, à la tonalité et à l’énergie des morceaux.
 
-La priorité de la prochaine refonte est le **résultat audio**, puis la stabilité, l’ergonomie et la finition visuelle. Les fonctions ci-dessous sont présentes dans la version actuelle ; les évolutions de la feuille de route restent à implémenter et à valider.
+La priorité de la refonte est le **résultat audio**, puis la stabilité, l’ergonomie et la finition visuelle. Les fonctions ci-dessous sont présentes dans la version actuelle ; les évolutions de la feuille de route restent à implémenter et à valider.
 
-### Fonctions présentes en 0.16.1
+### Fonctions présentes en 0.17.0
 
 | Mixer | Préparer et diffuser |
 | :--- | :--- |
@@ -26,6 +26,8 @@ La priorité de la prochaine refonte est le **résultat audio**, puis la stabili
 ### Un passage construit autour de la musique
 
 Le sélecteur Automix actuel utilise le tempo mesuré, la grille, l’énergie, la tonalité estimée et l’historique des effets pour proposer un passage. Le tempo progressif fait évoluer les deux platines ensemble, puis laisse le titre entrant à sa vitesse native. **Mixer maintenant** permet de demander le relais.
+
+Le premier lot ajoute une surveillance Automix dédiée, la lecture dès le décodage et une analyse en arrière-plan avec cache par contenu. Le panneau **Régie** est masqué par défaut et peut être rouvert depuis l’en-tête.
 
 Le catalogue actuel propose notamment fondu, filtre, échange de graves, Echo Out, Whoosh, Sweep et transitions à stems. Leur présence ne signifie pas que leur qualité musicale est acquise : le calage, le déclenchement au point OUT et le rendu des effets font partie des priorités de correction.
 
@@ -52,7 +54,7 @@ Captures de l’application exécutée avec des fichiers audio réels. Les fichi
 3. Sélectionner un passage dans **Transition Lab**, puis **Mixer maintenant**.
 4. Ouvrir **Master** pour le sidechain, **Micros / ligne** pour la régie et **Remote** pour l’appairage sur le réseau local.
 
-Le build produit `Sillora-DJ-Setup-0.16.1.exe` et `Sillora-DJ-0.16.1-Windows.exe`. **Les binaires ne sont pas encore publiés dans GitHub Releases.** Pour démarrer depuis les sources :
+Le build produit `Sillora-DJ-Setup-0.17.0.exe` et `Sillora-DJ-0.17.0-Windows.exe`. **Les binaires ne sont pas encore publiés dans GitHub Releases.** Pour démarrer depuis les sources :
 
 ```powershell
 npm ci
@@ -64,7 +66,7 @@ Node.js 24 est utilisé pour le développement. `npm run dev` démarre le lecteu
 
 ## Feuille de route
 
-La refonte est organisée dans cet ordre. **Ces objectifs ne sont pas annoncés comme livrés dans la version 0.16.1.**
+La refonte est organisée dans cet ordre. La **0.17.0 livre un premier lot de fiabilité et de préparation**, décrit dans les [notes de version](docs/CHANGELOG-0.17.0.md) et le [suivi des travaux](PROGRESS.md). Les objectifs complets ci-dessous ne sont pas tous livrés.
 
 | Priorité | Objectifs | Validation attendue |
 | :--- | :--- | :--- |
@@ -85,9 +87,9 @@ Une transition devra être préparée en amont, démarrer sur un repère musical
 
 ## Validation et limites actuelles
 
-Version **0.16.1**, Windows x64, Electron et Web Audio. La dernière suite locale enregistrée compte **200 tests réussis**. Les rapports existants comprennent des contrôles Electron, des rendus sur fichiers audio réels et des essais avec entrées micro simulées. Ces vérifications techniques ne constituent pas une validation d’écoute de tous les presets ni une garantie de stabilité sur de longues sessions.
+Version **0.17.0**, Windows x64, Electron et Web Audio. La dernière suite locale enregistrée compte **213 tests réussis**. Les rapports existants comprennent des contrôles Electron, des rendus sur fichiers audio réels et des essais avec entrées micro simulées. Ces vérifications techniques ne constituent pas une validation d’écoute de tous les presets ni une garantie de stabilité sur de longues sessions.
 
-Les problèmes signalés à reproduire et corriger concernent notamment le déclenchement Automix au point OUT, le retard de certaines boucles, la fluidité des ondes, les analyses pendant la lecture et la copie du lien Remote. Les essais de non-régression doivent couvrir ces cas, les transitions avec ou sans stems et les sessions prolongées.
+Le premier lot corrige la préparation au point OUT, les sources entrantes après annulation, la sortie de boucle après variation du tempo et la copie native du lien Remote. L’analyse fonctionne en arrière-plan pendant la lecture. La fluidité à grande échelle, les raccords audio des boucles, les préparations de stems et les sessions prolongées restent à approfondir.
 
 - BPM, tonalités et repères IN/OUT : estimations modifiables.
 - Stems précalculés sur CPU ; runtime et modèle embarqués dans les distributions préparées, hors du dépôt source.
@@ -99,7 +101,7 @@ La validation de chaque lot devra préciser les fonctions testées, les mesures 
 
 ## Documentation et contributions
 
-[Installation](docs/INSTALLATION.md) · [Galerie](docs/SCREENSHOTS.md) · [Identité visuelle](docs/BRAND.md) · [Historique](docs/CHANGELOG-0.16.1.md) · [Données & réseau](docs/PRIVACY.md) · [Dépendances](THIRD_PARTY.md)
+[Installation](docs/INSTALLATION.md) · [Galerie](docs/SCREENSHOTS.md) · [Identité visuelle](docs/BRAND.md) · [Historique](docs/CHANGELOG-0.17.0.md) · [Données & réseau](docs/PRIVACY.md) · [Dépendances](THIRD_PARTY.md)
 
 Un bug, une transition à améliorer ou une idée ? [Ouvrir une issue](https://github.com/Gaerisson/Sillora-DJ/issues/new/choose) ou consulter [le guide de contribution](CONTRIBUTING.md). Pour un problème audio, préciser la version, les réglages, le point de déclenchement et les étapes permettant de le reproduire.
 
