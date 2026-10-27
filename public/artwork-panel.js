@@ -1,0 +1,17 @@
+export class ArtworkPanel{
+ constructor(root,{onApply}={}){
+  Object.assign(this,{root,onApply,request:0});root.classList.add('artwork-panel');root.innerHTML='<h2>Choisir une pochette</h2><p>Recherchez la couverture d’un titre ou d’un album. La sélection est conservée dans votre bibliothèque.</p><form class="artwork-form"><label>TITRE<input class="artwork-title" maxlength="180" required></label><label>ARTISTE<input class="artwork-artist" maxlength="180"></label><button class="button import" type="submit">Rechercher</button></form><p class="artwork-status" role="status">Saisissez le titre et l’artiste.</p><div class="artwork-results"></div><p class="artwork-source">Pochettes : MusicBrainz / Cover Art Archive.</p>';root.querySelector('form').onsubmit=event=>{event.preventDefault();this.search();};
+ }
+ status(message){this.root.querySelector('.artwork-status').textContent=message;}
+ async open(track){this.track=track;this.request++;const metadata=track?.metadata||track||{};this.root.querySelector('.artwork-title').value=metadata.title||track?.name?.replace(/\.[^.]+$/,'')||'';this.root.querySelector('.artwork-artist').value=metadata.artist||'';if(this.root.querySelector('.artwork-title').value.length>=2)await this.search();}
+ close(){this.request++;}
+ async search(){
+  const api=window.sillageDesktop;if(!api?.searchArtwork||!api.fetchArtwork){this.status('La recherche de pochettes nécessite l’application Windows.');return;}
+  const query={title:this.root.querySelector('.artwork-title').value.trim(),artist:this.root.querySelector('.artwork-artist').value.trim(),album:''},request=++this.request;this.status('Recherche de pochettes…');this.root.querySelector('.artwork-results').replaceChildren();
+  try{const response=await api.searchArtwork(query);if(request!==this.request)return;const candidates=response.candidates||[];this.status(candidates.length?'Choisissez la pochette qui correspond au titre.':'Aucune pochette correspondante. Précisez le titre et l’artiste.');
+   for(const candidate of candidates){const row=document.createElement('article');row.className='artwork-result';const picture=document.createElement('div');picture.className='artwork-placeholder';picture.textContent='♫';const title=document.createElement('strong'),artist=document.createElement('small'),album=document.createElement('small'),button=document.createElement('button');title.textContent=candidate.title;artist.textContent=candidate.artist;album.textContent=candidate.album;button.className='button';button.textContent='Chargement…';button.disabled=true;row.append(picture,title,artist,album,button);this.root.querySelector('.artwork-results').append(row);
+    api.fetchArtwork(candidate.id).then(result=>{if(request!==this.request)return;const img=document.createElement('img');img.src=result.cover;img.alt='Pochette de '+candidate.album;picture.replaceWith(img);button.disabled=false;button.textContent='Utiliser cette pochette';button.onclick=async()=>{try{button.disabled=true;await this.onApply?.(result.cover,{...result,track:this.track});this.status('Pochette appliquée à la bibliothèque.');button.textContent='Pochette appliquée';}catch(error){button.disabled=false;this.status(error.message||'Impossible de conserver cette pochette.');}};}).catch(()=>{if(request!==this.request)return;button.textContent='Image indisponible';});
+   }
+  }catch(error){if(request===this.request)this.status(error.message||'Le catalogue de pochettes est indisponible.');}
+ }
+}

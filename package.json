@@ -1,0 +1,77 @@
+{
+  "name": "sillora-dj",
+  "version": "0.16.1",
+  "private": true,
+  "description": "Sillora DJ — DJ, Automix and live sound console for Windows, by Gaerisson",
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "prestart": "node scripts/runtime.mjs",
+    "start": "electron .",
+    "dev": "node server.mjs",
+    "vendor:audio": "node scripts/vendor-audio.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "prepack": "node scripts/runtime.mjs",
+    "pack": "node scripts/build.mjs",
+    "vendor:stems": "node scripts/vendor-stems.mjs",
+    "vendor:media": "node scripts/vendor-media.mjs",
+    "pack:installer": "node scripts/build.mjs --installer"
+  },
+  "devDependencies": {
+    "@soundtouchjs/audio-worklet": "2.1.1",
+    "electron": "^42.0.0",
+    "electron-builder": "^26.0.12",
+    "qrcode-generator": "2.0.4"
+  },
+  "build": {
+    "appId": "fr.sillage.studio",
+    "productName": "Sillora DJ",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**",
+      "!desktop/vendor/**",
+      "public/**",
+      "server.mjs",
+      "package.json",
+      "!public/validation-audio/**",
+      "!public/validation-baseline/**",
+      "!public/*validation*"
+    ],
+    "win": {
+      "target": "portable",
+      "artifactName": "Sillora-DJ-${version}-Windows.${ext}",
+      "signAndEditExecutable": true,
+      "icon": "desktop/icon.ico",
+      "signExecutable": false
+    },
+    "compression": "normal",
+    "copyright": "Copyright © 2026 Gaerisson",
+    "extraResources": [
+      {
+        "from": "desktop/vendor/stems",
+        "to": "stems"
+      },
+      {
+        "from": "desktop/vendor/media",
+        "to": "media"
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "runAfterFinish": false,
+      "artifactName": "Sillora-DJ-Setup-${version}.${ext}"
+    }
+  },
+  "dependencies": {
+    "music-metadata": "12.3.2"
+  },
+  "author": "Gaerisson",
+  "copyright": "Copyright © 2026 Gaerisson"
+}

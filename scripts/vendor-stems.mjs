@@ -1,0 +1,21 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const source=process.env.GAERISSON_STEMS_SOURCE||'D:/Codex/tools/sillage-stems';
+const model=process.env.GAERISSON_STEMS_MODEL||'D:/Codex/tools/cache/torch/hub/checkpoints/955717e8-8726e21a.th';
+const target=path.join(root,'desktop/vendor/stems');
+const exists=async p=>fs.access(p).then(()=>true,()=>false);
+if(!await exists(path.join(source,'python.exe'))||!await exists(model))throw new Error('Runtime CPU Demucs et modèle requis pour la distribution. Définir GAERISSON_STEMS_SOURCE et GAERISSON_STEMS_MODEL.');
+await fs.mkdir(target,{recursive:true});
+await fs.cp(source,path.join(target,'python'),{recursive:true,filter:async p=>{
+ const relative=path.relative(source,p).replaceAll('\\','/');
+ return !/(^|\/)(?:__pycache__|tests?|include|Include|Scripts|pip|setuptools)(\/|$)/.test(relative)&&!/[.](?:lib|pdb|pyc|h|hpp|cpp|c)$/i.test(p);
+}});
+const modelDir=path.join(target,'models/hub/checkpoints');await fs.mkdir(modelDir,{recursive:true});
+await fs.copyFile(model,path.join(modelDir,path.basename(model)));
+const hash=crypto.createHash('sha256').update(await fs.readFile(model)).digest('hex');if(!hash.startsWith('8726e21a'))throw new Error('Empreinte du modèle htdemucs inattendue.');
+await fs.writeFile(path.join(target,'runtime-manifest.json'),JSON.stringify({version:1,python:'3.12.14',torch:'2.5.1+cpu',demucs:'4.0.1',model:'htdemucs',checkpoint:path.basename(model),sha256:hash,offline:true,license:'Third-party licenses included in python/Lib/site-packages/*dist-info and python/LICENSE.txt'},null,2));
+await fs.writeFile(path.join(target,'THIRD_PARTY.txt'),'Gaerisson DJ Studio bundles an independent CPU Python runtime, PyTorch 2.5.1+cpu, torchaudio and Demucs 4.0.1 with the htdemucs checkpoint.\nPython: https://www.python.org/ — PSF license\nPyTorch: https://pytorch.org/ — BSD-style licenses\nDemucs: https://github.com/facebookresearch/demucs — MIT license\nAll installed package license notices are retained in python/Lib/site-packages.\nThe executable does not download model weights at first use.\n');
+console.log('Demucs CPU et modèle htdemucs préparés pour une utilisation hors ligne.');

@@ -1,0 +1,15 @@
+name: Proposer une amélioration
+description: Décrire un besoin DJ ou régie
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Dans quelle situation cette fonction aiderait-elle ?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Comportement proposé
+    validations:
+      required: true

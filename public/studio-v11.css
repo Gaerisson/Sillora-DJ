@@ -1,0 +1,9 @@
+.header-actions{gap:12px}.header-actions>.button{min-height:36px}.header-remote{color:var(--a)}
+.live-strip{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding:9px 15px;margin:-2px 0 14px;border:1px solid var(--line);border-radius:9px;background:var(--panel);font-size:11px;color:var(--muted)}
+.live-strip #mic-panel-open{color:var(--text);font-weight:650}.live-strip #mic-talk-toggle{padding:7px 15px;min-width:82px}.live-strip #mic-talk-toggle[aria-pressed="true"]{background:var(--b);color:var(--bg)}
+.live-strip #duck-live-state{font:11px Consolas,monospace}.live-strip #duck-live-state[data-active="true"]{color:var(--a)}.live-strip #output-live-label{margin-left:auto;max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#settings-dialog{width:min(820px,94vw);max-height:90vh}#settings-dialog .settings-section{padding-top:14px;border-top:1px solid var(--line);margin-top:14px}
+#remote-dialog{width:min(620px,94vw);max-height:90vh}.remote-panel-actions{display:flex;gap:10px;flex-wrap:wrap}.remote-pairing{display:grid;gap:12px;margin-top:18px}.remote-pairing label{display:grid;gap:8px;font-size:11px;color:var(--muted)}.remote-pairing select,.remote-pairing input{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;color:var(--text);background:var(--panel2)}.remote-pairing input{font:12px Consolas,monospace}.remote-panel-status{color:var(--a);line-height:1.5}
+@media(max-width:1250px){.header-actions{gap:8px}.workspace-label{display:none}.audio-status{max-width:140px}.live-strip #output-live-label{max-width:28%}}
+
+.remote-qr{display:block;width:220px;height:220px;border-radius:7px;background:white;margin:6px auto;image-rendering:pixelated}

@@ -1,0 +1,3 @@
+import {existsSync} from 'node:fs';import {spawnSync} from 'node:child_process';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+if(!existsSync(path.join(root,'node_modules','electron','dist','electron.exe'))){const result=spawnSync(process.execPath,[path.join(root,'node_modules','electron','install.js')],{cwd:root,stdio:'inherit',env:{...process.env,electron_config_cache:path.join(root,'.runtime','electron-cache')}});if(result.error)console.error(result.error.message);process.exit(result.status??1);}

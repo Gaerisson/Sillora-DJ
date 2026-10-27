@@ -1,0 +1,15 @@
+node_modules/
+release/
+.runtime/
+artifacts/
+*.log
+
+work/
+desktop/vendor/
+public/*validation*
+public/validation-audio/
+public/validation-baseline/
+*.wav
+*.mp3
+*.webm
+*.m4a

@@ -1,0 +1,9 @@
+.stem-panel{margin:12px 16px;padding:10px 12px;border:1px solid var(--border,#30343c);border-radius:10px;background:color-mix(in srgb,var(--panel,#181c24) 90%,transparent);font-size:11px}
+.stem-panel summary{cursor:pointer;display:flex;justify-content:space-between;gap:12px;font-size:10px;letter-spacing:1px;font-weight:700}
+.stem-panel summary small{letter-spacing:0;font-weight:400;color:var(--muted,#9aabbc);text-align:right;max-width:65%;overflow-wrap:anywhere}
+.stem-panel p{line-height:1.6;color:var(--muted,#9aabbc);margin:12px 0}
+.stem-actions,.stem-presets{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.stem-panel button{border:1px solid var(--border,#30343c);border-radius:6px;padding:7px 9px;color:inherit;background:transparent;font-size:10px;cursor:pointer}
+.stem-panel button:disabled{opacity:.45;cursor:default}.stem-panel .stem-prepare{color:var(--accent,#a3c5ff)}
+.stem-levels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.stem-levels label{display:grid;grid-template-columns:1fr auto;gap:5px}.stem-levels input{grid-column:1/-1;width:100%;accent-color:var(--accent,#a3c5ff)}.stem-levels output{grid-row:1;grid-column:2;color:var(--muted,#9aabbc);font-variant-numeric:tabular-nums}

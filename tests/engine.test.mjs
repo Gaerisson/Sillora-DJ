@@ -1,0 +1,294 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { StudioEngine, createDemo } from '../public/engine.js';
+import {transitionProgress} from '../public/transition-design.mjs';
+
+class Param {
+  value = 0; events = [];
+  cancelScheduledValues(time) { this.events.push({ type: 'cancel', time }); }
+  setValueAtTime(value, time) { this.value = value; this.events.push({ type: 'value', value, time }); }
+  setTargetAtTime(value, time) { this.value = value; this.events.push({ type: 'target', value, time }); }
+  exponentialRampToValueAtTime(value,time){this.value=value;this.events.push({type:"exponential",value,time});}
+  linearRampToValueAtTime(value, time) { this.value = value; this.events.push({ type: 'ramp', value, time }); }
+  setValueCurveAtTime(curve, time, duration) { this.events.push({ type: 'curve', curve, time, duration }); }
+}
+class AudioNode {
+  gain = new Param(); frequency = new Param(); Q = new Param(); delayTime = new Param(); playbackRate = new Param();
+  threshold = new Param(); knee = new Param(); ratio = new Param(); attack = new Param(); release = new Param();
+  connect(target) { return target; } disconnect() {} start(time, offset) { this.startTime = time; this.startOffset = offset; } stop() { this.stopped = true; }
+}
+class Context {
+  currentTime = 0; sampleRate = 22050; destination = new AudioNode();
+  createConvolver(){return new AudioNode();} createOscillator(){return new AudioNode();}
+  createChannelSplitter(){return new AudioNode();}createChannelMerger(){return new AudioNode();}
+  createGain() { return new AudioNode(); } createBiquadFilter() { return new AudioNode(); }
+  createDynamicsCompressor() { return new AudioNode(); } createAnalyser() { return new AudioNode(); }
+  createBufferSource() { return new AudioNode(); } createDelay() { return new AudioNode(); }
+  createBuffer(channels, length, sampleRate) { const data = Array.from({ length: channels }, () => new Float32Array(length)); return { duration: length / sampleRate, sampleRate, getChannelData: i => data[i] }; }
+  async resume() {}
+}
+globalThis.AudioContext = Context;
+const track = (id, bpm = 120, duration = 60) => ({ id, bpm, beatOffset: 0, buffer: { duration }, peaks: [] });
+
+test('musical clean handoff keeps the groove, starts the next track at its gain edge and cancels future transport',async()=>{
+ const engine=new StudioEngine();await engine.init();engine.load(0,track('a',120));engine.load(1,track('b',142));
+ await engine.startTransition({style:'auto',profile:'musical',sync:true,quantize:false,beats:32});const t=engine.transition,a=engine.decks[0],b=engine.decks[1];
+ assert.equal(t.style,'clean');assert.equal(t.duration,8);assert.equal(b.source.startTime,t.incomingStart);assert.equal(t.incomingStart,t.start+6);assert.ok(a.echoSend.gain.events.some(e=>e.type==='ramp'&&e.value>0&&e.value<.3));assert.equal(a.delay.delayTime.value,.5);
+ const out=a.fader.gain.events.findLast(e=>e.type==='curve'),incoming=b.fader.gain.events.findLast(e=>e.type==='curve');
+ assert.ok(out.curve[Math.floor(out.curve.length*.7)]>.99);assert.equal(incoming.curve[Math.floor(incoming.curve.length*.7)],0);
+ engine.context.currentTime=t.start+t.duration*.7;const future=b.source;engine.cancelTransition();assert.equal(b.playing,false);assert.equal(future.stopped,true);assert.equal(engine.crossfade,0);assert.equal(a.fader.gain.value,1);assert.equal(b.fader.gain.value,0);
+});
+
+test('cancelling after a clean handoff does not bring back an already silent outgoing track',async()=>{
+ const engine=new StudioEngine();await engine.init();engine.load(0,track('a',120));engine.load(1,track('b',142));await engine.startTransition({style:'auto',profile:'musical',sync:true,quantize:false});const t=engine.transition;
+ engine.context.currentTime=t.incomingStart+.1;engine.cancelTransition();assert.equal(engine.crossfade,1);assert.equal(engine.decks[0].fader.gain.value,Math.cos(Math.PI/2));assert.equal(engine.decks[1].fader.gain.value,1);assert.equal(engine.decks[1].playing,true);
+});
+
+test('automatic transport preserves explicit off-grid IN and OUT markers',async()=>{
+ const engine=new StudioEngine();await engine.init();engine.load(0,{...track('a',120),confidence:'manual',manualRegions:true,mixOut:10.3});engine.load(1,{...track('b',124),confidence:'manual',manualRegions:true,mixIn:1.123});
+ await engine.startTransition({style:'auto',profile:'musical',sync:true,quantize:true,automix:true,tempoBlend:false});assert.equal(engine.transition.inPoint,1.123);assert.equal(engine.transition.outPoint,10.3);
+});
+
+test('transport position, seek, rate changes and loops preserve the audio clock', async () => {
+  const engine = new StudioEngine(); await engine.init(); engine.load(0, track('a'));
+  await engine.play(0); engine.context.currentTime = 3;
+  assert.equal(engine.position(0), 3);
+  await engine.setRate(0, 1.5); engine.context.currentTime = 5;
+  assert.equal(engine.position(0), 6);
+  engine.pause(0); engine.context.currentTime = 8;
+  assert.equal(engine.position(0), 6);
+  await engine.seek(0, 10); engine.loop(0, 4); await engine.play(0);
+  engine.context.currentTime = 10;
+  assert.ok(engine.position(0) >= 10 && engine.position(0) < 12);
+  assert.equal(engine.decks[0].source.loop, true);
+  engine.loop(0, 4); assert.equal(engine.decks[0].source.loop, false);
+});
+test('audio transitions schedule both curves on the same clock, match BPM and finish on target', async () => {
+  const engine = new StudioEngine(); await engine.init(); engine.load(0, track('a')); engine.load(1, track('b', 128));
+  await engine.play(0); engine.context.currentTime = 1.13;
+  await engine.startTransition({ beats: 16, tempoBlend:false });
+  const transition = engine.transition;
+  assert.ok(Math.abs(transition.start - 2) < 1e-6);
+  assert.equal(transition.duration, 8);
+  assert.equal(engine.decks[1].rate, 120 / 128);
+  const curveA = engine.decks[0].fader.gain.events.findLast(e => e.type === 'curve');
+  const curveB = engine.decks[1].fader.gain.events.findLast(e => e.type === 'curve');
+  assert.equal(curveA.time, curveB.time); assert.equal(curveA.duration, curveB.duration);
+  for (let i = 0; i < curveA.curve.length; i++) assert.ok(Math.abs(curveA.curve[i] ** 2 + curveB.curve[i] ** 2 - 1) < 1e-6);
+  engine.context.currentTime = transition.start + 4; assert.equal(engine.tick(), 0.5);
+  engine.context.currentTime = transition.start + 8; engine.tick();
+  assert.equal(engine.crossfade, 1); assert.equal(engine.decks[0].playing, false); assert.equal(engine.decks[1].playing, true);
+});
+test('Tempo Blend integrates both playback clocks and finishes at the native target tempo',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a',120));engine.load(1,track('b',128));
+  await engine.startTransition({beats:16,tempoBlend:true,style:'bass'});
+  const t=engine.transition;engine.context.currentTime=t.start+t.duration/2;
+  assert.ok(Math.abs(engine.currentRate(0)*120-engine.currentRate(1)*128)<1e-9);
+  const a=engine.position(0),b=engine.position(1);
+  assert.ok(a>0&&b>0);
+  engine.context.currentTime=t.start+t.duration;engine.tick();
+  assert.equal(engine.decks[1].rate,1);assert.equal(engine.decks[1].rateRamp,null);
+  assert.ok(Math.abs(engine.position(1)-7.5)<1e-8);
+});
+test('Whoosh holds both beat clocks through a 110/98 tempo morph, lands naturally and cancels continuously',async()=>{
+ for(const [a,b]of [[110,98],[98,110]]){
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a',a,240));engine.load(1,track('b',b,240));
+  await engine.startTransition({style:'riser',sync:true,tempoBlend:true,quantize:false,beats:16});const t=engine.transition;
+  assert.equal(t.sync,true);assert.equal(t.tempoBlend,true);assert.equal(t.voices.length,2);
+  for(const p of [0,.25,.5,.75,1]){
+   engine.context.currentTime=t.start+t.duration*p;
+   assert.ok(Math.abs(engine.currentRate(0)*a-engine.currentRate(1)*b)<1e-9);
+   assert.ok(Math.abs((engine.position(0)-t.outPoint)*a/60-(engine.position(1)-t.inPoint)*b/60)<1e-8,'Transport phase does not drift during the shared ramp');
+  }
+  engine.tick();assert.equal(engine.decks[1].rate,1);assert.equal(engine.decks[0].playing,false);
+  assert.ok(Math.abs((engine.position(1)-t.inPoint)*b/60-16)<1e-8);
+  const other=new StudioEngine();await other.init();other.load(0,track('a',a,240));other.load(1,track('b',b,240));await other.startTransition({style:'riser',sync:true,tempoBlend:true,quantize:false});const u=other.transition;
+  other.context.currentTime=u.start+u.duration*.45;const before=other.decks.map((_,id)=>other.position(id));other.tick();const crossfade=other.crossfade;other.cancelTransition();
+  assert.equal(other.crossfade,crossfade);other.decks.forEach((_,id)=>assert.ok(Math.abs(other.position(id)-before[id])<1e-9));
+ }
+});
+
+test('automatic tempo morph uses the measured clock and Next aligns the incoming bar phase without shortening its 16 beats',async()=>{
+ const engine=new StudioEngine();await engine.init();engine.load(0,{...track('a',110,240),tempoConfidence:.72,beatStability:.43});engine.load(1,{...track('b',98,240),tempoConfidence:.66,beatStability:.30});await engine.play(0);
+ engine.context.currentTime=.7;await engine.startTransition({style:'auto',profile:'musical',sync:true,tempoBlend:true,quantize:true,startNow:true,skipBeats:16,beats:32});
+ const t=engine.transition;assert.equal(t.style,'riser');assert.equal(t.tempoBlend,true);assert.match(t.reason,/Grille estimée/);assert.ok(Math.abs(t.duration*104/60-16)<1e-9);
+ assert.ok(Math.abs(t.outPoint*110/60-t.inPoint*98/60)<1e-8,'Both tracks start on the same beat inside their bar');
+ engine.context.currentTime=t.start+t.duration;engine.tick();assert.equal(engine.decks[1].rate,1);
+});
+
+test('echo tail survives loading the next track onto the released deck',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));engine.load(1,track('b'));
+  await engine.startTransition({beats:4,style:'echo',tempoBlend:false});const t=engine.transition;
+  assert.equal(engine.decks[0].delay.delayTime.value,.5);
+  engine.context.currentTime=t.start+t.duration;engine.tick();
+  const wet=engine.decks[0].wet.gain.events.length;
+  engine.load(0,track('c'));
+  assert.equal(engine.decks[0].wet.gain.events.length,wet);
+  assert.ok(engine.decks[0].echoTailUntil>engine.context.currentTime);
+});
+test('cancelling a transition holds its current position and restores effect parameters', async () => {
+  const engine = new StudioEngine(); await engine.init(); engine.load(0, track('a')); engine.load(1, track('b'));
+  await engine.startTransition({ style: 'echo', beats: 8, quantize: false });
+  const start = engine.transition.start; engine.context.currentTime = start + 2.8;
+  engine.cancelTransition();
+  const progress=transitionProgress('echo',.7,4);
+  assert.equal(engine.transition, null); assert.ok(Math.abs(engine.crossfade-progress)<1e-9); assert.equal(engine.decks[0].echo, false);
+  assert.ok(Math.abs(engine.decks[0].fader.gain.value - Math.cos(progress*Math.PI/2)) < 1e-9);
+});
+
+test('normal loop release continues from the heard position after many wraps and a rate change',async()=>{
+ const engine=new StudioEngine();await engine.init();engine.load(0,track('loop'));await engine.seek(0,10.25);await engine.play(0);engine.loop(0,4);
+ engine.context.currentTime=7.4;const wrapped=engine.position(0);assert.ok(wrapped>=10&&wrapped<12);
+ engine.loop(0,4);assert.equal(engine.position(0),wrapped);assert.equal(engine.decks[0].source.loop,false);
+ engine.context.currentTime=7.9;assert.ok(Math.abs(engine.position(0)-wrapped-.5)<1e-9);
+ engine.loop(0,2);await engine.setRate(0,1.5);engine.context.currentTime=13;
+ const pitched=engine.position(0);engine.loop(0,2);assert.equal(engine.position(0),pitched);
+ engine.context.currentTime=14;assert.ok(Math.abs(engine.position(0)-pitched-1.5)<1e-9);
+});
+
+test('deck brake descends in native pitch, integrates its clock and resumes at the stopped position with key lock restored',async()=>{
+ const engine=new StudioEngine();await engine.init();engine.keyLockAvailable=true;
+ engine.SoundTouchNode=class extends AudioNode{pitch=new Param();port={close(){}};};
+ engine.load(0,track('brake'));await engine.seek(0,10);await engine.play(0);assert.ok(engine.decks[0].pitchNode);
+ const stopped=engine.brake(0,.4);await new Promise(resolve=>setImmediate(resolve));const d=engine.decks[0];
+ assert.equal(engine.keyLock,true);assert.equal(d.pitchNode,null);assert.ok(d.braking);assert.ok(d.source.playbackRate.events.some(e=>e.type==='ramp'&&e.value===.005));
+ engine.context.currentTime=.2;assert.ok(Math.abs(engine.position(0)-(10+.2-.995*.2*.2/.8))<1e-9);assert.ok(engine.currentRate(0)<.51);
+ engine.context.currentTime=.405;d.source.onended();await stopped;const position=10+.4*(1+.005)/2;
+ assert.ok(Math.abs(engine.position(0)-position)<1e-9);assert.equal(d.playing,false);assert.equal(d.rate,1);assert.equal(d.braking,null);
+ await engine.play(0);assert.ok(d.pitchNode);assert.equal(d.source.startOffset,position);
+});
+
+test('an interrupted brake freezes its integrated position and a new transition restarts a running source',async()=>{
+ const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));engine.load(1,track('b'));await engine.play(0);
+ const stopped=engine.brake(0,.4);await new Promise(resolve=>setImmediate(resolve));engine.context.currentTime=.1;const position=engine.position(0);engine.pause(0);await stopped;
+ assert.equal(engine.position(0),position);assert.equal(engine.decks[0].rate,1);assert.equal(engine.decks[0].braking,null);
+ await engine.play(0);const next=engine.brake(0,.4);await new Promise(resolve=>setImmediate(resolve));engine.context.currentTime=.15;await engine.startTransition({style:'filter',quantize:false});await next;
+ assert.equal(engine.decks[0].braking,null);assert.equal(engine.decks[0].playing,true);assert.equal(engine.transition.style,'filter');
+});
+
+test('Mix now skips a distant OUT marker and hands over on the next beats using the selected style',async()=>{
+ for(const style of ['clean','echo','bass']){
+  const engine=new StudioEngine();await engine.init();engine.load(0,{...track('a',120,180),confidence:'manual',manualRegions:true,mixOut:160});engine.load(1,{...track('b',120,180),confidence:'manual',manualRegions:true,mixIn:3.123});
+  await engine.play(0);engine.context.currentTime=12.13;await engine.startTransition({style,automix:true,startNow:true,quantize:true,beats:32});
+  const t=engine.transition;assert.equal(t.style,style);assert.ok(t.start>=12.25&&t.start<=12.75,`${style}: ${t.start}`);assert.ok(t.duration<=2);assert.ok(t.incomingStart<15);assert.equal(t.inPoint,3.123);assert.ok(t.outPoint<14);
+ }
+});
+
+test('musical automatic accents follow dosage while retaining a conservative unsynced handoff',async()=>{
+ for(const intensity of [0,.6]){const engine=new StudioEngine();await engine.init();engine.load(0,track('a',120));engine.load(1,track('b',142));await engine.startTransition({style:'auto',profile:'musical',intensity,quantize:false});const t=engine.transition;assert.equal(t.style,'clean');assert.equal(t.sync,false);assert.equal(t.accent,intensity?'filtered-rise':undefined);assert.equal(t.voices.length,intensity?1:0);}
+});
+
+test('measured loaded analysis shares canonical IN and OUT with the marker reset data',async()=>{
+ const engine=new StudioEngine();await engine.init();const envelope=Array.from({length:1800},(_,i)=>i<160?.001:i<1500?.15:.001),t={...track('regions',120,180),confidence:'generated',envelope,audibleEnd:180,mixIn:0,mixOut:172,analysis:{mixIn:0,mixOut:172}};
+ engine.load(0,t);assert.equal(t.mixIn,16);assert.ok(t.mixOut>=140&&t.mixOut<=144);assert.equal(t.analysis.mixIn,t.mixIn);assert.equal(t.analysis.mixOut,t.mixOut);
+});
+test('bass exchange is automated, short endings are bounded and future starts never show negative positions', async () => {
+  const engine = new StudioEngine(); await engine.init(); engine.load(0, track('a', 120, 3)); engine.load(1, track('b'));
+  await engine.play(0); engine.context.currentTime = 2;
+  await engine.startTransition({ style: 'bass', beats: 32, quantize: false });
+  assert.ok(engine.transition.duration <= 1);
+  assert.equal(engine.position(1), 0);
+  assert.ok(engine.decks[1].transitionLow.gain.events.some(e => e.type === 'value' && e.value === -18));
+});
+test('demo generator produces finite stereo audio with bounded peaks', () => {
+  const track = createDemo(new Context(), { title: 'Test', bpm: 120, root: 55, color: 190, variant: 0 });
+  assert.equal(track.buffer.duration, 32);
+  let peak = 0, energy = 0;
+  for (const value of track.buffer.getChannelData(0)) { assert.ok(Number.isFinite(value)); peak = Math.max(peak, Math.abs(value)); energy += value ** 2; }
+  assert.ok(peak < 1); assert.ok(energy > 100);
+});
+
+test('a late Automix handover does not wait for a measure beyond the outgoing ending',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a',120,3.2));engine.load(1,track('b'));
+  await engine.play(0);engine.context.currentTime=2.7;
+  await engine.startTransition({beats:16,quantize:true,tempoBlend:false});
+  assert.ok(engine.transition.start<3);
+  assert.ok(engine.transition.start+engine.transition.duration<=3.2);
+});
+
+test('hot cues can store zero, trigger playback, be cleared and remain bounded',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));
+  engine.setHotCue(0,0,0);engine.setHotCue(0,1,3.5);engine.setHotCue(0,2,200);
+  assert.equal(engine.decks[0].track.hotCues[0],0);assert.equal(engine.decks[0].track.hotCues[2],59.98);
+  await engine.triggerHotCue(0,1);assert.equal(engine.position(0),3.5);assert.equal(engine.decks[0].playing,true);
+  engine.clearHotCue(0,1);assert.equal(engine.decks[0].track.hotCues[1],null);
+});
+test('beat jumps retain transport state and count beats in source audio coordinates',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));await engine.seek(0,10);await engine.setRate(0,1.5);
+  await engine.beatJump(0,4);assert.equal(engine.position(0),12);assert.equal(engine.decks[0].playing,false);
+  await engine.play(0);await engine.beatJump(0,-8);assert.equal(engine.position(0),8);assert.equal(engine.decks[0].playing,true);
+});
+test('grid correction and unloading keep preparation and transport consistent',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));await engine.seek(0,1.25);engine.setDownbeat(0);
+  assert.equal(engine.decks[0].track.downbeat,1.25);assert.equal(engine.decks[0].track.confidence,'manual');
+  await engine.play(0);const source=engine.decks[0].source;engine.unload(0);assert.equal(source.stopped,true);assert.equal(engine.decks[0].track,null);assert.equal(engine.position(0),0);
+});
+
+test('quantized mixing honors a corrected incoming measure without moving an unquantized cue',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));engine.load(1,{...track('b'),mixIn:0.5,downbeat:1.25});
+  await engine.startTransition({quantize:true,tempoBlend:false});assert.equal(engine.decks[1].source.startOffset,1.25);
+  engine.cancelTransition();engine.pause(0);engine.pause(1);engine.setCrossfade(0);
+  await engine.startTransition({quantize:false,tempoBlend:false});assert.equal(engine.decks[1].source.startOffset,0.5);
+});
+
+test('all transition styles schedule finite bounded curves and cancel without residual gates',async()=>{
+  const {transitionCatalog}=await import('../public/transition-design.mjs');
+  for(const {id} of transitionCatalog.filter(item=>item.id!=='auto')){
+    const engine=new StudioEngine();await engine.init();engine.load(0,{...track('a'),title:'A'});engine.load(1,{...track('b'),title:'B'});
+    if(id.startsWith('stem'))for(const d of engine.decks)d.track.stemBuffer=id==='stemsustain'?engine.context.createBuffer(8,engine.context.sampleRate*60,engine.context.sampleRate):{duration:60,numberOfChannels:8};
+    await engine.startTransition({style:id,beats:4,quantize:false,intensity:0.7});const t=engine.transition;
+    assert.equal(t.style,id);engine.context.currentTime=t.start+t.duration*0.65;engine.tick();const position=engine.crossfade;engine.cancelTransition();
+    assert.equal(engine.transition,null);assert.ok(position>=0&&position<=1);
+    for(const d of engine.decks){assert.equal(d.transitionGate.gain.value,1);assert.ok(d.fader.gain.events.filter(event=>event.type==='curve').every(event=>[...event.curve].every(Number.isFinite)));}
+  }
+});
+
+test('stem playback uses one source clock and vocal-only echo leaves manual stem levels intact',async()=>{
+ const engine=new StudioEngine();await engine.init();
+ for(let id=0;id<2;id++)engine.load(id,{...track(String(id)),stemBuffer:{duration:60,numberOfChannels:8},stemLevels:{drums:1,bass:.7,other:1,vocals:.8}});
+ await engine.startTransition({style:'stemecho',beats:8});const t=engine.transition,a=engine.decks[0],b=engine.decks[1];
+ assert.equal(t.style,'stemecho');assert.equal(a.source.buffer.numberOfChannels,8);assert.equal(a.stemGains.vocals.gain.value,.8);assert.equal(a.stemGains.bass.gain.value,.7);
+ assert.ok(a.stemEchoSend.gain.events.some(e=>e.type==='ramp'&&e.value>0));assert.ok(!a.echoSend.gain.events.some(e=>e.type==='ramp'&&e.value>0));
+ const out=a.stemTransitionGains.vocals.gain.events.find(e=>e.type==='curve'),incoming=b.stemTransitionGains.vocals.gain.events.find(e=>e.type==='curve');
+ assert.equal(out.time,incoming.time);assert.equal(out.curve.at(-1),0);assert.equal(incoming.curve[0],0);
+ engine.setStemLevel(0,'vocals',.3);engine.context.currentTime=t.start+t.duration*.5;engine.cancelTransition();
+ assert.equal(a.stemGains.vocals.gain.value,.3);assert.equal(a.stemTransitionGains.vocals.gain.value,1);assert.equal(a.stemEchoSend.gain.value,0);
+});
+test('slip roll releases at the continuing song clock and transitions leave roll mode',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));engine.load(1,track('b'));await engine.seek(0,10);await engine.play(0);await engine.roll(0,0.5);engine.context.currentTime=3;
+  assert.ok(engine.position(0)<10.25);await engine.endRoll(0);assert.equal(engine.position(0),13);assert.equal(engine.decks[0].loop,null);assert.equal(engine.decks[0].roll,null);
+  await engine.roll(0,1);engine.context.currentTime=4;await engine.startTransition({style:'bass',beats:4});assert.equal(engine.decks[0].roll,null);assert.equal(engine.decks[0].loop,null);
+});
+test('dynamic history advances after completed passages and retains a readable set log',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,{...track('a'),title:'One'});engine.load(1,{...track('b'),title:'Two'});
+  await engine.startTransition({style:'auto',profile:'peak',beats:4});let t=engine.transition;engine.context.currentTime=t.start+t.duration;engine.tick();
+  assert.deepEqual(engine.transitionHistory,['linear']);assert.equal(engine.performanceLog[0].to,'Two');
+  engine.load(0,{...track('c'),title:'Three'});await engine.startTransition({style:'auto',profile:'peak'});assert.equal(engine.transition.style,'linear');
+});
+
+test('manual rack dosage is independent of transition gates and online handover clears effect returns',async()=>{
+  const engine=new StudioEngine();await engine.init();engine.load(0,track('a'));engine.load(1,track('b'));engine.setDeckEffect(0,'flanger',0.6);assert.equal(engine.decks[0].fx.amount,0.6);assert.equal(engine.decks[0].fx.flangerWet.gain.value,0.3);
+  await engine.startTransition({style:'space',beats:4});engine.context.currentTime=engine.transition.start+1;engine.silence();
+  assert.equal(engine.transition,null);assert.ok(engine.decks.every(deck=>!deck.playing&&deck.fx.amount===0&&deck.echo===false&&deck.wet.gain.value===0&&deck.verbWet.gain.value===0));
+});
+
+test('filter sweeps keep both filter types fixed and echo manual send follows the channel fader',async()=>{const e=new StudioEngine();await e.init();e.load(0,track('a'));e.setFilter(0,1);e.setFilter(0,-1);assert.equal(e.decks[0].highpass.type,'highpass');assert.equal(e.decks[0].sweep.type,'lowpass');e.setEcho(0,true);assert.ok(e.decks[0].manualEchoSend.gain.value>0);assert.equal(e.decks[0].echoSend.gain.value,0);e.setEcho(0,false);assert.equal(e.decks[0].manualEchoSend.gain.value,0);});
+
+test('manual EQ and filter edits survive cancellation and completion of transition automation',async()=>{
+ for(const finish of [false,true])for(const style of ['bass','filter','lowpass','downlift']){
+  const e=new StudioEngine();await e.init();e.load(0,track('a'));e.load(1,track('b'));
+  e.setEQ(0,0,-4);e.setEQ(1,0,3);e.setFilter(0,.2);
+  await e.startTransition({style,beats:4,quantize:false});const t=e.transition;
+  e.context.currentTime=t.start+t.duration*.4;e.setEQ(0,0,-7);e.setEQ(1,0,-2);e.setFilter(0,-.3);
+  if(finish){e.context.currentTime=t.start+t.duration;e.tick();}else e.cancelTransition();
+  assert.equal(e.decks[0].low.gain.value,-7);assert.equal(e.decks[1].low.gain.value,-2);assert.equal(e.decks[0].filter,-.3);
+  for(const d of e.decks){assert.equal(d.transitionLow.gain.value,0);assert.equal(d.transitionHighpass.frequency.value,0);assert.equal(d.transitionLowpass.frequency.value,e.context.sampleRate/2);}
+ }
+});
+
+test('cancelling a dub transition restores the pre-existing manual echo timing and feedback',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('a'));e.load(1,track('b'));e.setEcho(0,true);
+ e.decks[0].delay.delayTime.value=.37;e.decks[0].feedback.gain.value=.19;
+ await e.startTransition({style:'dub',beats:4,quantize:false});const t=e.transition;e.context.currentTime=t.start+t.duration*.6;e.cancelTransition();
+ assert.equal(e.decks[0].echo,true);assert.equal(e.decks[0].delay.delayTime.value,.37);assert.equal(e.decks[0].feedback.gain.value,.19);
+});

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" fill="none">
+<rect width="1280" height="360" rx="24" fill="#101720"/>
+<path d="M800 0V360M960 0V360M1120 0V360" stroke="#1C2935"/>
+<path d="M760 180H810L832 148L858 219L891 108L925 246L956 134L984 205L1012 159L1040 180H1220" stroke="#75E5CE" stroke-opacity=".16" stroke-width="36" stroke-linejoin="round"/>
+<path d="M760 180H810L832 148L858 219L891 108L925 246L956 134L984 205L1012 159L1040 180H1220" stroke="#75E5CE" stroke-width="3" stroke-linejoin="round"/>
+<g transform="translate(60 75) scale(.70)"><rect x="8" y="8" width="240" height="240" rx="64" fill="#14232D" stroke="#293D48" stroke-width="2"/><path d="M174 70C160 58 139 54 120 59C97 65 81 82 78 101" stroke="#75E5CE" stroke-width="15" stroke-linecap="round"/><path d="M82 186C96 198 117 202 136 197C159 191 175 174 178 155" stroke="#EFAE64" stroke-width="15" stroke-linecap="round"/><path d="M64 128H91L106 107L126 150L147 108L163 128H192" stroke="#F2F7F7" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="272" y="142" fill="#F2F7F7" font-family="Segoe UI,Arial,sans-serif" font-size="58" font-weight="700" letter-spacing="6">SILLORA<tspan fill="#75E5CE" font-size="29" letter-spacing="2"> DJ</tspan></text>
+<text x="274" y="186" fill="#B2C3CD" font-family="Segoe UI,Arial,sans-serif" font-size="22">Le mix, dans son mouvement.</text>
+<text x="276" y="231" fill="#EFAE64" font-family="Consolas,monospace" font-size="13" letter-spacing="3">DECKS / AUTOMIX / LIVE / REMOTE</text>
+<rect x="62" y="295" width="112" height="27" rx="13.5" fill="#1B2C35"/><text x="79" y="313" fill="#A9CEC9" font-family="Segoe UI,Arial,sans-serif" font-size="12">Windows x64</text>
+<text x="195" y="313" fill="#7F949F" font-family="Segoe UI,Arial,sans-serif" font-size="12">0.16.1 · Electron · Web Audio</text>
+<text x="1216" y="315" text-anchor="end" fill="#8097A3" font-family="Segoe UI,Arial,sans-serif" font-size="13" letter-spacing="2">PAR GAERISSON</text>
+</svg>

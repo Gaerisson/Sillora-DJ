@@ -1,0 +1,11 @@
+import { mkdir, copyFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const input=path.join(root,'node_modules/@soundtouchjs/audio-worklet');
+const output=path.join(root,'public/vendor/soundtouch');
+await mkdir(output,{recursive:true});
+for(const file of ['SoundTouchNode.js','constants.js','soundtouch-processor.js']) await copyFile(path.join(input,'.dist',file),path.join(output,file));
+await copyFile(path.join(input,'LICENSE'),path.join(output,'LICENSE.txt'));
+await copyFile(path.join(input,'README.md'),path.join(output,'README.md'));
+console.log('SoundTouchJS 2.1.1 copié avec sa licence MPL-2.0.');

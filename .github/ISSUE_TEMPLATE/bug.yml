@@ -1,0 +1,27 @@
+name: Signaler un bug
+description: Lecture, mixage, interface ou Remote
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version de Sillora DJ et de Windows
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      description: Inclure les réglages du passage ou du périphérique si nécessaire.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Résultat attendu et résultat obtenu
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Captures ou journaux utiles
+      description: Retirer les jetons Remote, comptes et chemins personnels.
