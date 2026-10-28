@@ -71,11 +71,11 @@ test('automatic tempo morphs use measured BPM without claiming a precise grid or
  const noMorph=selectMusicalFx({...input,tempoBlend:false});assert.equal(noMorph.style,'clean');
 });
 
-test('harmonic clashes and an unsynchronized clock retain a short natural relay at every dosage',()=>{
+test('an unsynchronized clock stays natural while harmonic clashes get a guarded spectral relay',()=>{
  const input={source,target,sync:true,trustworthy:true,keyKnown:true,harmonic:true,stemsAvailable:true,beats:32};
  for(const intensity of [0,.15,.45,1]){
   for(const patch of [{sync:false},{harmonic:false}]){
-   const result=selectMusicalFx({...input,...patch,intensity});assert.equal(result.style,'clean');assert.ok(result.beats<=16);assert.deepEqual(result.candidates,['clean']);
+   const result=selectMusicalFx({...input,...patch,intensity});assert.ok(result.beats<=16);if(patch.sync===false){assert.equal(result.style,'clean');assert.deepEqual(result.candidates,['clean']);}else{assert.equal(result.style,'echo');assert.equal(result.harmonicGuard,true);assert.ok(!result.candidates.some(id=>id.startsWith('stem')));}
   }
  }
 });

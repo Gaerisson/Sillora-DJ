@@ -191,9 +191,9 @@ test('echo tail survives loading the next track onto the released deck',async()=
 test('cancelling a transition holds its current position and restores effect parameters', async () => {
   const engine = new StudioEngine(); await engine.init(); engine.load(0, track('a')); engine.load(1, track('b'));
   await engine.startTransition({ style: 'echo', beats: 8, quantize: false });
-  const start = engine.transition.start; engine.context.currentTime = start + 2.8;
+  const {start,score} = engine.transition; engine.context.currentTime = start + 1.6;
   engine.cancelTransition();
-  const progress=transitionProgress('echo',.7,4);
+  const progress=transitionProgress('echo',.4,4,score);
   assert.equal(engine.transition, null); assert.ok(Math.abs(engine.crossfade-progress)<1e-9); assert.equal(engine.decks[0].echo, false);
   assert.ok(Math.abs(engine.decks[0].fader.gain.value - Math.cos(progress*Math.PI/2)) < 1e-9);
 });
@@ -250,7 +250,7 @@ test('bass exchange is automated, short endings are bounded and future starts ne
   await engine.startTransition({ style: 'bass', beats: 32, quantize: false });
   assert.ok(engine.transition.duration <= 1);
   assert.equal(engine.position(1), 0);
-  assert.ok(engine.decks[1].transitionLow.gain.events.some(e => e.type === 'value' && e.value === -18));
+  assert.ok(engine.decks[1].transitionLow.gain.events.some(e => e.type === 'value' && e.value === -24));
 });
 test('demo generator produces finite stereo audio with bounded peaks', () => {
   const track = createDemo(new Context(), { title: 'Test', bpm: 120, root: 55, color: 190, variant: 0 });

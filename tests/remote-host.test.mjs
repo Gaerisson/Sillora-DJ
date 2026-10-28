@@ -12,6 +12,12 @@ test('shared stereo meter modules are available to the paired remote interface',
  const f=await fixture(t);for(const asset of ['/audio-meter-view.js','/audio-meters.mjs','/audio-meter.css']){const response=await fetch(f.origin+asset);assert.equal(response.status,200,asset);assert.ok((await response.text()).length>500);}
 });
 
+test('the remote waveform serves its entire static module dependency graph',async t=>{
+ const f=await fixture(t),pending=['/dj-waveform.mjs'],seen=new Set();
+ while(pending.length){const asset=pending.shift();if(seen.has(asset))continue;seen.add(asset);const response=await fetch(f.origin+asset);assert.equal(response.status,200,asset);const source=await response.text();for(const match of source.matchAll(/(?:from\s*|import\s*)['"](\.\.?\/[^'"]+)['"]/g)){const dependency=new URL(match[1],f.origin+asset).pathname;if(!seen.has(dependency))pending.push(dependency);}}
+ assert.ok(seen.has('/transition-score.mjs'));assert.ok(seen.has('/tempo-automation.mjs'));assert.ok(seen.has('/audio-math.mjs'));
+});
+
 test('state is explicitly filtered, bounded and excludes audio, local paths and credentials',()=>{
  assert.equal(sanitizeState(null).decks.length,2);
  const raw=snapshot();Object.assign(raw,{token:'private-pair-secret',path:'C:\\Users\\Name\\Music',audio:new Uint8Array(1000)});raw.decks[0].buffer={secret:'audio'};raw.decks[0].title='C:\\Users\\Name\\Music\\song.mp3';raw.library=Array.from({length:400},(_,i)=>({id:'track-'+i,title:'x'.repeat(300),path:'C:\\private',token:'audio-token',duration:Infinity}));raw.recommendations.push({id:'foreign',title:'outside collection'});

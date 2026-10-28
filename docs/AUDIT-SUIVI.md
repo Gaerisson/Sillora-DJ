@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.19.0
+# Suivi de l’audit — Sillora DJ 0.20.0
 
 Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -8,8 +8,9 @@ Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | :--- | :--- | :--- |
 | A · 0.18.0 | Mesures stéréo réelles, continuité pendant une préparation tardive, déconnexion Remote | 225 tests ; quatre scénarios Electron/audio. [Détail et limites](CHANGELOG-0.18.0.md) |
 | B · 0.19.0 | Catalogue immédiat, import prioritaire et reprenable, cache natif, réanalyse, pagination | 246 tests ; six scénarios bibliothèque et quatre scénarios audio/Remote sous Electron. [Détail et recette](CHANGELOG-0.19.0.md) |
+| C · 0.20.0 | Partition commune des transitions, relais des graves, variation de tempo et repères cohérents | 254 tests ; neuf rendus avec maintien de hauteur, six scénarios bibliothèque et quatre audio/Remote. [Déroulement et limites](TRANSITIONS-0.20.md) |
 
-V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes de la 0.19.0. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
+V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
 ## Section 4 — bibliothèque et analyses
 
@@ -57,9 +58,42 @@ V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T =
 - Les rapports locaux générés contiennent les mesures détaillées. Les musiques et données personnelles ne sont pas distribuées avec le dépôt.
 - Les dix scénarios passent également depuis le code inclus dans `app.asar`. Les 129 fichiers applicatifs correspondent aux sources testées ; l’archive commune aux deux exécutables passe son contrôle d’intégrité. Empreintes dans les [notes de version](CHANGELOG-0.19.0.md). L’installation sur le profil personnel n’a pas été exécutée.
 
+## Section 3 — points revus dans le lot C
+
+Cette mise à jour vise les familles EQ, relais harmonique, filtre, Whoosh et Echo Out. Les autres états de la section 3 conservent le périmètre du registre initial.
+
+| Référence | État actuel | Résultat et limite |
+| :--- | :---: | :--- |
+| R3.constats-02, R3.constats-03, R3.constats-06 | T | Construction des volumes/filtres remaniée et rendus comparables générés. La qualité musicale et l’équivalence perceptive avec les références ne sont pas certifiées par les mesures. |
+| R3.constats-04 | P | Variation commune mesurée dans les rendus ; l’appréciation de sa dynamique reste à valider à l’écoute. |
+| R3.3.D-01 | V | Rendus avec maintien de hauteur et variation commune 110 → 98 et 98 → 110 BPM. `qa-transitions-windows.cjs`. |
+| R3.2-04, R3.1-12, R3.1-13 | P | Place réservée en secondes natives à partir du nombre de temps pendant le morphing ; IN/OUT manuels conservés. La pertinence sémantique des repères reste ouverte. Tests `transition-score`. |
+| R3.2-05 | P | Durée bornée par l’audio disponible à vitesse moyenne, puis partition adaptée à la durée réellement exécutée. Pas de détection de phrases. |
+| R3.2-06, R3.3.D-06 | P | Tonalités éloignées : choix d’un filtre/écho avec chevauchement limité, sans rejeter un tempo commun valide. Le repli sans morphing reste actif si le tempo est incertain. Tests `automatic-fx` et `transition-score`. |
+| R3.2-08 | V | Partition en temps séparée de son ordonnanceur AudioParam ; mêmes repères pour volumes, graves, filtre, capture d’écho et étapes. `transition-score.mjs`. |
+| R3.2-09, R3.constats-05 | P | Effets programmés sur l’horloge audio ; phase du transport vérifiée pendant les rampes. Les décalages acoustiques du time-stretch et les underruns ne sont pas couverts par cette mesure. |
+| R3.2-10, R3.6-04 | V | Les rendus contrôlent la poursuite du titre entrant à sa vitesse native après le passage, dans le périmètre des fichiers et choix testés. |
+| R3.3.A-03 | V | Courbes complémentaires à puissance constante, dans les deux directions. Tests `transition-score` et `engine`. |
+| R3.3.A-04, R3.3.B-02, R3.3.B-04 | V | Relais des graves commun, courbes complémentaires en amplitude et automation EQ. Les boosts de médiums ne sont plus nécessaires à ce relais. |
+| R3.3.A-02, R3.3.B-03 | A | La grille place le relais sur une mesure ; elle n’identifie pas encore une véritable frontière de phrase musicale. |
+| R3.3.B-05 | P | Courbes internes partagées et trim existant ; édition intégrale des courbes non livrée. |
+| R3.3.C-04, R3.3.C-05 | P | Le groove sortant reste présent avant la montée filtrée ; le titre entrant atteint son niveau au relais. Aucun détecteur de buildup/drop. |
+| R3.3.C-01, R3.3.C-07 | A | Pas de reconnaissance sémantique ni de calage garanti sur un drop détecté. |
+| R3.3.D-02 | T | Maintien de hauteur activé dans les rendus ; la qualité perceptive doit être jugée sur les extraits. |
+| R3.3.D-03 | A | Pas de sélecteur de courbes d’accélération/décélération ; la rampe commune reste linéaire. |
+| R3.3.D-04 | P | Intégrale commune et divisions d’écho cohérentes ; fiabilité limitée par l’estimation des beats des morceaux. |
+| R3.3.E-01, R3.3.E-02, R3.3.E-03, R3.3.E-04 | V | Capture des dernières pulsations, feedback borné, filtre et queue d’écho programmés. L’écho discret du relais harmonique est conservé et testé. |
+| R3.3.E-05 | T | Aucun silence de 50 ms ni saturation sur les rendus mesurés ; cela ne certifie pas une impression de niveau homogène sur toute une collection. |
+| R3.7-03, R3.7-08, R3.7-09 | V | Prévisualisation, étapes et repères d’onde utilisent la partition et l’intégrale de tempo du moteur. |
+| R3.7-10, X3-01 | P | Partition exécutable et aperçu de volume avec marqueur RELAIS ; éditeur complet et planificateur sémantique non livrés. |
+
+Le banc bibliothèque attend désormais que le bouton de pause soit visible avant de le déclencher : la découverte du catalogue précède l’initialisation de l’import. Il vérifie ainsi un contrôle accessible à l’utilisateur. Remote sert et teste les nouvelles dépendances de son composant d’onde.
+
+La recette finale du lot C passe aussi depuis `app.asar` : six scénarios bibliothèque, neuf rendus de transitions et quatre audio/Remote. Les 130 fichiers applicatifs correspondent aux sources testées ; installateur et portable ont le même contenu et leur archive passe le contrôle d’intégrité. [Empreintes et périmètre](CHANGELOG-0.20.0.md).
+
 ## Prochain travail prioritaire
 
-1. Automix musical : séparer clairement le plan de transition de son exécution, traiter les phrases et les tempos différents, mesurer puis comparer les rendus sur les références fournies. Les nouveaux modes et la qualité perceptive restent ouverts.
+1. Automix musical : approfondir les phrases et les points de passage, mesurer le décalage acoustique du time-stretch, puis valider les rendus à l’écoute. Le plan commun est intégré aux familles du lot C ; les nouveaux modes et la reconnaissance sémantique restent ouverts.
 2. Préparation audio : stems hors du thread interface, budgets de calcul et tests de ressources manquantes/longues sessions.
 3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
 4. Poursuivre les sections restantes du registre, notamment scratch waveform, playlists, mises à jour et validation acoustique micro.

@@ -1,5 +1,6 @@
 import {clamp} from './audio-math.mjs';
 import {selectAutomaticFx,selectMusicalFx} from './automatic-fx.mjs';
+import {makeTransitionScore,scoreProgress} from './transition-score.mjs';
 import {tempoFraction} from './tempo-automation.mjs';
 import {composedPlan,cleanTiming,musicalEntry,musicalExit,gridReliable} from './musical-plan.mjs';
 import {harmonicCompatibility,tempoCompatibility} from './dj-library.mjs';
@@ -68,9 +69,9 @@ export function resolveTransition(a,b,options={}){
   while(beats>2&&beats*60/bpmA>available)beats/=2;
   if(profile==='musical'){
    composition=composedPlan({source:A,target:B,sync,harmonic,keyKnown:harmony.known,dense:dense>.45,stems:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),beats:Number(options.beats)||32,position:options.position||0,bpmA});
-   if(composition.style!=='clean'){
+   if(composition.style!=='clean'||sync){
     effectSelection=selectMusicalFx({source:{...A,bpm:bpmA},target:{...B,bpm:bpmB},sync,trustworthy,harmonic,keyKnown:harmony.known,dense:dense>.45,intensity:clamp(Number(options.intensity??.45),0,1),history:options.history||[],stemsAvailable:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),tempoBlend:morph,beats:Number(options.beats)||32});
-    composition={...composition,style:effectSelection.style,beats:effectSelection.beats,seconds:effectSelection.beats*60/bpmA,reason:effectSelection.reason,stages:effectSelection.stages};
+    composition={...composition,style:effectSelection.style,beats:effectSelection.beats,seconds:effectSelection.beats*60/bpmA,reason:effectSelection.reason,stages:effectSelection.stages,harmonicGuard:effectSelection.harmonicGuard};
    }
    style=composition.style;beats=composition.beats;reason=composition.reason;
   }
@@ -78,15 +79,17 @@ export function resolveTransition(a,b,options={}){
  if(['stemfade','stemecho','stemsustain'].includes(style)&&!(options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer))){style='bass';reason='Stems indisponibles sur une platine : relais EQ. Préparez les deux titres et activez leurs stems avant la lecture.';}
  const bridge=['bridge','landing'].includes(style),separated=bridge||style==='clean',tempoBlend=Boolean(!separated&&sync&&morph&&Math.abs(ratio-1)>.001),nominal=beats*60/(tempoBlend?(bpmA+bpmB)/2:bpmA),seconds=composition&&!tempoBlend?composition.seconds:bridge?clamp(nominal,7,12):automatic&&!sync?clamp(nominal,1.2,3):nominal;
  if(!automatic&&!reason)reason=sync&&!separated?(tempoBlend?'Tempo commun '+bpmA.toFixed(1)+' → '+bpmB.toFixed(1)+' BPM pendant le passage. ':'Tempo entrant calé à '+bpmA.toFixed(1)+' BPM. ')+(!trustworthy?'Grille estimée : vérifiez le premier temps.':'Mesures alignées.'):(options.sync===false?'Sync désactivée : tempos naturels.':separated?'Reprise au tempo naturel du prochain titre.':'Écart supérieur à la plage de synchronisation : tempos naturels.');
- const timing=style==='clean'?cleanTiming(seconds):{},inPoint=musicalEntry(B),outPoint=musicalExit(A,seconds*(a.rate||1),options.position||0,timing);
+ const timing=style==='clean'?cleanTiming(seconds):{},inPoint=musicalEntry(B),sourceSpanSeconds=tempoBlend?beats*60/(A.bpm||120):seconds*(a.rate||1),outPoint=musicalExit(A,sourceSpanSeconds,options.position||0,timing);
  const ea=regionEnergy(A,true,outPoint,Math.min(4,seconds*(a.rate||1))),eb=regionEnergy(B,false,inPoint,Math.min(4,seconds));
  const gainA=(A.autoGain||1)*(a.volume??.85),gainB=(B.autoGain||1)*(b.volume??.85),trimDb=ea&&eb?clamp(20*Math.log10(ea*gainA/(eb*gainB)),-3,3):0;
  const referenceStages={lunarecho:[[0,'Installer le groove'],[.25,'Ouvrir l’écho orbital'],[.55,'Relayer les graves'],[.82,'Laisser les répétitions']],sweep:[[0,'Préparer le filtre'],[.25,'Balayer le spectre'],[.60,'Ouvrir le nouveau titre'],[.86,'Relâcher la réverbération']],hydrant:[[0,'Installer le jet'],[.30,'Faire monter la pression'],[.60,'Relayer les graves'],[.80,'Relâcher le souffle']],stemsustain:[[0,'Séparer les voix'],[.32,'Suspendre les instruments'],[.56,'Relayer le groove'],[.80,'Poser la nouvelle voix']]};
  const stages=referenceStages[style]?.map(([at,label])=>({at,label}))??composition?.stages;
  const timedStages=tempoBlend&&stages?stages.map(stage=>({...stage,at:tempoFraction(stage.at,bpmA,bpmB,seconds)/seconds})):stages;
- return {...(composition||{}),sync:separated?false:sync,rate:sync&&!separated?ratio:1,beats,seconds,style,tempoBlend,fallback:(!sync||separated)&&options.sync!==false,bpmA,bpmB,reason,energyA:ea,energyB:eb,profile,trustworthy,harmonic,keyKnown:harmony.known,keyRelation:harmony.relation,incomingQuantizeBeats:octave===1?undefined:4/octave,trimDb,automatic,effectSelection,inPoint,outPoint,preserveInPoint:Boolean(B.manualRegions||!sync&&(B.regionAnalysisVersion||gridReliable(B))),...timing,...(timedStages?{stages:timedStages}:{})};
+ const score=makeTransitionScore({style,seconds,beats,bpmA,bpmB,tempoBlend,harmonicGuard:composition?.harmonicGuard},{intensity:options.intensity});
+ return {...(composition||{}),score,sourceSpanSeconds,sync:separated?false:sync,rate:sync&&!separated?ratio:1,beats,seconds,style,tempoBlend,fallback:(!sync||separated)&&options.sync!==false,bpmA,bpmB,reason,energyA:ea,energyB:eb,profile,trustworthy,harmonic,keyKnown:harmony.known,keyRelation:harmony.relation,incomingQuantizeBeats:octave===1?undefined:4/octave,trimDb,automatic,effectSelection,inPoint,outPoint,preserveInPoint:Boolean(B.manualRegions||!sync&&(B.regionAnalysisVersion||gridReliable(B))),...timing,...(score?{handoffFraction:score.handoffFraction,handoffPosition:outPoint+sourceSpanSeconds*score.handoffFraction,incomingStartFraction:0,sourceStopFraction:1,quantizeHandoff:false,fadeSeconds:undefined}:{}),...(score?{stages:score.stages.map(stage=>({...stage,at:tempoBlend?tempoFraction(stage.at,bpmA,bpmB,seconds)/seconds:stage.at}))}:timedStages?{stages:timedStages}:{})};
 }
-export function transitionProgress(style,p,duration=8){
+export function transitionProgress(style,p,duration=8,score=null){
+  if(score)return scoreProgress(score,p);
   p=clamp(p,0,1);
   if(style==='clean'){const timing=cleanTiming(duration);return clamp((p-timing.handoffFraction)*duration/timing.fadeSeconds,0,1);}
   if(style==='cut'){const width=Math.min(0.1,0.012/Math.max(0.05,duration));return clamp((p-0.8)/width,0,1);}
@@ -95,7 +98,7 @@ export function transitionProgress(style,p,duration=8){
   if(relays[style]){const [begin,end]=relays[style],x=clamp((p-begin)/(end-begin),0,1);return x*x*(3-2*x);}
   return p;
 }
-export function faderCurves(from,to,style,duration,count=1024){
+export function faderCurves(from,to,style,duration,count=1024,score=null){
   const curves=[new Float32Array(count),new Float32Array(count)];
   if(style==='clean'){
    const {handoffFraction,fadeSeconds}=cleanTiming(duration),source=1-to,initial=source===0?Math.cos(from*Math.PI/2):Math.sin(from*Math.PI/2);
@@ -110,7 +113,7 @@ export function faderCurves(from,to,style,duration,count=1024){
    for(let i=0;i<count;i++){const p=i/(count-1);curves[source][i]=(source===0?Math.cos(from*Math.PI/2):Math.sin(from*Math.PI/2))*(1-smooth((p-.25)/.2));curves[to][i]=smooth((p-.5)/.16);}
    return curves;
   }
-  for(let i=0;i<count;i++){const p=transitionProgress(style,i/(count-1),duration),x=from+(to-from)*p;curves[0][i]=style==='linear'?1-x:Math.cos(x*Math.PI/2);curves[1][i]=style==='linear'?x:Math.sin(x*Math.PI/2);}
+  for(let i=0;i<count;i++){const p=transitionProgress(style,i/(count-1),duration,score),x=from+(to-from)*p;curves[0][i]=style==='linear'?1-x:Math.cos(x*Math.PI/2);curves[1][i]=style==='linear'?x:Math.sin(x*Math.PI/2);}
   return curves;
 }
 export const textureNames={rise:'Whoosh ↑',fall:'Whoosh ↓',impact:'Impact',laser:'Laser',roll:'Snare roll',air:'Air swell'};

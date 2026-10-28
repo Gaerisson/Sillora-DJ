@@ -1,6 +1,6 @@
 {
   "name": "sillora-dj",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "private": true,
   "description": "Sillora DJ — DJ, Automix and live sound console for Windows, by Gaerisson",
   "type": "module",
@@ -17,7 +17,8 @@
     "vendor:media": "node scripts/vendor-media.mjs",
     "pack:installer": "node scripts/build.mjs --installer",
     "test:audio:windows": "electron scripts/qa-audio-continuity.cjs",
-    "test:library:windows": "electron scripts/qa-library-windows.cjs"
+    "test:library:windows": "electron scripts/qa-library-windows.cjs",
+    "test:transitions:windows": "electron scripts/qa-transitions-windows.cjs"
   },
   "devDependencies": {
     "@soundtouchjs/audio-worklet": "2.1.1",

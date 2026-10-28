@@ -123,3 +123,11 @@ Restent notamment l’indexation récursive, l’analyse passive du dossier cons
 ## Suite du document
 
 Priorité au planificateur musical et à la comparaison des transitions sur les références : phrases, tempo, graves, effets et points IN/OUT. La grille variable et l’identification sémantique restent ouvertes. Le branchement complet de la nouvelle UI, le scratch sur waveform, les playlists, les updates et les validations longues/acoustiques ne sont pas livrés par le lot B.
+
+## Lot C — partition musicale et relais — 0.20.0
+
+Partition commune en temps pour EQ, relais harmonique, filtre, Whoosh et Echo Out : relais des graves, volume, capture d’écho, filtre et étapes affichées. Le groove reste présent pendant la préparation du filtre ; le nouveau titre arrive sur le relais. Calcul de place avant EOF par vitesse moyenne pendant le morphing, et repères d’onde en temps natif du fichier.
+
+La revue indépendante a relevé la perte de l’écho discret du relais harmonique lors de la migration vers la partition. Un test ciblé a reproduit cette absence ; le send, les réglages et le nettoyage de l’écho ont été rétablis dans la partition. Le test passe. Les essais ont aussi trouvé une dépendance statique manquante de Remote ; sa liste d’assets est corrigée et son graphe d’imports est testé.
+
+Une première matrice de huit rendus sur les deux MP3 passe, avec maintien de hauteur, dans les deux sens pour filtre/Whoosh/automatique. Une comparaison avec le paquet 0.19 utilise les mêmes fichiers et les mêmes repères manuels ; elle mesure un signal modifié, pas une qualité d’écoute. La recette finale compte neuf rendus, avec le relais harmonique et son écho restauré. Les 254 tests, les six scénarios bibliothèque et les quatre audio/Remote passent. Distribution Windows construite et vérifiée : même contenu dans les deux exécutables, contrôle d’intégrité de 7215 fichiers, 130 sources applicatives comparées, 19 scénarios réussis depuis le paquet. L’installation sur le profil personnel n’a pas été exécutée. [Architecture et limites](docs/TRANSITIONS-0.20.md).

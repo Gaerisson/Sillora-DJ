@@ -1,3 +1,4 @@
+import {transitionSourceOffset} from './transition-score.mjs';
 const peakCache = new WeakMap();
 const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
 const finite = (value, fallback = 0) => Number.isFinite(value) ? value : fallback;
@@ -162,7 +163,7 @@ export function drawDJWaveform(ctx, {
   const planStart = transitionPlan?.outPoint ?? transitionPlan?.startPosition;
   const planSeconds = transitionPlan?.seconds ?? transitionPlan?.duration;
   if (Number.isFinite(planStart) && Number.isFinite(planSeconds) && planSeconds > 0) {
-    const planEnd = planStart + planSeconds;
+    const planEnd = planStart + transitionSourceOffset(transitionPlan,1);
     rangeShade(planStart, planEnd, deckColor, .1);
     const left = clamp(xAt(planStart), 0, width), right = clamp(xAt(planEnd), 0, width);
     if (right > left) {
@@ -170,7 +171,7 @@ export function drawDJWaveform(ctx, {
       if (right - left > 82) label(ctx, 'TRANSITION', left + 2, height - 8, deckColor, width, panel);
     }
     for (const stage of transitionPlan.stages || []) {
-      const value = planStart + clamp(finite(stage.at), 0, 1) * planSeconds;
+      const value = planStart + transitionSourceOffset(transitionPlan,finite(stage.at));
       if (value < from || value > to) continue;
       const x = xAt(value);
       ctx.fillStyle = deckColor; ctx.beginPath(); ctx.moveTo(x, height - 4);
@@ -180,6 +181,7 @@ export function drawDJWaveform(ctx, {
 
   const cueColors = colors.cues || [deckColor, '#c1adff', warm, green];
   const markers = [
+    ...(transitionPlan?.score&&Number.isFinite(planStart)?[[planStart+(transitionPlan.sourceSpanSeconds??planSeconds)*transitionPlan.score.handoffFraction,'RELAIS',deckColor]]:[]),
     [finite(track.mixIn), 'IN', green], [finite(transitionPlan?.outPoint,finite(track.mixOut,duration)), 'OUT', warm],
     ...(track.hotCues || []).map((value, index) => [value, String(index + 1), cueColors[index % cueColors.length]]),
   ];

@@ -35,11 +35,19 @@ export function selectMusicalFx({source, target, sync, trustworthy = true, harmo
  dense = false, intensity = .45, history = [], stemsAvailable = false, tempoBlend = false, beats = 16} = {}) {
  const amount = clamp(Number.isFinite(intensity) ? intensity : .45, 0, 1), requested = requestedLength(beats);
  const uncertain = !trustworthy, measured = knownTempo(source) && knownTempo(target);
- const safeRelay = !sync || !harmonic || uncertain && (!tempoBlend || !measured);
+ const safeRelay = !sync || uncertain && (!tempoBlend || !measured);
  if (safeRelay) {
   return {style:'clean',beats:Math.min(16,requested),candidates:['clean'],weights:{clean:1},excluded:[],mode:'musical',
    reason:!sync?'Tempos non synchronisés : relais court, chaque titre garde sa vitesse.' : !harmonic?'Tonalités éloignées : relais court pour séparer les mélodies.' : 'Grille ou tempo peu fiable : relais court sans superposer les rythmes.',
    stages:[{at:0,label:'Garder le groove'},{at:.6875,label:'Dernière pulsation'},{at:.75,label:'Poser le nouveau titre'}]};
+ }
+
+ // A harmonic clash needs spectral separation, not a veto of a trustworthy
+ // shared tempo. Keep a short overlap and land the bass on a common downbeat.
+ if(!harmonic){
+  const style=tempoBlend||history.at(-1)==='echo'?'filter':'echo';
+  return {style,beats:Math.min(16,Math.max(4,requested)),candidates:['filter','echo'],weights:{filter:tempoBlend?10:8,echo:tempoBlend?8:10},excluded:[],mode:'musical',harmonicGuard:true,
+   reason:'Tonalités éloignées : séparer les mélodies par le filtre et un écho court, avec relais des graves sur le même temps.'+(uncertain?' Grille estimée : vérifiez le premier temps.':''),stages:[]};
  }
 
  const aEnergy=energy(source),bEnergy=energy(target),energyDelta=aEnergy===null||bEnergy===null?null:bEnergy-aEnergy;

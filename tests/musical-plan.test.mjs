@@ -4,7 +4,7 @@ const track=(bpm,root,mode)=>({bpm,confidence:'generated',keyRoot:root,keyMode:m
 test('a reliable relative major/minor pair uses a measured harmonic phrase relay',()=>{
  const a=track(120,0,'major'),b=track(124,9,'minor');const plan=resolveTransition({track:a},{track:b},{style:'auto',profile:'musical',beats:32,sync:true});
  assert.equal(plan.keyRelation,'Tonalité relative');assert.equal(plan.harmonic,true);assert.equal(plan.style,'phrase');assert.equal(plan.sync,true);assert.ok(Math.abs(plan.rate-120/124)<1e-9);assert.equal(plan.seconds,16);
- const clash=resolveTransition({track:a},{track:track(120,1,'major')},{style:'auto',profile:'musical',beats:32});assert.equal(clash.style,'clean');assert.equal(clash.beats,16);assert.equal(clash.sync,false);
+ const clash=resolveTransition({track:a},{track:track(120,1,'major')},{style:'auto',profile:'musical',beats:32});assert.equal(clash.style,'echo');assert.equal(clash.beats,16);assert.equal(clash.sync,true);assert.equal(clash.score.harmonicGuard,true);
 });
 test('half/double pulse matching keeps actual audio at its natural speed',()=>{
  for(const [a,b,quantum] of [[80,160,8],[160,80,2]]){const plan=resolveTransition({track:track(a,0,'major')},{track:track(b,0,'major')},{style:'auto',profile:'musical',sync:true});assert.equal(plan.sync,true);assert.equal(plan.rate,1);assert.equal(plan.incomingQuantizeBeats,quantum);assert.equal(plan.bpmB,a);}

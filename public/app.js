@@ -20,6 +20,7 @@ import {camelotKey,keyLabel,rankCandidates,sortTracks,selectionModes,harmonicCom
 import {drawDJWaveform} from './dj-waveform.mjs';
 import {FolderBrowser} from './folder-browser.js';
 import {Appearance} from './appearance.js';
+import {tempoFraction,warpTempoCurve} from './tempo-automation.mjs';
 import {transitionCatalog,transitionName,faderCurves,textureNames} from './transition-design.mjs';
 import { StudioEngine, createDemo } from './engine.js';
 import { clamp, transitionSeconds } from './audio-math.mjs';
@@ -351,7 +352,7 @@ function updateTransitionPreview(plan){
   const style=plan?.style||$('#transition-style').value,item=transitionCatalog.find(item=>item.id===style)||transitionCatalog[0];
   $('#selected-transition-name').textContent=($('#transition-style').value==='auto'?'✦ Choix dynamique · ':'')+item.label;$('#selected-transition-description').textContent=item.description;
   $('#set-profile').disabled=$('#transition-style').value!=='auto';$('#transition-intensity-value').textContent=Math.round(Number($('#transition-intensity').value)*100)+'%';
-  const canvas=$('#transition-shape'),ctx=canvas.getContext('2d'),curves=faderCurves(0,1,style,plan?.seconds||plan?.duration||8,100);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.strokeStyle=appearance.colors.grid;ctx.beginPath();ctx.moveTo(3,45);ctx.lineTo(207,45);ctx.stroke();for(let id=0;id<2;id++){ctx.strokeStyle=id?appearance.colors.b:appearance.colors.a;ctx.lineWidth=1.7;ctx.beginPath();curves[id].forEach((v,i)=>i?ctx.lineTo(5+i*2,44-v*36):ctx.moveTo(5,44-v*36));ctx.stroke();}
+  const canvas=$('#transition-shape'),ctx=canvas.getContext('2d'),rawCurves=faderCurves(0,1,style,plan?.seconds||plan?.duration||8,100,plan?.score),curves=plan?.tempoBlend?rawCurves.map(curve=>warpTempoCurve(curve,plan.bpmA,plan.bpmB,plan.seconds||plan.duration)):rawCurves;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.strokeStyle=appearance.colors.grid;ctx.beginPath();ctx.moveTo(3,45);ctx.lineTo(207,45);ctx.stroke();for(let id=0;id<2;id++){ctx.strokeStyle=id?appearance.colors.b:appearance.colors.a;ctx.lineWidth=1.7;ctx.beginPath();curves[id].forEach((v,i)=>i?ctx.lineTo(5+i*2,44-v*36):ctx.moveTo(5,44-v*36));ctx.stroke();}if(plan?.score){const x=5+198*(plan.tempoBlend?tempoFraction(plan.score.handoffFraction,plan.bpmA,plan.bpmB,plan.seconds||plan.duration)/(plan.seconds||plan.duration):plan.score.handoffFraction);ctx.strokeStyle=appearance.colors.text||'#e9edf2';ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(x,3);ctx.lineTo(x,45);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=ctx.strokeStyle;ctx.font='8px sans-serif';ctx.fillText('RELAIS',Math.min(170,x+3),9);}
 }
 function renderSetHistory(){const log=engine.performanceLog;$('#history-empty').hidden=Boolean(log.length);$('#history-clear').disabled=!log.length;$('#set-history').innerHTML=log.slice(-4).reverse().map(t=>'<li><span>'+esc(transitionName(t.style))+' · '+t.seconds.toFixed(1)+' s</span><strong>'+esc(t.from)+' → '+esc(t.to)+'</strong></li>').join('');}
 $('#history-clear').onclick=()=>{engine.performanceLog=[];renderSetHistory();};
@@ -475,7 +476,7 @@ async function importDesktop(entries,target=null,options){
 }
 $('#import-top').onclick=()=>run(async()=>{fileDeck=null;if(window.sillageDesktop)await importDesktop(await window.sillageDesktop.chooseAudio());else $('#file-input').click();});
 if(window.sillageDesktop){
- document.body.dataset.platform='windows';$('.workspace-label').firstChild.textContent='';$('.workspace-label').innerHTML='<span class="live-dot"></span> STUDIO WINDOWS <span class="version">/ 019.0</span>';
+ document.body.dataset.platform='windows';$('.workspace-label').firstChild.textContent='';$('.workspace-label').innerHTML='<span class="live-dot"></span> STUDIO WINDOWS <span class="version">/ 020.0</span>';
  $('#desktop-library').hidden=false;$('#desktop-library').onclick=()=>run(async()=>{const entries=await window.sillageDesktop.library();if(!entries.length)return toast('Importez des fichiers avec le sélecteur Windows pour mémoriser votre bibliothèque.');await importDesktop(entries);});
  window.sillageDesktop.ready({audioReady:false}).catch(()=>{});let lastPlaying=null;setInterval(()=>{const playing=engine.decks.some(d=>d.playing);if(playing!==lastPlaying){lastPlaying=playing;window.sillageDesktop.setPlaying(playing).catch(()=>{});if(playing)window.sillageDesktop.ready({audioReady:true}).catch(()=>{});}},500);
 }
