@@ -1,3 +1,4 @@
+import {checkedGrid,automaticGrid,gridRevision} from './grid-editor.mjs';
 import {keyLockProfile as resolveKeyLockProfile} from './keylock-profiles.mjs';
 import {ProgramBus,programOptions} from './program-bus.js';
 import {PumpingBus} from './pumping-bus.mjs';
@@ -396,9 +397,22 @@ export class StudioEngine extends EventTarget {
   }
   setDownbeat(id) {
     const d = this.decks[id]; if (!d.track) return;
-    this.cancelTransition(); d.track.downbeat = d.track.beatOffset = this.position(id); d.track.confidence = 'manual';d.track.manualGrid=true;
-    this.refreshArrangement(d.track);
+    this.setGrid(id,{bpm:d.track.bpm||120,downbeat:this.position(id)});
+  }
+  setGrid(id,grid,{automatic=false,expectedTrack=this.decks[id]?.track,expectedRevision}={}) {
+    const track=this.decks[id]?.track;
+    if(!track||track!==expectedTrack)throw Error('La piste a changé. Rouvrez sa préparation.');
+    if(expectedRevision!==undefined&&gridRevision(track)!==expectedRevision)throw Error('La grille a changé. Rechargez sa préparation.');
+    const patch=automatic?automaticGrid(track):{...checkedGrid(grid,track.buffer.duration),manualGrid:true,confidence:'manual'};
+    this.cancelTransition();const previousEntry=track.mixIn;
+    Object.assign(track,patch);this.refreshArrangement(track);
+    if(!track.manualRegions){
+      const regions=prepareAnalysisRegions({...track,regionAnalysisVersion:0},track.buffer.duration);
+      for(const key of ['mixIn','mixOut','introEnd','outroEnd','regionAnalysisVersion'])track[key]=regions[key];
+      for(const deck of this.decks)if(deck.track===track&&Math.abs(deck.cue-previousEntry)<1e-7)deck.cue=track.mixIn;
+    }
     this.dispatchEvent(new Event('change'));
+    return track;
   }
   async setRate(id, rate,{cancel=true}={}) {
     if(cancel)this.cancelTransition(); const d = this.decks[id], pos=this.position(id);

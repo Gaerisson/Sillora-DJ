@@ -2,6 +2,16 @@
 
 Les vues générales proviennent de la 0.16.1 exécutée ; les vues de préparation et de gestes sont datées ci-dessous. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
 
+## Grille rythmique · 0.25.0
+
+![Préparation de grille, onde détaillée et aperçu global](images/preparation-025.png)
+
+![Préparation dans le thème Porcelaine](images/preparation-porcelain-025.png)
+
+<img src="images/preparation-mobile-025.png" alt="Panneau de préparation à 480 pixels" width="480">
+
+Captures du code embarqué avec un vrai fichier et une correction de grille explicite. Le banc vérifie le dessin après réouverture et la persistance ; ces positions ne sont pas une référence rythmique annotée. [Utilisation](PREPARATION-0.25.md).
+
 ## Gestes d’onde · 0.24.0
 
 ![Déplacer, Scratch et sensibilité indépendante sur les ondes détaillées](images/gestures-024.png)

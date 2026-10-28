@@ -8,6 +8,9 @@ import {createRequire} from 'node:module';
 const {openStudioHost}=createRequire(import.meta.url)('../desktop/studio-host.cjs');
 const version='0.10.0';
 const absent=async()=>{throw new Error('No existing service');};
+test('the production health version follows package metadata used by the desktop host',async t=>{
+ const {createStudioServer}=await import('../server.mjs'),pkg=JSON.parse(await fs.readFile(new URL('../package.json',import.meta.url),'utf8')),server=await createStudioServer({port:0});t.after(()=>server.close());const health=await(await fetch(server.origin+'/api/health')).json();assert.equal(health.version,pkg.version);assert.equal(health.localOnly,true);assert.equal(health.application,'sillage-studio');
+});
 async function profile(t){const directory=await fs.mkdtemp(path.join(os.tmpdir(),'sillage-host-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));return directory;}
 async function createServer({port=0,health={application:'sillage-studio',version,localOnly:true}}={}){
  const listener=http.createServer((_request,response)=>{response.setHeader('Content-Type','application/json');response.end(JSON.stringify(health));});

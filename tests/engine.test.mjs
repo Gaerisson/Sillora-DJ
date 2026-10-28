@@ -3,6 +3,21 @@ import assert from 'node:assert/strict';
 import { StudioEngine, createDemo } from '../public/engine.js';
 import {transitionProgress} from '../public/transition-design.mjs';
 import {makeTransitionPlan} from '../public/analysis.mjs';
+import {readGrid,gridRevision} from '../public/grid-editor.mjs';
+
+test('grid preparation preserves the playing source, measured baseline and explicit regions',async()=>{
+ const e=new StudioEngine();await e.init();const t=track('prepare');Object.assign(t,{manualRegions:true,mixIn:3.125,mixOut:48.875,hotCues:[7],analysis:{bpm:123.456,downbeat:.234567,beatOffset:.234567,confidence:'low'}});e.load(0,t);e.decks[0].rate=1.12;await e.play(0);const source=e.decks[0].source,baseline=structuredClone(t.analysis),rev=gridRevision(t);
+ e.setGrid(0,{bpm:126.789,downbeat:10.123456},{expectedTrack:t,expectedRevision:rev});assert.equal(e.decks[0].source,source);assert.equal(e.decks[0].rate,1.12);assert.equal(t.mixIn,3.125);assert.equal(t.mixOut,48.875);assert.deepEqual(t.hotCues,[7]);assert.deepEqual(t.analysis,baseline);assert.equal(t.manualGrid,true);assert.equal(t.arrangement.downbeat,10.123456);
+ e.setGrid(0,null,{automatic:true});assert.deepEqual(readGrid(t),{bpm:123.456,downbeat:.234567,beatOffset:.234567});assert.equal(t.manualGrid,false);assert.equal(t.confidence,'low');assert.equal(e.decks[0].source,source);assert.equal(t.mixIn,3.125);
+});
+test('invalid, stale or replaced grid preparations do not cancel the current transition or mutate a track',async()=>{
+ const e=new StudioEngine();await e.init();const t=track('old');e.load(0,t);const rev=gridRevision(t);e.setGrid(0,{bpm:130,downbeat:.2});const current=JSON.stringify(t);let cancelled=0;e.cancelTransition=()=>cancelled++;
+ assert.throws(()=>e.setGrid(0,{bpm:131,downbeat:0},{expectedRevision:rev}),/changé/);assert.throws(()=>e.setGrid(0,{bpm:NaN,downbeat:0}));assert.throws(()=>e.setGrid(0,null,{automatic:true}),/indisponible/);assert.equal(JSON.stringify(t),current);assert.equal(cancelled,0);
+ e.load(0,track('replacement'));cancelled=0;assert.throws(()=>e.setGrid(0,{bpm:131,downbeat:0},{expectedTrack:t}),/changé/);assert.equal(cancelled,0);assert.equal(JSON.stringify(t),current);
+});
+test('applying a corrected grid recomputes automatic IN and OUT without changing a separately set cue',async()=>{
+ const e=new StudioEngine();await e.init();const t=track('regions');Object.assign(t,{downbeat:0,beatOffset:0,manualGrid:false,regionAnalysisVersion:2,envelope:Array(600).fill(.2),bassEnvelope:Array(600).fill(.1),audibleEnd:60,manualRegions:false});e.load(0,t);t.mixIn=1.123;t.mixOut=58.789;e.decks[0].cue=1.123;e.load(1,t);e.decks[1].cue=7.654;e.setGrid(0,{bpm:100,downbeat:.25});assert.notEqual(t.mixIn,1.123);assert.notEqual(t.mixOut,58.789);assert.equal(e.decks[0].cue,t.mixIn);assert.equal(e.decks[1].cue,7.654);assert.equal(t.manualRegions,false);
+});
 
 test('loading and correcting a measured arrangement keeps manual regions and the active voice',async()=>{
  const engine=new StudioEngine();await engine.init();const t=createDemo(engine.context,0);

@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const publicRoot=path.join(path.dirname(fileURLToPath(import.meta.url)),'public');
+const {version}=JSON.parse(await readFile(new URL('./package.json',import.meta.url),'utf8'));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};
 export async function createStudioServer({port=43821}={}){
  let origin;
@@ -14,7 +15,7 @@ export async function createStudioServer({port=43821}={}){
    res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');
    res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
    const url=new URL(req.url,origin);
-   if(url.pathname==='/api/health')return send(res,200,{application:'sillage-studio',version:'0.24.0',localOnly:true,pid:process.pid});
+   if(url.pathname==='/api/health')return send(res,200,{application:'sillage-studio',version,localOnly:true,pid:process.pid});
    if(url.pathname.startsWith('/api/')||url.pathname==='/callback')return send(res,404,{error:'Fonction indisponible.'});
    if(req.method!=='GET')return send(res,405,{error:'Méthode refusée.'});
    const relative=decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname),file=path.resolve(publicRoot,'.'+relative);

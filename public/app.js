@@ -1,3 +1,4 @@
+import {mountGridEditor} from './grid-editor-view.js';
 import {gridStatus,gridDetail} from './grid-status.mjs';
 import {audioContentId} from './audio-identity.mjs';
 import {renderArrangement} from './arrangement-view.js';
@@ -127,7 +128,7 @@ $$('.deck').forEach((el, id) => {
   el.querySelector('.echo').onclick = () => { if (!engine.decks[id].track) return; engine.setEcho(id, !engine.decks[id].echo); update(); };
   el.querySelector('.loop').title='Boucle sur la grille · Maj + clic : capture immédiate';
   el.querySelector('.loop').onclick = event => { if(automix)stopAutomix();engine.cancelTransition(); engine.loop(id, Number(el.querySelector('.loop-size').value),{quantize:!event.shiftKey&&$('#quantize').checked}); };
-  el.querySelector('.bpm-input').onchange = event => { const d = engine.decks[id]; if (d.track) { engine.cancelTransition(); d.track.bpm = clamp(Number(event.target.value) || 120, 40, 240) / d.rate;d.track.confidence='manual';d.track.manualGrid=true;engine.refreshArrangement(d.track);savePreparation(d.track);renderLibrary(); update(); } };
+  el.querySelector('.bpm-input').onchange = event => { const d = engine.decks[id]; if (d.track) { engine.setGrid(id,{bpm:clamp((Number(event.target.value)||120)/d.rate,40,240),downbeat:d.track.downbeat??d.track.beatOffset??0});savePreparation(d.track);renderLibrary(); update(); } };
   el.querySelector('.pitch').oninput = event => run(() => engine.setRate(id, 1 + Number(event.target.value) / 100));
   el.querySelector('.pitch').ondblclick = () => run(() => engine.setRate(id, 1));
   const keyControl=document.createElement('label');keyControl.className='deck-key';keyControl.innerHTML='CLÉ <select class="deck-key-select" aria-label="Tonalité platine '+letter+'"><option value="auto">Auto · Clé incertaine</option>'+['major','minor'].map(mode=>Array.from({length:12},(_,root)=>'<option value="'+root+':'+mode+'">'+keyLabel({keyRoot:root,keyMode:mode,keyConfidence:1})+'</option>').join('')).join('')+'</select>';el.querySelector('.deck-summary').after(keyControl);
@@ -153,7 +154,7 @@ $$('.deck').forEach((el, id) => {
   performancePanel.querySelector('.cue-erase').onclick=()=>{eraseCues[id]=!eraseCues[id];update();};
   performancePanel.querySelectorAll('.hot-cue').forEach(button=>{button.onclick=event=>run(async()=>{const d=engine.decks[id];if(!d.track)return toast('Chargez un morceau sur cette platine.');const slot=Number(button.dataset.slot);if(event.shiftKey||eraseCues[id]){engine.clearHotCue(id,slot);toast(`Hot Cue ${slot+1} effacé sur ${letter}.`);}else{if(Number.isFinite(d.track.hotCues?.[slot])){await prepareLocalPlayback();stopAutomix();}await engine.triggerHotCue(id,slot);if(d.playing)sessionStart??=Date.now();}savePreparation(d.track);update();});});
   for(const [selector,direction] of [['.jump-back',-1],['.jump-forward',1]])performancePanel.querySelector(selector).onclick=()=>run(async()=>{stopAutomix();await engine.beatJump(id,direction*Number(performancePanel.querySelector('.jump-size').value));});
-  const changeBpm=value=>{const d=engine.decks[id];if(!d.track)return;if(value<40||value>240)return toast('Le BPM doit être compris entre 40 et 240.');engine.cancelTransition();d.track.bpm=value;d.track.confidence='manual';d.track.manualGrid=true;engine.refreshArrangement(d.track);savePreparation(d.track);renderLibrary();update();};
+  const changeBpm=value=>{const d=engine.decks[id];if(!d.track)return;if(value<40||value>240)return toast('Le BPM doit être compris entre 40 et 240.');engine.setGrid(id,{bpm:value,downbeat:d.track.downbeat??d.track.beatOffset??0});savePreparation(d.track);renderLibrary();update();};
   performancePanel.querySelector('.bpm-half').onclick=()=>changeBpm((engine.decks[id].track?.bpm||120)/2);
   performancePanel.querySelector('.bpm-double').onclick=()=>changeBpm((engine.decks[id].track?.bpm||120)*2);
   performancePanel.querySelector('.tap-tempo').onclick=()=>{const bpm=tapTempos[id].tap(performance.now());if(bpm)changeBpm(bpm);else toast('Continuez à taper au rythme du morceau…');};
@@ -682,7 +683,7 @@ async function remoteCommand(command){
  }else if(type==='deck:volume'){engine.setVolume(deck,c.value);$('[data-volume="'+deck+'"]').value=c.value;
  }else if(type==='deck:seek'){stopAutomix();await engine.seek(deck,c.position);
  }else if(type==='deck:rate'){stopAutomix();await engine.setRate(deck,c.value);
- }else if(type==='deck:bpm'){engine.cancelTransition();d.track.bpm=c.value/d.rate;d.track.confidence='manual';d.track.manualGrid=true;engine.refreshArrangement(d.track);savePreparation(d.track);renderLibrary();
+ }else if(type==='deck:bpm'){engine.setGrid(deck,{bpm:c.value/d.rate,downbeat:d.track.downbeat??d.track.beatOffset??0});savePreparation(d.track);renderLibrary();
  }else if(type==='deck:sync'){stopAutomix();await engine.sync(deck);
  }else if(type==='deck:loop'){stopAutomix();engine.loop(deck,c.beats);
  }else if(type==='deck:jump'){stopAutomix();await engine.beatJump(deck,c.beats);
@@ -773,6 +774,9 @@ if(window.sillageDesktop?.onRemoteCommand){
 window.addEventListener('sillage:appearance',()=>{cueColors.splice(0,4,...appearance.colors.cues);$$ ('.deck .hot-cue').forEach(button=>button.style.setProperty('--cue-color',cueColors[Number(button.dataset.slot)]));updateSessionPanel();});
 
 const arrangementRoot=document.createElement('section');$('#analysis-regions').after(arrangementRoot);
+const gridEditorRoot=document.createElement('section');$('#analysis-map').before(gridEditorRoot);let disposeGridEditor=null;
+const gridStyle=document.createElement('link');gridStyle.rel='stylesheet';gridStyle.href='/grid-editor.css';document.head.append(gridStyle);
+$('#analysis-dialog').addEventListener('close',()=>{if($('#analysis-dialog').open)return;disposeGridEditor?.();disposeGridEditor=null;});
 function showAnalysis(id){
  const t=engine.decks[id].track;if(!t)return toast('Chargez un morceau sur cette platine.');engine.refreshArrangement(t);
  const ownTrack=()=>{if(engine.decks[id].track!==t){$('#analysis-dialog').close();throw Error('La piste a changé. Rouvrez son analyse.');}};
@@ -782,7 +786,8 @@ function showAnalysis(id){
  $('#analysis-metrics').innerHTML=metrics.map(([name,value,detail,hint])=>'<div title="'+esc(hint||'')+'"><small>'+name+'</small><strong>'+esc(value)+'</strong>'+(detail?'<span class="analysis-metric-detail">'+esc(detail)+'</span>':'')+'</div>').join('');
  $('#analysis-regions').textContent='Entrée '+preciseTime(t.mixIn||0)+' → '+preciseTime(t.introEnd??t.mixIn??0)+' · Sortie '+preciseTime(t.mixOut||0)+' → '+preciseTime(t.audibleEnd??t.buffer.duration);
  $('#analysis-notes').textContent=t.confidence==='generated'?'Les démos utilisent une grille déterministe. Importez vos morceaux pour évaluer l’analyse musicale.':t.confidence==='low'?'La pulsation est incertaine. L’Automix privilégie un relais court au tempo naturel. Vérifiez la grille et corrigez les repères IN / OUT au besoin.':'L’Automix utilise ces mesures pour limiter l’étirement du tempo, choisir la durée du relais et équilibrer le niveau. Les repères et la tonalité restent des estimations ; aucune séparation de voix n’est appliquée.';
- const canvas=$('#analysis-map');drawDJWaveform(canvas.getContext('2d'),{track:t,position:engine.position(id),width:canvas.width,height:canvas.height,colors:appearance.colors,deckColor:id?appearance.colors.b:appearance.colors.a});if(!$('#analysis-dialog').open)$('#analysis-dialog').showModal();
+ disposeGridEditor?.();disposeGridEditor=mountGridEditor(gridEditorRoot,{track:t,overview:$('#analysis-map'),position:()=>engine.position(id),playing:()=>engine.decks[id].playing,isCurrent:()=>engine.decks[id].track===t,colors:()=>appearance.colors,seek:async position=>{ownTrack();stopAutomix();await engine.seek(id,position);update();},toggle:async()=>{ownTrack();if(engine.decks[id].playing)engine.pause(id);else{await prepareLocalPlayback();ownTrack();stopAutomix();await engine.play(id);sessionStart??=Date.now();}update();},apply:(grid,options)=>{ownTrack();stopAutomix();engine.setGrid(id,grid,{...options,expectedTrack:t});savePreparation(t);renderLibrary();update();showAnalysis(id);},onError:error=>toast(error.message)});
+ if(!$('#analysis-dialog').open)$('#analysis-dialog').showModal();
 }
 
 // Shared desktop views keep a single audio engine in the main studio window.

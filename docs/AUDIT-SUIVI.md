@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.24.0
+# Suivi de l’audit — Sillora DJ 0.25.0
 
 Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -13,6 +13,7 @@ Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | E · 0.22.0 | Repères d’arrangement, préparation et relais avec phase conservée ; migration des préparations par digest | 282 tests ; 60 cas natifs depuis le paquet, dont huit de préparation et quatre rendus de régions. [Architecture et limites](ARRANGEMENT-0.22.md) |
 | F · 0.23.0 | Précision de grille séparée de la couverture, contrôles de contraste/support, mesures partagées PC/Remote | 296 tests ; 68 cas natifs depuis le paquet, dont quatre grille PC/Remote/cache et quatre rendus sans correction manuelle. [Diagnostic et portée](GRID-0.23.md) |
 | G · 0.24.0 | Gestes d’onde PC/Remote, propriété des prises et relais sur grille incertaine ; corpus élargi | 313 tests ; 99 fichiers analysés et 50 cas natifs depuis le paquet, dont 20 rendus de transitions et 20 cas de gestes MP3/Opus. [Gestes](GESTURES-0.24.md) · [Corpus](CORPUS-0.24.md) |
+| H · 0.25.0 | Préparation visuelle de grille, calibration, brouillon et restauration automatique | 322 tests ; 54 cas natifs, dont 18 de préparation MP3/Opus. [Fonctionnement](PREPARATION-0.25.md) · [Recette](CHANGELOG-0.25.0.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -164,11 +165,23 @@ La revue indépendante a permis de reproduire puis corriger trois défauts Remot
 
 Le paquet final passe ses 50 cas natifs ; 145 sources comparées, versions et ressources vérifiées, contenu identique et intégrité des 7 215 fichiers validée. Le contraste Porcelaine de Remote est également mesuré après correction. Installation sur le profil personnel non exécutée. [Fonctionnement](GESTURES-0.24.md) · [Essais élargis et limites](CORPUS-0.24.md) · [Notes de version](CHANGELOG-0.24.0.md).
 
+## Sections 3, 4 et 7 — points revus dans le lot H
+
+| Référence | État actuel | Résultat et limite |
+| :--- | :---: | :--- |
+| R3.1-02, R3.1-04 | P | Préparation manuelle précise, calibration explicite entre deux impacts, aperçu et retour à la mesure automatique. Cela ne valide pas la justesse des grilles calculées ni un corpus annoté. |
+| R4.3-02 | V | BPM et premier temps appliqués puis restaurés par contenu après redémarrage, sans secours localStorage et sans autoplay, sur MP3 et Opus. |
+| R4.3-04 | P | Grille constante corrigée et persistée ; carte de tempo variable toujours absente. |
+| R3.1-12, R3.1-13, R4.3-05 | P | Changement de grille : recalcul des régions automatiques, conservation des IN/OUT manuels, Hot Cues et source en lecture. La pertinence musicale et les phrases restent ouvertes. |
+| R7-03, R7-07 | P | Zoom 1/4/16 mesures, impacts numérotés et navigation sur les deux ondes ; deux thèmes à 1440/480 px, dessin vérifié après réouverture. Pas de campagne FPS/latence ni intégration complète de la maquette. |
+
+54 cas natifs passent depuis le paquet final, dont 18 de préparation sur quatre fichiers réels et huit rendus automatiques sans corrections de grille. 322 tests automatisés, 148 sources comparées, ressources et exécutables contrôlés, contenu identique et intégrité de l’archive vérifiée. Installation personnelle non exécutée. Relecture par l’auteur uniquement. Les 66 grilles incertaines du corpus précédent ne sont pas requalifiées. [Recette détaillée](CHANGELOG-0.25.0.md).
+
 ## Prochain travail prioritaire
 
 1. Automix musical : élargir le jeu de grilles annotées, travailler les phrases et les points de passage, puis valider les rendus à l’écoute. Les grilles des deux références sont désormais exploitables sans correction manuelle ; cela ne clôt pas la fiabilité générale ni les nouveaux modes et la reconnaissance sémantique.
 2. Préparation audio : stems hors du thread interface, budgets de calcul et tests de ressources manquantes/longues sessions.
 3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
-4. Poursuivre les sections restantes du registre, notamment scratch waveform, playlists, mises à jour et validation acoustique micro.
+4. Poursuivre les sections restantes du registre, notamment réglages avancés du scratch, playlists, mises à jour et validation acoustique micro.
 
 Chaque prochain lot devra apporter son code exécuté, sa recette et ses limites avant de changer les états correspondants.
