@@ -3,6 +3,21 @@ import assert from 'node:assert/strict';
 import { StudioEngine, createDemo } from '../public/engine.js';
 import {transitionProgress} from '../public/transition-design.mjs';
 
+test('loading and correcting a measured arrangement keeps manual regions and the active voice',async()=>{
+ const engine=new StudioEngine();await engine.init();const t=createDemo(engine.context,0);
+ Object.assign(t,{bpm:120,confidence:'generated',manualRegions:true,mixIn:3.41,mixOut:80.23,downbeat:0,audibleEnd:96,envelope:Array.from({length:960},(_,i)=>i<320?.05:.2),bassEnvelope:Array.from({length:960},(_,i)=>i<320?.01:.08),structure:Array.from({length:48},(_,i)=>({time:i*2,rms:i<16?.05:.2,density:.2}))});
+ t.buffer={duration:96};engine.load(0,t);assert.ok(t.arrangement?.landmarks.some(p=>p.time===32));assert.equal(t.mixIn,3.41);assert.equal(t.mixOut,80.23);
+ await engine.play(0);const source=engine.decks[0].source;engine.context.currentTime=10.5;engine.setDownbeat(0);assert.equal(engine.decks[0].source,source);assert.equal(t.arrangement.downbeat,t.downbeat);assert.ok(t.arrangement.landmarks.every(p=>Math.abs((p.time-t.downbeat)/2-Math.round((p.time-t.downbeat)/2))<1e-5));
+});
+
+test('scheduled arrangement relays survive short-score quantization and fractional-tempo grid precision',async()=>{
+ const make=(id,bpm,change=92)=>{const bar=240/bpm,duration=100*bar;return{id,bpm,confidence:'generated',downbeat:0,beatOffset:0,mixIn:0,mixOut:duration-20,audibleEnd:duration,buffer:{duration},envelope:Array(Math.ceil(duration*10)).fill(.2),bassEnvelope:Array(Math.ceil(duration*10)).fill(.06),structure:Array.from({length:100},(_,i)=>({time:i*bar,rms:.2,density:i<change?.08:.5}))};};
+ for(const [a,b,beats]of [[120,120,4],[110,98,16],[98,110,16]]){
+  const e=new StudioEngine();await e.init();e.load(0,make('a',a));e.load(1,make('b',b,99));await e.play(0);await e.startTransition({style:'riser',beats,sync:true,quantize:true,automix:true,tempoBlend:a!==b});
+  assert.ok(Math.abs(e.transition.handoffPosition-92*240/a)<1e-5,JSON.stringify({a,b,beats,actual:e.transition.handoffPosition,expected:92*240/a}));
+ }
+});
+
 class Param {
   value = 0; events = [];
   cancelScheduledValues(time) { this.events.push({ type: 'cancel', time }); }

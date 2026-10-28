@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {AnalysisQueue} from '../public/analysis-queue.mjs';
 import {contentAnalysisKey} from '../public/analysis-cache.mjs';
+import {REGION_ANALYSIS_VERSION} from '../public/analysis.mjs';
 const turn=()=>new Promise(resolve=>setImmediate(resolve));
+
+test('content cache identity invalidates pre-arrangement region baselines',async()=>{const key=await contentAnalysisKey(new Uint8Array([7,4,2]));assert.ok(key.endsWith(':region'+REGION_ANALYSIS_VERSION));assert.equal(REGION_ANALYSIS_VERSION,2);});
 
 test('background suspension preempts a worker but preserves a foreground request and resumes the old job',async()=>{
  const q=new AnalysisQueue(),order=[];let count=0;const old=q.enqueue('background',signal=>{order.push('background');if(++count===1)return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('pause','AbortError'))));return 1;});await turn();q.setBackgroundPaused(true);await turn();assert.equal(q.running,null);const front=q.enqueue('play',()=>{order.push('play');return 2;},{priority:0});assert.equal(await front,2);q.setBackgroundPaused(false);assert.equal(await old,1);assert.deepEqual(order,['background','play','background']);

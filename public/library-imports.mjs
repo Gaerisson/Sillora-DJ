@@ -1,3 +1,5 @@
+import {audioContentId} from './audio-identity.mjs';
+export {audioContentId} from './audio-identity.mjs';
 import {fileKey} from './studio-tools.mjs';
 const abortError=()=>new DOMException('Import annulé','AbortError');
 const audioReady=track=>Boolean(track?.buffer?.getChannelData);
@@ -44,7 +46,7 @@ export class LibraryImports extends EventTarget{
   catch(error){if(this.jobs.get(r.id)===job){r.state=error.name==='AbortError'?'cancelled':'error';r.error=error.message;}job.reject(error);}
   finally{if(this.jobs.get(r.id)===job)this.jobs.delete(r.id);this.active=null;this.emit();this.drainSoon();}
  }
- indexContent(record){const key=record.meta?.contentKey,prior=this.byContent.get(key);if(key&&(!prior||(record.userUpdatedAt||0)>=(prior.userUpdatedAt||0)))this.byContent.set(key,record);}
+ indexContent(record){const key=audioContentId(record.meta?.contentKey),prior=this.byContent.get(key);if(key&&(!prior||(record.userUpdatedAt||0)>=(prior.userUpdatedAt||0)))this.byContent.set(key,record);}
  touch(track,{user=false}={}){const r=this.get(track.id);if(r){r.meta=metadata(track);r.title=track.title;r.artist=track.artist;r.duration=track.buffer.duration;if(user)r.userUpdatedAt=Date.now();this.indexContent(r);this.emit();}}
  bind(files){const records=this.discover(files),keys=new Set(records.map(r=>r.key));for(const r of this.records.values())if(!r.file&&!keys.has(r.key))r.state='missing';this.emit();return records;}
  snapshot(){return{version:1,records:[...this.records.values()].slice(-20000).map(r=>({id:r.id,key:r.key,name:r.name,size:r.size,lastModified:r.lastModified,fileId:r.fileId,title:r.track?.title||r.title,artist:r.track?.artist||r.artist,duration:r.duration,meta:r.track?metadata(r.track):r.meta,processed:r.processed,userUpdatedAt:r.userUpdatedAt||0,favorite:r.favorite})),batch:this.batch?{id:this.batch.id,label:this.batch.label,keys:this.batch.keys,completed:this.batch.completed,state:this.batch.state}:this.restoredBatch||null};}

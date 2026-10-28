@@ -179,6 +179,13 @@ export function drawDJWaveform(ctx, {
     }
   }
 
+  let lastArrangementLabel=-40;
+  for(const [index,point] of (track.arrangement?.landmarks||[]).entries()){
+    if(!Number.isFinite(point.time)||point.time<0||point.time>=duration||point.time<from||point.time>to||!(point.confidence>=.55)||!['lift','release','change'].includes(point.kind))continue;
+    const x=xAt(point.time),color=point.kind==='lift'?green:point.kind==='release'?warm:deckColor;
+    ctx.globalAlpha=.25;ctx.fillStyle=color;ctx.fillRect(x,28,1,Math.max(0,height-28));ctx.globalAlpha=1;
+    if(height>=70&&x-lastArrangementLabel>=32){label(ctx,'R'+(index+1),x+2,39,color,width,panel);lastArrangementLabel=x;}
+  }
   const cueColors = colors.cues || [deckColor, '#c1adff', warm, green];
   const markers = [
     ...(transitionPlan?.score&&Number.isFinite(planStart)?[[planStart+(transitionPlan.sourceSpanSeconds??planSeconds)*transitionPlan.score.handoffFraction,'RELAIS',deckColor]]:[]),

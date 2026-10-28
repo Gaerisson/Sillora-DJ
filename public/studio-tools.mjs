@@ -1,5 +1,14 @@
 import {transitionIds,profiles} from './transition-design.mjs';
 import { clamp } from './audio-math.mjs';
+import {audioContentId} from './audio-identity.mjs';
+
+export function mixRegionPatch(track,kind,time){
+ const duration=track?.buffer?.duration??track?.duration;
+ if(!['in','out'].includes(kind)||!Number.isFinite(time)||!Number.isFinite(duration)||time<0||time>duration)throw Error('Repère de transition invalide.');
+ if(kind==='in'&&time>=(track.mixOut??duration)-.1)throw Error('IN doit précéder OUT.');
+ if(kind==='out'&&time<=(track.mixIn??0)+.1)throw Error('OUT doit suivre IN.');
+ return {manualRegions:true,[kind==='in'?'mixIn':'mixOut']:time};
+}
 
 export const transitionPresets = {
   dynamic: {label:'DJ dynamique',style:'auto',profile:'musical',beats:32,sync:true,tempoBlend:true,quantize:true},
@@ -33,11 +42,12 @@ const validManualKey=value=>value.manualKey===true&&Number.isInteger(value.keyRo
 const manualKeyFields=value=>({manualKey:true,keyRoot:value.keyRoot,keyMode:value.keyMode,key:keyNames[value.keyRoot]+(value.keyMode==='minor'?'m':''),keyConfidence:1});
 
 export function trackPreparation(track) {
-  return { regionAnalysisVersion:track.regionAnalysisVersion,analysisVersion:track.analysisVersion,manualGrid:Boolean(track.manualGrid),manualRegions:Boolean(track.manualRegions), bpm: track.bpm, downbeat: track.downbeat, beatOffset: track.beatOffset, mixIn: track.mixIn, mixOut: track.mixOut, hotCues: track.hotCues || [], confidence: track.confidence, favorite: Boolean(track.favorite),...(validManualKey(track)?manualKeyFields(track):{manualKey:false}) };
+  return { contentKey:track.contentKey,regionAnalysisVersion:track.regionAnalysisVersion,analysisVersion:track.analysisVersion,manualGrid:Boolean(track.manualGrid),manualRegions:Boolean(track.manualRegions), bpm: track.bpm, downbeat: track.downbeat, beatOffset: track.beatOffset, mixIn: track.mixIn, mixOut: track.mixOut, hotCues: track.hotCues || [], confidence: track.confidence, favorite: Boolean(track.favorite),...(validManualKey(track)?manualKeyFields(track):{manualKey:false}) };
 }
 
 export function restorePreparation(track, saved) {
   if (!saved || typeof saved !== 'object') return track;
+  if(saved.contentKey&&track.contentKey&&audioContentId(saved.contentKey)!==audioContentId(track.contentKey))return track;
   const end = track.buffer.duration;
   const grid=saved.manualGrid||saved.confidence==='manual'||saved.analysisVersion===track.analysisVersion;
   const legacyManualRegions=saved.manualRegions===undefined&&saved.manualGrid!==true&&saved.confidence==='manual';

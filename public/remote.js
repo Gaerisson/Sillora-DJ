@@ -113,7 +113,7 @@ function drawWave(el,d){
  const canvas=el.querySelector('.waveform'),ctx=canvas.getContext('2d'),pos=deckPosition(d),zoom=el.querySelector('.wave-zoom').value,duration=d.duration||1;
  const range=zoom==='full'?[0,duration]:rollingWaveRange(pos,d.nativeBpm||120,Number(zoom));canvas.remoteRange=range;
  let track=waveTracks.get(d.id);if(!track||track.id!==d.trackId){track={id:d.trackId,peaks:d.peaks,waveBands:d.waveBands,buffer:{duration}};waveTracks.set(d.id,track);}
- Object.assign(track,{bpm:d.nativeBpm,beatOffset:d.beatOffset,mixIn:d.mixIn,mixOut:d.mixOut,hotCues:d.hotCues});
+ Object.assign(track,{bpm:d.nativeBpm,beatOffset:d.beatOffset,arrangement:d.arrangement,mixIn:d.mixIn,mixOut:d.mixOut,hotCues:d.hotCues});
  const css=getComputedStyle(document.documentElement),colors={inset:css.getPropertyValue('--bg').trim(),grid:css.getPropertyValue('--line').trim(),text:css.color,dim:css.getPropertyValue('--muted').trim(),a:css.getPropertyValue('--a').trim(),b:css.getPropertyValue('--b').trim()};
  drawDJWaveform(ctx,{track:d.loaded?track:null,position:pos,from:range[0],to:range[1],width:canvas.width,height:canvas.height,colors,deckColor:d.id?colors.b:colors.a,loop:d.loop});
  canvas.setAttribute('aria-valuenow',String(Math.round(pos/duration*100)));el.querySelector('.time').firstChild.textContent=time(pos);el.querySelector('.remaining').textContent='− '+time(duration-pos);el.querySelector('.vinyl').style.transform='rotate('+(matchMedia('(prefers-reduced-motion: reduce)').matches?0:pos*200)+'deg)';el.querySelector('.vinyl').classList.toggle('scratching',d.scratching);

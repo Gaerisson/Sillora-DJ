@@ -61,3 +61,16 @@ test('CSV export quotes metadata and neutralizes spreadsheet formulas',()=>{
   const csv=csvTracklist([{title:'=HYPERLINK("x")',artist:'A;B',bpm:120,buffer:{duration:10.4}}]);
   assert.ok(csv.startsWith('\ufeff'));assert.match(csv,/"'=HYPERLINK\(""x""\)"/);assert.match(csv,/"A;B"/);
 });
+import * as regionTools from '../public/studio-tools.mjs';
+
+test('saved corrections identify the audio independently of cache versions and reject changed bytes',()=>{
+ const key='sha256:'+'a'.repeat(64),old={buffer:{duration:100},contentKey:key+':2:wave2:region1',manualGrid:true,confidence:'manual',bpm:127,manualRegions:true,mixIn:3.41,mixOut:80.23,hotCues:[2,10],favorite:true},saved=trackPreparation(old);
+ assert.equal(saved.contentKey,old.contentKey);const fresh={buffer:{duration:100},contentKey:key+':2:wave2:region2',mixIn:0,mixOut:90,bpm:120};restorePreparation(fresh,saved);assert.equal(fresh.bpm,127);assert.equal(fresh.mixIn,3.41);assert.equal(fresh.mixOut,80.23);assert.equal(fresh.favorite,true);
+ const changed={buffer:{duration:100},contentKey:'sha256:'+'b'.repeat(64)+':2:wave2:region2',mixIn:0,mixOut:90,bpm:120};restorePreparation(changed,saved);assert.equal(changed.mixIn,0);assert.equal(changed.bpm,120);assert.equal(changed.manualRegions,undefined);
+});
+
+test('arrangement preparation validates an IN or OUT patch without mutating the playing track',()=>{
+ assert.equal(typeof regionTools.mixRegionPatch,'function');const t={buffer:{duration:100},mixIn:4,mixOut:80,manualGrid:true};
+ assert.deepEqual(regionTools.mixRegionPatch(t,'in',16),{manualRegions:true,mixIn:16});assert.deepEqual(regionTools.mixRegionPatch(t,'out',64),{manualRegions:true,mixOut:64});assert.equal(t.mixIn,4);assert.equal(t.manualRegions,undefined);
+ for(const [kind,at]of [['in',81],['out',3],['out',101],['in',NaN],['other',20]])assert.throws(()=>regionTools.mixRegionPatch(t,kind,at));
+});

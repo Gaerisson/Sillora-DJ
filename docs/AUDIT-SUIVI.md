@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.21.0
+# Suivi de l’audit — Sillora DJ 0.22.0
 
 Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -10,6 +10,7 @@ Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | B · 0.19.0 | Catalogue immédiat, import prioritaire et reprenable, cache natif, réanalyse, pagination | 246 tests ; six scénarios bibliothèque et quatre scénarios audio/Remote sous Electron. [Détail et recette](CHANGELOG-0.19.0.md) |
 | C · 0.20.0 | Partition commune des transitions, relais des graves, variation de tempo et repères cohérents | 254 tests ; neuf rendus avec maintien de hauteur, six scénarios bibliothèque et quatre audio/Remote. [Déroulement et limites](TRANSITIONS-0.20.md) |
 | D · 0.21.0 | Mesure acoustique après Key Lock, profil Rythme optionnel et réglage partagé PC/Remote | 261 tests ; 48 scénarios depuis le paquet : 16 cas acoustiques, quatre UI/IPC, 18 rendus musicaux, six bibliothèque, quatre audio/Remote. [Mesures et architecture](KEYLOCK-0.21.md) |
+| E · 0.22.0 | Repères d’arrangement, préparation et relais avec phase conservée ; migration des préparations par digest | 282 tests ; 60 cas natifs depuis le paquet, dont huit de préparation et quatre rendus de régions. [Architecture et limites](ARRANGEMENT-0.22.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -110,9 +111,30 @@ Les relevés synthétiques sont publiés dans [KEYLOCK-MEASURES-0.21.json](KEYLO
 
 Les 48 scénarios passent depuis le code embarqué. Les 136 fichiers applicatifs correspondent aux sources testées et les deux exécutables ont le même contenu, contrôlé par intégrité. L’installation sur le profil personnel reste distincte de cette recette. Ce lot ferme son plan technique ; il ne clôt pas les autres exigences partielles du registre.
 
+## Section 3 — points revus dans le lot E
+
+| Référence | État actuel | Résultat et limite |
+| :--- | :---: | :--- |
+| R3.1-03, R3.1-09 | P | Changements durables de niveau, graves et densité spectrale, avec contexte de deux mesures par côté et rejet des accents isolés. Les mesures alimentent des repères d’arrangement ; elles ne constituent pas une reconnaissance de phrases. |
+| R3.1-02, R3.1-04 | P | La grille et sa confiance conditionnent la carte. Corrections ½/×2/Tap et premier temps actualisent la carte et restent manuelles. Sur les deux MP3, la stabilité automatique est insuffisante ; les recettes de structure utilisent une grille acceptée explicitement. |
+| R3.1-07, R3.1-12, R3.1-13, R3.2-04 | P | Entrée proche d’un changement de groove et sortie dans les dernières mesures actives, avec réserve avant EOF. Les manuels restent prioritaires ; absence de repère fiable : repli énergétique. Deux des quatre rendus utilisent un repère, deux le repli. La pertinence à l’écoute reste à valider. |
+| R3.2-08 | V | Phase du relais prise en compte dans la quantification du départ, y compris score de quatre temps. Les repères gardent leur précision complète ; régression moteur dans les deux sens de tempo. |
+| R3.2-09 | P | Les quatre rendus de régions retrouvent le relais prévu dans le moteur natif. Cela ne mesure ni la qualité automatique de la grille, ni les pertes de blocs sous toutes charges. |
+| R3.3.A-02, R3.3.B-03 | P | Un relais peut rejoindre un changement d’arrangement mesuré, au lieu d’une mesure régulière sans autre indice. La frontière sémantique d’une phrase n’est pas identifiée. |
+| R3.7-03, R3.7-08, R3.7-09 | V | Onde RGB du panneau d’analyse, marques partagées PC/Remote et liste de préparation reliées aux données et au moteur. Navigation et IN/OUT validés ; identité de piste contrôlée avant action. |
+| R3.1-08, R3.1-10, R3.1-11 | A | Aucun détecteur sémantique de buildup/drop, voix ou partie instrumentale n’est livré. |
+
+Le panneau est contrôlé dans deux thèmes à 1440 et 480 px ; les repères sont aussi affichés sur Remote à 390 px. La revue a reproduit et permis de corriger une quantification décalant le relais, ainsi qu’une commande de panneau obsolète agissant sur une piste remplacée. Les régressions correspondantes passent.
+
+Le cache des régions passe en version 2 ; l’identité du contenu reste son digest audio. Une migration native du catalogue, avec préparation localStorage supprimée, conserve le BPM et les IN/OUT manuels sans lecture automatique. Deux tests couvrent aussi le rapprochement entre versions et le rejet de préparations identifiant des octets différents. Les autres fonctions de bibliothèque restent dans le périmètre du lot B.
+
+Les grilles automatiques des deux MP3 restent un écart prioritaire. Le suivi ne compte pas leur correction manuelle comme une résolution de l’estimation automatique. [Recettes, capture et distribution](CHANGELOG-0.22.0.md).
+
+Le paquet est contrôlé : 140 sources comparées, 60 cas natifs réussis, ressources vérifiées et archive identique dans les deux exécutables, avec intégrité validée. Un délai initial du banc bibliothèque n’a pas été reproduit pendant trois recettes instrumentées ; les reprises et la cause non confirmée restent consignées, sans déclarer un défaut corrigé.
+
 ## Prochain travail prioritaire
 
-1. Automix musical : approfondir les phrases et les points de passage, puis valider les rendus à l’écoute. Le plan commun est intégré aux familles du lot C et le lot D mesure le calage acoustique sur pulsations ; les nouveaux modes et la reconnaissance sémantique restent ouverts.
+1. Automix musical : approfondir la fiabilité de grille sur les fichiers réels, les phrases et les points de passage, puis valider les rendus à l’écoute. Les changements d’arrangement du lot E complètent les régions ; les nouveaux modes et la reconnaissance sémantique restent ouverts.
 2. Préparation audio : stems hors du thread interface, budgets de calcul et tests de ressources manquantes/longues sessions.
 3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
 4. Poursuivre les sections restantes du registre, notamment scratch waveform, playlists, mises à jour et validation acoustique micro.

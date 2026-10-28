@@ -2,6 +2,11 @@ import test from 'node:test';import assert from 'node:assert/strict';import {cre
 const {RemoteHost,sanitizeState,sanitizeCommand,privateIPv4}=createRequire(import.meta.url)('../desktop/remote-host.cjs');
 const publicDir=fileURLToPath(new URL('../public',import.meta.url));
 const snapshot=()=>({decks:[{loaded:true,title:'Titre A',artist:'Artiste A',playing:true,duration:180,position:30},{loaded:true,title:'Titre B',duration:200}],master:.7,crossfader:.2,automix:{enabled:true,mode:'compatible',scopeName:'Musique',remaining:2},library:[{id:'track-1',title:'Titre A',bpm:120,key:'Am · 8A',duration:180},{id:'track-2',title:'Titre B',bpm:122,key:'C · 8B',duration:200}],recommendations:[{id:'track-2',title:'Titre B',reason:'Tonalité relative'}]});
+
+test('remote arrangement landmarks are bounded, sorted and stripped of private fields',()=>{
+ const raw=snapshot();raw.decks[0].arrangement={version:1,landmarks:[{time:40,confidence:.9,kind:'lift',path:'private'},{time:-1,confidence:1,kind:'release'},{time:180,confidence:1,kind:'release'},{time:NaN,confidence:1,kind:'change'},{time:20,confidence:.3,kind:'change'},{time:24,confidence:.8,kind:'change'},...Array.from({length:300},()=>({time:40,confidence:.9,kind:'lift'}))]};
+ const r=sanitizeState(raw).decks[0].arrangement;assert.equal(r.version,1);assert.deepEqual(r.landmarks,[{time:24,confidence:.8,kind:'change'},{time:40,confidence:.9,kind:'lift'}]);assert.equal(JSON.stringify(r).includes('private'),false);
+});
 async function fixture(t,options={}){
  let host;host=new RemoteHost({publicDir,dispatch:message=>queueMicrotask(()=>host.acknowledge({id:message.id,ok:true})),...options});host.publish(snapshot());const status=await host.start();t.after(()=>host.stop());
  const link=status.links.find(item=>item.origin.includes('127.0.0.1')),origin=link.origin,token=new URLSearchParams(new URL(link.url).hash.slice(1)).get('pair'),headers={Authorization:'Bearer '+token};

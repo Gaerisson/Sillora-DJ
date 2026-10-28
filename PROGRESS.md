@@ -147,3 +147,20 @@ Le réglage partagé PC/Remote est accessible dans Régie → Master, mémorisé
 La revue indépendante a détecté une annulation tardive qui pouvait laisser démarrer le titre entrant. Le cas a été reproduit puis corrigé, avec préservation d’une source plus récente lancée par l’utilisateur. Les opérations internes de préparation utilisent leur propre contrôle d’annulation ; la suite complète et la revue ciblée passent après correction. Le sélecteur Porcelaine a aussi été corrigé après une mesure de contraste insuffisante, puis contrôlé avec les commandes du thème.
 
 La distribution Windows 0.21.0 est construite et vérifiée. Les 136 sources applicatives correspondent au code embarqué ; les 48 scénarios passent depuis `app.asar` : 16 mesures acoustiques, quatre PC/Remote, 18 rendus musicaux, six bibliothèque et quatre continuité/audio. Les deux exécutables embarquent le même contenu, dont l’archive de 7 215 fichiers passe le contrôle d’intégrité. Les ressources natives vérifiées correspondent aux ressources préparées. L’installation sur le profil personnel n’a pas été exécutée. [Architecture et banc reproductible](docs/KEYLOCK-0.21.md) · [Notes et empreintes](docs/CHANGELOG-0.21.0.md).
+
+## Lot E — repères d’arrangement — 0.22.0
+
+[Périmètre](docs/ARRANGEMENT-0.22.md) · [Plan et décisions](docs/superpowers/plans/2026-10-28-arrangement.md).
+
+- [x] Détecteur conservateur de changements durables sur les caractéristiques mesurées, tests et persistance.
+- [x] IN/OUT automatiques et relais du score sur les repères, manuel prioritaire et réserve avant EOF.
+- [x] Marques PC/Remote et préparation accessible dans le panneau d’analyse exécuté.
+- [x] Revue, recettes musicales natives, distribution vérifiée et audit actualisé.
+
+Les 282 tests, les huit scénarios natifs de préparation et quatre rendus de régions passent depuis les sources. Le panneau est contrôlé en Obsidian/Porcelaine à 1440 et 480 px ; Remote affiche les repères à 390 px. La revue a permis de reproduire puis corriger un départ mal quantifié et des actions d’analyse sur une piste remplacée. La migration de cache conserve les préparations par digest ; le banc recharge les corrections du catalogue avec le repli localStorage supprimé et sans lecture automatique.
+
+Les grilles automatiques des deux MP3 restent peu fiables : les essais de structure utilisent une correction explicite. Deux rendus suivent un repère et deux restent sur le repli énergétique. La qualité d’écoute et la reconnaissance automatique des phrases ne sont pas déclarées acquises.
+
+Distribution 0.22.0 construite : 140 sources comparées et 60 cas natifs réussis depuis le paquet, dont 22 rendus musicaux. Les deux exécutables ont le même contenu et l’archive commune de 7 215 fichiers passe le contrôle d’intégrité. Ressources embarquées et versions vérifiées ; installation sur le profil personnel non exécutée.
+
+Le premier passage du banc bibliothèque a expiré sur un chargement prioritaire. Trois recettes complètes instrumentées passent ensuite sans changement du code ; cause non confirmée, observation conservée avec les reprises dans les preuves. Les essais prolongés/sous charge restent ouverts. [Notes et empreintes](docs/CHANGELOG-0.22.0.md).

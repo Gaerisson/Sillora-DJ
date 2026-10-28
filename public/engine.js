@@ -11,11 +11,12 @@ import {faderCurves,transitionProgress,textureNames} from './transition-design.m
 import {makeTransitionScore,scheduleTransitionScore} from './transition-score.mjs';
 import {eqCurves} from './transition-envelopes.mjs';
 import {tempoAt,tempoBeats,tempoFraction,tempoDelay,warpTempoCurve} from './tempo-automation.mjs';
-import {cleanTiming} from './musical-plan.mjs';
+import {cleanTiming,gridReliable} from './musical-plan.mjs';
 import {stemNames} from './stems.mjs';
 import {analyzeWaveDetail} from './wave-colors.mjs';
 import { clamp, crossfadeGains, waveformPeaks, estimateTempo, transitionSeconds, quantizedDelay } from './audio-math.mjs';
 import { analyzeAudio, prepareAnalysisRegions, nextMusicalTime, makeTransitionPlan } from './analysis.mjs';
+import {arrangementFor} from './arrangement.mjs';
 
 export class StudioEngine extends EventTarget {
   constructor(options={}) {
@@ -164,6 +165,7 @@ export class StudioEngine extends EventTarget {
       if(track.manualGrid)for(const key of ['manualGrid','bpm','downbeat','beatOffset','confidence'])preserved[key]=track[key];
       if(track.manualKey)for(const key of ['manualKey','key','keyRoot','keyMode','keyConfidence'])preserved[key]=track[key];
       Object.assign(track,result,preserved,{analysis:result,analysisStatus:'ready',analysisError:null,analysisReanalyzing:false});
+      this.refreshArrangement(track);
       for(const deck of this.decks)if(deck.track===track&&deck.input){
         const now=this.context.currentTime;deck.input.gain.cancelScheduledValues(now);
         deck.input.gain.setTargetAtTime(track.autoGain||1,now,.35);
@@ -201,11 +203,13 @@ export class StudioEngine extends EventTarget {
     if(voice&&this.context){const now=this.context.currentTime;voice.gain.cancelScheduledValues(now);voice.gain.setTargetAtTime(0,now,.003);try{source.stop(now+.025);}catch{cleanup();}}
     else{try{source.stop();}catch{}cleanup();}
   }
+  refreshArrangement(track){if(track)track.arrangement=arrangementFor(track);return track?.arrangement;}
   load(id, track) {
     this.decks[id].playRequest=null;
     this.releaseContinuity(id);
     this.cancelTransition();
     this.analysisQueue.promote(track.id,0);
+    this.refreshArrangement(track);
     if(!track.manualRegions&&track.envelope?.length){const regions=prepareAnalysisRegions(track,track.buffer.duration);Object.assign(track,{mixIn:regions.mixIn,mixOut:regions.mixOut,introEnd:regions.introEnd,regionAnalysisVersion:regions.regionAnalysisVersion});if(track.analysis)Object.assign(track.analysis,{mixIn:regions.mixIn,mixOut:regions.mixOut,introEnd:regions.introEnd,regionAnalysisVersion:regions.regionAnalysisVersion});}
     const d = this.decks[id]; this.stopSource(d);
     d.fx?.reset();d.roll=null;
@@ -393,6 +397,7 @@ export class StudioEngine extends EventTarget {
   setDownbeat(id) {
     const d = this.decks[id]; if (!d.track) return;
     this.cancelTransition(); d.track.downbeat = d.track.beatOffset = this.position(id); d.track.confidence = 'manual';d.track.manualGrid=true;
+    this.refreshArrangement(d.track);
     this.dispatchEvent(new Event('change'));
   }
   async setRate(id, rate,{cancel=true}={}) {
@@ -556,7 +561,8 @@ export class StudioEngine extends EventTarget {
     const pos=this.position(source), lookahead=Math.max(.12,(this.keyLockLatency||0)+.04);
     const requestedPoint=options.automix&&!options.startNow&&!recovering?(options.plannedPoint??plan.outPoint??a.track.mixOut??0):0;
     const alignStart=!recovering&&quantize&&a.track.bpm&&(!plan.automatic||plan.trustworthy||plan.quantizeHandoff||plan.tempoBlend)&&!(options.automix&&a.track.manualRegions);
-    const targetPosition=alignStart?nextMusicalTime(Math.max(pos+lookahead*a.rate,requestedPoint),a.track.bpm,a.track.downbeat??a.track.beatOffset??0,options.quantizeBeats||(options.startNow?1:4)):Math.max(pos+lookahead*a.rate,requestedPoint);
+    const alignmentOffset=(a.track.downbeat??a.track.beatOffset??0)-(options.automix&&!options.startNow&&plan.score&&gridReliable(a.track)?plan.sourceSpanSeconds*plan.score.handoffFraction:0);
+    const targetPosition=alignStart?nextMusicalTime(Math.max(pos+lookahead*a.rate,requestedPoint),a.track.bpm,alignmentOffset,options.quantizeBeats||(options.startNow?1:4)):Math.max(pos+lookahead*a.rate,requestedPoint);
     const endPosition=Math.min(a.track.audibleEnd||a.track.buffer.duration,a.track.buffer.duration);
     const remaining=(endPosition-pos)/a.rate;
     const delay=(targetPosition-pos)/a.rate;

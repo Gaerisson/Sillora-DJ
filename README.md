@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/images/sillora-banner.svg" alt="Sillora DJ — Le mix, dans son mouvement. Par Gaerisson." width="100%"></p>
 
-<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix, stems et télécommande Web.<br><sub>Version de développement 0.21.0 · Par Gaerisson</sub></p>
+<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix, stems et télécommande Web.<br><sub>Version de développement 0.22.0 · Par Gaerisson</sub></p>
 
 <p align="center"><a href="#le-studio">Découvrir</a> · <a href="docs/SCREENSHOTS.md">Galerie</a> · <a href="#prise-en-main">Démarrer</a> · <a href="#feuille-de-route">Feuille de route</a> · <a href="#validation-et-limites-actuelles">État &amp; limites</a></p>
 
@@ -12,7 +12,7 @@
 
 La priorité de la refonte est le **résultat audio**, puis la stabilité, l’ergonomie et la finition visuelle. Les fonctions ci-dessous sont présentes dans la version actuelle ; les évolutions de la feuille de route restent à implémenter et à valider.
 
-### Fonctions présentes en 0.21.0
+### Fonctions présentes en 0.22.0
 
 | Mixer | Préparer et diffuser |
 | :--- | :--- |
@@ -30,6 +30,12 @@ La **0.19.0** sépare le catalogue du décodage : les fichiers apparaissent imm�
 La **0.20.0** coordonne volumes, graves, filtre et écho sur une partition commune. Les montées gardent le groove avant un relais mesuré, et les repères d’onde suivent le temps réellement parcouru pendant le changement de tempo. [Notes et recette](docs/CHANGELOG-0.20.0.md).
 
 La **0.21.0** ajoute le profil de maintien de hauteur **Rythme** dans **Régie → Master**, également pilotable sur Remote. Sur le banc de pulsations, sa latence de traitement est d’environ 59 ms et l’écart maximal par corrélation passe de 13 à 5 ms. Standard reste le profil par défaut ; le timbre doit être jugé à l’écoute. [Mesures, utilisation et limites](docs/KEYLOCK-0.21.md).
+
+La **0.22.0** ajoute les repères d’arrangement, leur affichage sur les ondes PC/Remote et la préparation depuis **ANALYSE → STRUCTURE**. Les régions peuvent suivre un changement mesuré et le relais du score conserve sa phase. Les corrections restent prioritaires et survivent au changement de version du cache. [Fonctionnement et limites](docs/CHANGELOG-0.22.0.md).
+
+![Préparation des repères, navigation et réglage IN/OUT dans Sillora DJ 0.22](docs/images/arrangement-022.png)
+
+La capture utilise une grille explicitement corrigée. Une grille peu fiable conserve le repli énergétique ; ces repères ne reconnaissent pas encore les phrases, voix ou drops.
 
 ### Un passage construit autour de la musique
 
@@ -62,7 +68,7 @@ Captures de l’application exécutée avec des fichiers audio réels. Les fichi
 3. Sélectionner un passage dans **Transition Lab**, puis **Mixer maintenant**.
 4. Ouvrir **Master** pour le sidechain, **Micros / ligne** pour la régie et **Remote** pour l’appairage sur le réseau local.
 
-Le build produit `Sillora-DJ-Setup-0.21.0.exe` et `Sillora-DJ-0.21.0-Windows.exe`. **Les binaires ne sont pas encore publiés dans GitHub Releases.** Pour démarrer depuis les sources :
+Le build produit `Sillora-DJ-Setup-0.22.0.exe` et `Sillora-DJ-0.22.0-Windows.exe`. **Les binaires ne sont pas encore publiés dans GitHub Releases.** Pour démarrer depuis les sources :
 
 ```powershell
 npm ci
@@ -76,7 +82,7 @@ Node.js 24 est utilisé pour le développement. `npm run dev` démarre le lecteu
 
 La refonte est organisée dans cet ordre. La **0.17.0 livre un premier lot de fiabilité et de préparation**, décrit dans les [notes de version](docs/CHANGELOG-0.17.0.md) et le [suivi des travaux](PROGRESS.md). Les objectifs complets ci-dessous ne sont pas tous livrés.
 
-La [revue complète du cahier des charges](docs/AUDIT-REFONTE.md) classe **374 points** avec leurs preuves, écarts et validations restantes sur la base 0.17.0. Le [suivi actualisé](docs/AUDIT-SUIVI.md) détaille les lots 0.18–0.21 et les points encore ouverts. La [proposition de refonte UI](docs/REFONTE-UI.md) comprend des captures et une [maquette interactive locale](design/refonte/README.md) : Studio, Automix, Préparation et Régie. Il s'agit d'une proposition à données illustratives ; la maquette ne pilote pas le moteur audio de la 0.21.0.
+La [revue complète du cahier des charges](docs/AUDIT-REFONTE.md) classe **374 points** avec leurs preuves, écarts et validations restantes sur la base 0.17.0. Le [suivi actualisé](docs/AUDIT-SUIVI.md) détaille les lots 0.18–0.22 et les points encore ouverts. La [proposition de refonte UI](docs/REFONTE-UI.md) comprend des captures et une [maquette interactive locale](design/refonte/README.md) : Studio, Automix, Préparation et Régie. Il s'agit d'une proposition à données illustratives ; la maquette ne pilote pas le moteur audio de la 0.22.0.
 
 | Priorité | Objectifs | Validation attendue |
 | :--- | :--- | :--- |
@@ -97,7 +103,7 @@ Une transition devra être préparée en amont, démarrer sur un repère musical
 
 ## Validation et limites actuelles
 
-Version **0.21.0**, Windows x64, Electron et Web Audio. La dernière suite locale enregistrée compte **261 tests réussis**. **48 scénarios natifs passent depuis le paquet Windows** : 16 cas acoustiques, quatre PC/Remote, 18 rendus musicaux avec les deux profils, six bibliothèque et quatre continuité/audio. Les 136 sources applicatives correspondent au code embarqué ; installateur et portable ont le même contenu vérifié. Les détails et empreintes sont consignés dans les [notes de version](docs/CHANGELOG-0.21.0.md). Ces vérifications techniques ne constituent pas une validation d’écoute de tous les presets ni une garantie de stabilité sur de longues sessions.
+Version **0.22.0**, Windows x64, Electron et Web Audio. **282 tests automatisés et 60 cas natifs passent**, dont 22 rendus musicaux. Les cas natifs utilisent le code embarqué ; les 140 sources applicatives correspondent au paquet et les deux exécutables ont le même contenu vérifié. Le périmètre, les reprises du banc bibliothèque et les empreintes figurent dans les [notes de version](docs/CHANGELOG-0.22.0.md). Ces vérifications techniques ne constituent pas une validation d’écoute de tous les presets ni une garantie de stabilité sur de longues sessions.
 
 Le premier lot corrige la préparation au point OUT, les sources entrantes après annulation, la sortie de boucle après variation du tempo et la copie native du lien Remote. L’analyse fonctionne en arrière-plan pendant la lecture. La 0.18 ajoute des microfondus aux raccords du secours. La 0.19 valide six scénarios de bibliothèque sous Electron, dont une reprise après changement de port, et rejoue quatre scénarios audio/Remote sur deux vrais MP3. La gestion de très grandes collections, les préparations de stems et les sessions prolongées restent à approfondir.
 
@@ -111,7 +117,7 @@ La validation de chaque lot devra préciser les fonctions testées, les mesures 
 
 ## Documentation et contributions
 
-[Installation](docs/INSTALLATION.md) · [Galerie](docs/SCREENSHOTS.md) · [Identité visuelle](docs/BRAND.md) · [Version 0.21](docs/CHANGELOG-0.21.0.md) · [Suivi de l’audit](docs/AUDIT-SUIVI.md) · [Données & réseau](docs/PRIVACY.md) · [Dépendances](THIRD_PARTY.md)
+[Installation](docs/INSTALLATION.md) · [Galerie](docs/SCREENSHOTS.md) · [Identité visuelle](docs/BRAND.md) · [Version 0.22](docs/CHANGELOG-0.22.0.md) · [Suivi de l’audit](docs/AUDIT-SUIVI.md) · [Données & réseau](docs/PRIVACY.md) · [Dépendances](THIRD_PARTY.md)
 
 Un bug, une transition à améliorer ou une idée ? [Ouvrir une issue](https://github.com/Gaerisson/Sillora-DJ/issues/new/choose) ou consulter [le guide de contribution](CONTRIBUTING.md). Pour un problème audio, préciser la version, les réglages, le point de déclenchement et les étapes permettant de le reproduire.
 

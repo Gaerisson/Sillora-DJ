@@ -2,6 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {drawDJWaveform,rollingWaveRange} from '../public/dj-waveform.mjs';
 
+test('waveform arrangement flags use only confident in-range cached landmarks',()=>{
+ const labels=[],rects=[],ctx={canvas:{width:600,height:94},save(){},restore(){},clearRect(){},fillRect(...r){rects.push(r);},beginPath(){},rect(){},clip(){},moveTo(){},lineTo(){},closePath(){},fill(){},fillText(text,x,y){labels.push({text,x,y});},measureText(s){return{width:s.length*5};}};
+ const track={bpm:120,buffer:{duration:20,getChannelData(){throw Error('No PCM in drawing');}},arrangement:{version:1,landmarks:[{time:4,confidence:.9,kind:'lift'},{time:12,confidence:.2,kind:'change'},{time:22,confidence:.95,kind:'release'}]}};
+ drawDJWaveform(ctx,{track,from:0,to:20});assert.ok(labels.some(p=>p.text==='R1'&&p.x>=120&&p.x<140));assert.ok(!labels.some(p=>p.text==='R2'||p.text==='R3'));assert.ok(rects.every(r=>r.every(Number.isFinite)));
+});
+
 test('rolling view preserves its playhead at one quarter before the first beat and near the end',()=>{
   for(const bpm of [98,110,128])for(const position of [0,1,100,239]){
     const [from,to]=rollingWaveRange(position,bpm,16);

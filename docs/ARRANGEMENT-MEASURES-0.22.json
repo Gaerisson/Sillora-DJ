@@ -1,0 +1,77 @@
+{
+  "version": "0.22.0",
+  "profile": "rhythm",
+  "scope": "Real MP3 files with explicitly accepted test grids, automatic IN/OUT and production engine. Measured arrangement changes; no automatic grid-confidence or semantic phrase certification.",
+  "automaticGridQualityCertified": false,
+  "semanticPhrasesDetected": false,
+  "renders": [
+    {
+      "style": "riser",
+      "fromBpm": 110,
+      "toBpm": 98,
+      "plannedHandoffNativeSeconds": 228.34338767803843,
+      "actualHandoffNativeSeconds": 228.34338767803806,
+      "measuredArrangementAnchor": {
+        "time": 228.34338767803843,
+        "confidence": 0.721,
+        "kind": "release",
+        "energyDeltaDb": -5.26,
+        "bassDelta": -0.271
+      },
+      "peak": 0.4502195715904236,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50msWindows": 0,
+      "incomingContinues": true,
+      "incomingFinalRate": 1
+    },
+    {
+      "style": "riser",
+      "fromBpm": 98,
+      "toBpm": 110,
+      "plannedHandoffNativeSeconds": 233.14629848000195,
+      "actualHandoffNativeSeconds": 233.14629848000195,
+      "measuredArrangementAnchor": null,
+      "peak": 0.4531134068965912,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50msWindows": 0,
+      "incomingContinues": true,
+      "incomingFinalRate": 1
+    },
+    {
+      "style": "auto",
+      "fromBpm": 110,
+      "toBpm": 98,
+      "plannedHandoffNativeSeconds": 228.34338767803843,
+      "actualHandoffNativeSeconds": 228.34338767803806,
+      "measuredArrangementAnchor": {
+        "time": 228.34338767803843,
+        "confidence": 0.721,
+        "kind": "release",
+        "energyDeltaDb": -5.26,
+        "bassDelta": -0.271
+      },
+      "peak": 0.450193852186203,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50msWindows": 0,
+      "incomingContinues": true,
+      "incomingFinalRate": 1
+    },
+    {
+      "style": "auto",
+      "fromBpm": 98,
+      "toBpm": 110,
+      "plannedHandoffNativeSeconds": 233.14629848000195,
+      "actualHandoffNativeSeconds": 233.14629848000195,
+      "measuredArrangementAnchor": null,
+      "peak": 0.40191665291786194,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50msWindows": 0,
+      "incomingContinues": true,
+      "incomingFinalRate": 1
+    }
+  ]
+}

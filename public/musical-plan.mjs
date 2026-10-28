@@ -1,4 +1,5 @@
 import {clamp} from './audio-math.mjs';
+import {arrangementFor} from './arrangement.mjs';
 
 const finite=(n,fallback=0)=>Number.isFinite(n)?n:fallback;
 const average=values=>values.length?values.reduce((sum,value)=>sum+finite(value),0)/values.length:0;
@@ -45,7 +46,8 @@ export function musicalEntry(track){
  if(track.envelope?.length&&chosen===null){
   for(let at=start;at<=Math.max(start,limit);at+=.1){if((levelAt(track.envelope,at+bar/2,bar)??0)>=threshold&&(levelAt(track.envelope,at+bar*1.5,bar)??0)>=threshold*.7){entry=snap(track,at);break;}}
  }
- return clamp(entry,start,Math.max(start,end-.05));
+ const landmark=arrangementFor(track).landmarks.find(p=>p.time>=entry-.05&&p.time<=Math.min(limit,entry+bar*4)+.001&&(p.kind==='lift'||p.bassDelta>.1)&&(levelAt(track.envelope,p.time+bar,bar*2)??0)>=threshold);
+ return clamp(landmark?.time??entry,start,Math.max(start,end-.05));
 }
 
 export function cleanTiming(duration){
@@ -68,8 +70,11 @@ export function musicalExit(track,duration,position=0,{handoffFraction=1}={}){
   const windows=(track.structure||[]).filter(w=>w.time>=tailStart&&w.time<end&&w.rms>=threshold);
   if(windows.length)activeEnd=Math.min(end,windows.at(-1).time+bar);
  }
- const handoff=snap(track,Math.max(start,activeEnd-.08),'floor');
- const planned=Math.max(start,handoff-duration*handoffFraction);
+ const fraction=clamp(finite(handoffFraction,1),0,1),latest=Math.min(activeEnd-.08,end-Math.max(0,duration)*(1-fraction)-.04);
+ let handoff=snap(track,Math.max(start,latest),'floor');
+ const landmark=arrangementFor(track).landmarks.filter(p=>p.time<=handoff+.001&&p.time>=handoff-bar*8&&p.time>=start).at(-1);
+ if(landmark)handoff=landmark.time;
+ const planned=Math.max(start,handoff-duration*fraction);
  // Keep the plan stable while approaching it. If already past it, the engine
 // schedules the next safe boundary; do not move every preview by its lookahead.
  return clamp(planned,start,Math.max(start,end-.1));

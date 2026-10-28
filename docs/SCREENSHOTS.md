@@ -1,6 +1,12 @@
 # Sillora DJ en images
 
-Captures de la version 0.16.1 en cours d’exécution. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
+Les vues générales proviennent de la 0.16.1 exécutée ; la préparation de structure ci-dessous provient de la 0.22.0. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
+
+## Préparation · 0.22.0
+
+![Onde RGB et repères d’arrangement dans le panneau d’analyse](images/arrangement-022.png)
+
+Repères mesurés après correction explicite de la grille, navigation et pose de IN/OUT. La carte de ce titre nécessite encore cette correction ; elle n’est pas présentée comme une détection automatique de phrases.
 
 ## Studio
 

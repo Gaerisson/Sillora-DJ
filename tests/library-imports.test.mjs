@@ -31,3 +31,10 @@ test('changing visible priorities demotes old background work without demoting a
 test('content-indexed user preparation survives restart and a renamed file can recover it',async()=>{
  const q=new LibraryImports({decode:async(f,r)=>({...audio(r),contentKey:'sha256:stable-content'})}),t=await q.ensure(q.discover([file('old.mp3')])[0].id);t.hotCues=[2,10,null,null];t.manualGrid=true;t.bpm=127;t.favorite=true;q.touch(t,{user:true});const restored=new LibraryImports();restored.restore(q.snapshot());const prepared=restored.byContent.get('sha256:stable-content');assert.equal(prepared.meta.bpm,127);assert.deepEqual(prepared.meta.hotCues,[2,10,null,null]);assert.equal(prepared.meta.favorite,true);assert.ok(prepared.userUpdatedAt>0);assert.notEqual(fileKey(file('new.mp3')),fileKey(file('old.mp3')));
 });
+import * as identities from '../public/library-imports.mjs';
+
+test('content preparation lookup follows the audio digest across analysis cache versions',async()=>{
+ assert.equal(typeof identities.audioContentId,'function');const hash='a'.repeat(64),old='sha256:'+hash+':2:wave2:region1',current='sha256:'+hash+':2:wave2:region2';
+ const q=new LibraryImports({decode:async(f,r)=>({...audio(r),contentKey:old})}),t=await q.ensure(q.discover([file('old.mp3')])[0].id);t.manualRegions=true;t.mixIn=3.41;t.mixOut=80.23;q.touch(t,{user:true});const restored=new LibraryImports();restored.restore(q.snapshot());
+ const prepared=restored.byContent.get(identities.audioContentId(current));assert.equal(prepared.meta.mixIn,3.41);assert.equal(prepared.meta.manualRegions,true);assert.notEqual(identities.audioContentId(current),identities.audioContentId(current.replace(hash,'b'.repeat(64))));
+});

@@ -1,6 +1,30 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {resolveTransition,faderCurves,transitionProgress} from '../public/transition-design.mjs';import {musicalEntry,musicalExit,cleanTiming} from '../public/musical-plan.mjs';
 const track=(bpm,root,mode)=>({bpm,confidence:'generated',keyRoot:root,keyMode:mode,keyConfidence:1,buffer:{duration:180},mixOut:160,mixIn:0,audibleEnd:179});
+
+function arranged(bpm=120,bars=100,change=92){const bar=240/bpm,duration=bar*bars;return {...track(bpm,0,'major'),downbeat:0,buffer:{duration},audibleEnd:duration,envelope:Array.from({length:Math.ceil(duration*10)},()=>.2),bassEnvelope:Array.from({length:Math.ceil(duration*10)},()=>.06),structure:Array.from({length:bars},(_,i)=>({time:i*bar,rms:.2,density:i<change?.08:.5}))};}
+
+test('an incoming bass entrance close to the energy region refines automatic IN',()=>{
+ const t=arranged(120,50,49);t.structure.forEach(w=>w.density=.2);t.bassEnvelope=t.bassEnvelope.map((_,i)=>i<80?.01:.12);
+ assert.equal(musicalEntry(t),8);assert.equal(musicalEntry({...t,manualRegions:true,mixIn:1.23}),1.23);
+});
+
+test('the score bass handoff lands on the measured outgoing arrangement boundary',()=>{
+ const a=arranged(),b=arranged(120,100,99),plan=resolveTransition({track:a},{track:b},{style:'riser',beats:16,sync:true});
+ assert.equal(plan.handoffPosition,184);assert.equal(plan.outPoint,178);assert.equal(plan.outPoint+plan.sourceSpanSeconds*plan.score.handoffFraction,184);
+ assert.equal(resolveTransition({track:a},{track:b},{style:'riser',beats:16,sync:true,position:180}).outPoint,plan.outPoint,'Preview stays stable');
+});
+
+test('arrangement handoff uses native beats in both directions of a tempo morph',()=>{
+ for(const [a,b]of [[110,98],[98,110]]){const source=arranged(a,112,104),target=arranged(b,112,111),plan=resolveTransition({track:source},{track:target},{style:'riser',beats:16,sync:true,tempoBlend:true});
+  assert.equal(plan.tempoBlend,true);assert.ok(Math.abs(plan.handoffPosition-104*240/a)<1e-5);assert.ok(plan.outPoint+plan.sourceSpanSeconds<source.buffer.duration);
+ }
+});
+
+test('automatic score timing leaves audio after its handoff before EOF',()=>{
+ const source={...arranged(120,100,99),structure:[]},target=arranged();
+ for(const style of ['riser','filter','echo','bass','phrase']){const plan=resolveTransition({track:source},{track:target},{style,beats:16,sync:true});assert.ok(plan.outPoint+plan.sourceSpanSeconds<=source.buffer.duration-.02,style);}
+});
 test('a reliable relative major/minor pair uses a measured harmonic phrase relay',()=>{
  const a=track(120,0,'major'),b=track(124,9,'minor');const plan=resolveTransition({track:a},{track:b},{style:'auto',profile:'musical',beats:32,sync:true});
  assert.equal(plan.keyRelation,'Tonalité relative');assert.equal(plan.harmonic,true);assert.equal(plan.style,'phrase');assert.equal(plan.sync,true);assert.ok(Math.abs(plan.rate-120/124)<1e-9);assert.equal(plan.seconds,16);
