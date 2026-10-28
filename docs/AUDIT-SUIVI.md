@@ -55,6 +55,7 @@ V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T =
 - Cache natif : 500 résultats ou 128 Mio. Budget des originaux décodés : 384 Mio, souple ; platines et ressources stems actives protégées. Ce chiffre ne limite pas la mémoire totale du processus.
 - Les références et checkpoints natifs ne dépendent plus du port localhost. Les fichiers navigateur restent soumis à une nouvelle sélection après fermeture ; les pochettes conservent leur cache historique distinct.
 - Les rapports locaux générés contiennent les mesures détaillées. Les musiques et données personnelles ne sont pas distribuées avec le dépôt.
+- Les dix scénarios passent également depuis le code inclus dans `app.asar`. Les 129 fichiers applicatifs correspondent aux sources testées ; l’archive commune aux deux exécutables passe son contrôle d’intégrité. Empreintes dans les [notes de version](CHANGELOG-0.19.0.md). L’installation sur le profil personnel n’a pas été exécutée.
 
 ## Prochain travail prioritaire
 

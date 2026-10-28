@@ -34,4 +34,11 @@ Le navigateur de dossiers reste plafonné à 2 000 entrées par réponse et n’
 
 Ce lot améliore la préparation et la continuité opérationnelle. Il n’apporte pas de nouvelle validation perceptive des transitions, de détection sémantique des phrases/drops, de grille à tempo variable ou de branchement complet de la maquette UI. [Suivi des exigences et travail restant](AUDIT-SUIVI.md).
 
-Les distributions prévues sont `Sillora-DJ-Setup-0.19.0.exe` et `Sillora-DJ-0.19.0-Windows.exe`. L’intégrité du paquet et la correspondance aux sources sont vérifiées séparément avant remise des exécutables. L’installation sur le profil personnel n’est pas lancée automatiquement.
+Les distributions Windows x64 `Sillora-DJ-Setup-0.19.0.exe` et `Sillora-DJ-0.19.0-Windows.exe` sont construites. Elles embarquent le même contenu ; l’archive de 7 215 fichiers passe son contrôle d’intégrité. Les 129 fichiers applicatifs du paquet correspondent aux sources testées ; les ressources Python, modèle et média vérifiées correspondent aux ressources préparées. Les six scénarios bibliothèque et les quatre audio/Remote passent aussi depuis les sources incluses dans `app.asar`. L’installation sur le profil personnel n’a pas été exécutée.
+
+Empreintes SHA-256 des exécutables remis :
+
+| Fichier | SHA-256 |
+| :--- | :--- |
+| Installateur | `58688e0bd8c0cedbcb396ddc396c9bde3e37d80bf867a4dfc1f511bc34f1b923` |
+| Portable | `df8b90190541302a55072c5c60b23ed05d8c38d1746d61e711728f256bbf91f9` |
