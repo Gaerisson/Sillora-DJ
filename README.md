@@ -68,6 +68,8 @@ Node.js 24 est utilisé pour le développement. `npm run dev` démarre le lecteu
 
 La refonte est organisée dans cet ordre. La **0.17.0 livre un premier lot de fiabilité et de préparation**, décrit dans les [notes de version](docs/CHANGELOG-0.17.0.md) et le [suivi des travaux](PROGRESS.md). Les objectifs complets ci-dessous ne sont pas tous livrés.
 
+La [revue complète du cahier des charges](docs/AUDIT-REFONTE.md) classe **374 points** avec leurs preuves, écarts et validations restantes. La [proposition de refonte UI](docs/REFONTE-UI.md) comprend des captures et une [maquette interactive locale](design/refonte/README.md) : Studio, Automix, Préparation et Régie. Il s'agit d'une proposition à données illustratives ; le moteur 0.17.0 reste inchangé.
+
 | Priorité | Objectifs | Validation attendue |
 | :--- | :--- | :--- |
 | **1 · Fiabilité audio** | Horloge audio commune, commandes et boucles immédiates ou quantifiées, préparation avant OUT, relais de secours | Lecture continue, absence de silence ou clic involontaire, mesures de latence et de dérive |

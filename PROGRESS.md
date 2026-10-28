@@ -69,3 +69,17 @@ Terminer la bibliothèque (découverte immédiate dans la table, annulation/repr
 ## Travaux de documentation réalisés
 
 Le README GitHub présente les fonctions actuelles, les limites et les six phases prévues. Il ne constitue pas une livraison de la refonte de l'application.
+
+## Revue complète du cahier des charges — 28 octobre 2026
+
+Les 20 sections ont été examinées contre le code 0.17.0 et les preuves disponibles : **333 éléments de listes et 41 exigences transversales**, soit **374 points**. Le registre distingue 95 points couverts avec preuve ciblée, 162 partiels, 91 à développer et 26 à valider. Ce sont des états par exigence ; ce décompte ne mesure pas un pourcentage d'achèvement du produit.
+
+- [Audit point par point](docs/AUDIT-REFONTE.md), avec référence au code, constat et critère de validation.
+- [Proposition de refonte produit/UI](docs/REFONTE-UI.md), architecture des écrans, composants partagés, dépendances et recette de migration.
+- [Maquette navigable](design/refonte/index.html) : Studio, Automix, Préparation, Régie, Visuels, Remote, Sources et réglages. Le registre de l'audit y est filtrable.
+
+La baseline de **213 tests** a été réexécutée avec succès. La maquette a été contrôlée dans Electron sur cinq tailles (1440×900, 1280×800, 1024×768, 768×1024, 390×844), avec tests des vues, thèmes, recherche/tri/favoris, chargement illustratif, états micro partagés, réglages et filtres du registre. Aucun débordement horizontal n'a été relevé. Les contrôles restent des interactions de maquette, pas des tests DSP.
+
+Écarts majeurs confirmés : grille constante et structure énergétique non sémantique, secours avant EOF incomplet, absence de scratch sur l'onde, VU master non séparé L/R, préparation/reprise de bibliothèque incomplète, manque de playlists et d'updates. La comparaison d'écoute avec les vidéos reste à faire.
+
+La version audio **0.17.0 est inchangée** par cette proposition. Les nouvelles fonctions montrées dans la maquette restent à implémenter et à brancher sur des états/mesures réels, par lots documentés dans la proposition. Une interface affichée ne vaut pas une fonction livrée.
