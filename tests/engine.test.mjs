@@ -30,6 +30,26 @@ class Context {
 globalThis.AudioContext = Context;
 const track = (id, bpm = 120, duration = 60) => ({ id, bpm, beatOffset: 0, buffer: { duration }, peaks: [] });
 
+test('emergency hold is armed before EOF, follows the audible cursor and releases without a position jump',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('a',120,20));await e.play(0);e.context.currentTime=17;
+ assert.equal(e.holdForNext(0),true);const d=e.decks[0],source=d.source,window=d.loop;assert.equal(window.kind,'continuity');assert.ok(window.end>17&&window.end<20);assert.equal(source.loop,true);
+ const edge=d.continuity.fade.firstEdge;assert.ok(d.voiceGain.gain.events.some(event=>event.type==='ramp'&&event.time===edge&&event.value===0));assert.ok(d.voiceGain.gain.events.some(event=>event.type==='ramp'&&Math.abs(event.time-edge-.004)<1e-9&&event.value===1));
+ e.context.currentTime=21;const cursor=e.position(0);assert.ok(cursor>=window.start&&cursor<window.end);e.releaseContinuity(0);assert.equal(d.loop,null);assert.equal(source.loop,false);assert.equal(e.position(0),cursor);e.context.currentTime+=.5;assert.equal(e.position(0),cursor+.5);
+});
+test('emergency hold never owns a manual loop and cannot survive pause, seek, unload or replacement',async()=>{
+ for(const action of ['pause','seek','unload','load','loop']){
+  const e=new StudioEngine();await e.init();e.load(0,track('a',120,20));await e.play(0);e.context.currentTime=17;assert.equal(e.holdForNext(0),true);
+  if(action==='seek')await e.seek(0,3);else if(action==='load')e.load(0,track('new'));else if(action==='loop')e.loop(0,4);else e[action](0);
+  assert.equal(e.decks[0].continuity,null,action);assert.notEqual(e.decks[0].loop?.kind,'continuity',action);
+ }
+ const e=new StudioEngine();await e.init();e.load(0,track('a'));await e.play(0);e.loop(0,4);const manual=e.decks[0].loop;assert.equal(e.holdForNext(0),false);e.releaseContinuity(0);assert.equal(e.decks[0].loop,manual);
+});
+test('a ready successor leaves emergency hold through a bounded scheduled transition',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('a',120,20));e.load(1,track('b'));await e.play(0);e.context.currentTime=17;e.holdForNext(0);e.context.currentTime=21;
+ await e.startTransition({style:'bass',beats:4,sync:false,quantize:false,tempoBlend:false,startNow:true,automix:true});
+ assert.equal(e.decks[0].continuity,null);assert.equal(e.decks[0].loop,null);assert.ok(e.transition.duration<=2.01);assert.ok(e.transition.incomingStart<e.context.currentTime+.25);assert.equal(e.decks[1].playing,true);
+});
+
 test('a future scheduled passage can be cancelled for every family without ghost playback',async()=>{
  for(const style of ['bass','riser','echo','clean']){
   const e=new StudioEngine();await e.init();e.load(0,{...track('a'),manualRegions:true,mixOut:20});e.load(1,track('b'));

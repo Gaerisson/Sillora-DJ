@@ -12,6 +12,7 @@ import {bindWaveSeek} from './wave-seek.mjs';
 import {RemotePanel} from './remote-panel.js';
 import {DJSession} from './dj-session.mjs';
 import {AutomixScheduler} from './automix-scheduler.mjs';
+import {mountAudioMeters} from './audio-meter-view.js';
 import {camelotKey,keyLabel,rankCandidates,sortTracks,selectionModes,harmonicCompatibility,selectNextTrack} from './dj-library.mjs';
 import {drawDJWaveform} from './dj-waveform.mjs';
 import {FolderBrowser} from './folder-browser.js';
@@ -57,7 +58,7 @@ if(document.querySelector('.lab-count'))document.querySelector('.lab-count').tex
 const appearance=new Appearance();
 const engine = new StudioEngine();
 const sampleBank=new SampleBank(engine);
-const liveMixer=new LiveMixer(engine),audioIO=liveMixer.primary;let audioSettings=null,consoleLayout=null,programSettings=null,brand=null,sourcesPanel=null,pumpQuick=null,lastPumpUI=0;
+const liveMixer=new LiveMixer(engine),audioIO=liveMixer.primary;let audioSettings=null,consoleLayout=null,programSettings=null,meterViews=null,brand=null,sourcesPanel=null,pumpQuick=null,lastPumpUI=0;
 const remotePanel=new RemotePanel($('#remote-settings'));
 const preferences=sanitizePreferences(readStorage('sillage:preferences',{}));
 if(!localStorage.getItem('sillage:musical-v9')){Object.assign(preferences,{style:'auto',profile:'musical',beats:32,intensity:.65});writeStorage('sillage:preferences',preferences);localStorage.setItem('sillage:musical-v9','1');}
@@ -77,7 +78,7 @@ function writeStorage(key,value){try{localStorage.setItem(key,JSON.stringify(val
 function savePreparation(track){if(!track)return;const key=trackKey(track);delete savedPreparation[key];savedPreparation[key]=trackPreparation(track);const keys=Object.keys(savedPreparation);while(keys.length>500)delete savedPreparation[keys.shift()];writeStorage('sillage:preparation',savedPreparation);}
 function rememberTrack(track){return restorePreparation(track,savedPreparation[trackKey(track)]);}
 function savePreferences(){Object.assign(preferences,{view:document.body.dataset.view||'decks',zoom:waveZoom,master:engine.masterVolume,style:$('#transition-style').value,profile:$('#set-profile').value,intensity:Number($('#transition-intensity').value),beats:Number($('#transition-beats').value),sync:$('#tempo-sync').checked,tempoBlend:$('#tempo-blend').checked,quantize:$('#quantize').checked});writeStorage('sillage:preferences',preferences);}
-function stopAutomix(){automix=false;engine.cancelTransition();update();}
+function stopAutomix(){automix=false;engine.releaseContinuity(0);engine.releaseContinuity(1);engine.cancelTransition();update();}
 function preciseTime(value){return time(value)+'.'+Math.floor((value%1)*100).toString().padStart(2,'0');}
 function replaceQueue(next){lastQueue=[...queue];queue.splice(0,queue.length,...next);renderLibrary();}
 async function run(action) { try { return await action(); } catch (error) { toast(error.message || 'Une erreur est survenue.'); } }
@@ -474,7 +475,7 @@ async function importDesktop(entries,target=null,options){
 }
 $('#import-top').onclick=()=>run(async()=>{fileDeck=null;if(window.sillageDesktop)await importDesktop(await window.sillageDesktop.chooseAudio());else $('#file-input').click();});
 if(window.sillageDesktop){
- document.body.dataset.platform='windows';$('.workspace-label').firstChild.textContent='';$('.workspace-label').innerHTML='<span class="live-dot"></span> STUDIO WINDOWS <span class="version">/ 017.0</span>';
+ document.body.dataset.platform='windows';$('.workspace-label').firstChild.textContent='';$('.workspace-label').innerHTML='<span class="live-dot"></span> STUDIO WINDOWS <span class="version">/ 018.0</span>';
  $('#desktop-library').hidden=false;$('#desktop-library').onclick=()=>run(async()=>{const entries=await window.sillageDesktop.library();if(!entries.length)return toast('Importez des fichiers avec le sélecteur Windows pour mémoriser votre bibliothèque.');await importDesktop(entries);});
  window.sillageDesktop.ready({audioReady:false}).catch(()=>{});let lastPlaying=null;setInterval(()=>{const playing=engine.decks.some(d=>d.playing);if(playing!==lastPlaying){lastPlaying=playing;window.sillageDesktop.setPlaying(playing).catch(()=>{});if(playing)window.sillageDesktop.ready({audioReady:true}).catch(()=>{});}},500);
 }
@@ -503,7 +504,7 @@ window.addEventListener('drop', event => { if (event.dataTransfer.files.length) 
 
 async function toggleAutomix() {
   if(!automix&&!djSession.enabled&&source==='folders'&&folderBrowser.scope)return startFolderAutomix(folderBrowser.files,folderBrowser.scope,$('#session-mode').value);
-  if (automix) { automix = false; engine.cancelTransition(); update(); return; }
+  if (automix) { stopAutomix(); return; }
   const active = engine.crossfade < 0.5 ? 0 : 1;
   if(djSession.enabled&&!djSession.remaining(engine.decks[active].track)&&engine.position(active)>=(engine.decks[active].track?.buffer.duration||Infinity)-.05){if(window.sillageDesktop?.folderList&&djSession.scope?.id!=='selection'){const folder=await window.sillageDesktop.folderList(djSession.scope.id);return startFolderAutomix(folder.files,djSession.scope,djSession.mode);}const previous=[...djSession.tracks];prepareSet(previous);automix=true;await engine.play(0);update();return;}
   if(!djSession.enabled){const currentScope=engine.decks[active].track?.sourceFolders?.[0];if(currentScope&&window.sillageDesktop?.folderList){const folder=await window.sillageDesktop.folderList(currentScope.id);return startFolderAutomix(folder.files,currentScope,$('#session-mode').value);}if(!engine.decks[active].track&&viewedScope)return startFolderAutomix(viewedScope.files,viewedScope,$('#session-mode').value);}
@@ -528,7 +529,7 @@ engine.addEventListener('analysis',event=>{
 });
 engine.addEventListener('warning',event=>toast(event.detail));
 const automixScheduler=new AutomixScheduler(engine,{
- enabled:()=>automix,options:transitionOptions,
+ enabled:()=>automix,options:transitionOptions,pending:()=>importing,
  prepare:async active=>{
   const other=1-active;
   if(djSession.enabled&&!prepared[other])fillNextDeck(active);
@@ -541,7 +542,7 @@ const automixScheduler=new AutomixScheduler(engine,{
 setInterval(()=>automixScheduler.tick(),100);
 engine.addEventListener('naturalend',()=>automixScheduler.tick());
 
-let lastMasterPeakDb=-100;const waveCanvases = $$('.waveform'), vinyls = $$('.vinyl'), levels = new Float32Array(128);
+let lastMasterPeakDb=-100,lastContinuityPhase='off';const waveCanvases = $$('.waveform'), vinyls = $$('.vinyl');
 function draw() {
   const colors={...appearance.colors,a:getComputedStyle(document.documentElement).getPropertyValue('--a').trim()||appearance.colors.a,b:getComputedStyle(document.documentElement).getPropertyValue('--b').trim()||appearance.colors.b};
   const progress = engine.tick();
@@ -568,15 +569,10 @@ function draw() {
     vinyls[id].style.transform = `rotate(${appearance.settings.motion&&!appearance.reducedMotion?pos*200:0}deg)`;
     if(d.rateRamp){const effective=(d.track?.bpm||120)*engine.currentRate(id);if(document.activeElement!==deckEl.querySelector('.bpm-input'))deckEl.querySelector('.bpm-input').value=effective.toFixed(1);}
   }
-  const vu = $('#vu-meter'), v = vu.getContext('2d'); v.clearRect(0, 0, 46, 90);
-  let amplitude = 0;
-  if (engine.analyser) { engine.analyser.getFloatTimeDomainData(levels); amplitude = Math.sqrt(levels.reduce((sum, value) => sum + value * value, 0) / levels.length); }
-  lastMasterPeakDb=20*Math.log10(Math.max(.00001,...Array.from(levels,Math.abs)));
-  const db = 20 * Math.log10(Math.max(0.0001, amplitude)), level = clamp((db + 45) / 45, 0, 1);
-  for (let i = 0; i < 15; i++) {
-    v.fillStyle = i / 15 < level ? i > 12 ? colors.b : colors.green : colors.panel2;
-    v.fillRect(11, 84 - i * 5.4, 9, 3.2); v.fillRect(24, 84 - i * 5.4, 9, 3.2);
-  }
+  const metrics=engine.readAudioMetrics(),master=metrics.master;meterViews?.update(metrics,colors);
+  lastMasterPeakDb=metrics.available?Math.max(master.left.peakDb,master.right.peakDb):-100;
+  const db=metrics.available?Math.max(master.left.rmsDb,master.right.rmsDb):-100,level=clamp((db+60)/60,0,1);
+  const phase=automixScheduler.state.phase;if(phase==='holding')$('#transition-status').textContent='Secours · prochain titre en préparation · '+Math.ceil(automixScheduler.state.remaining||0)+' s max';else if(lastContinuityPhase==='holding')updateTransitionText();lastContinuityPhase=phase;
   if (sessionStart) { const seconds = Math.floor((Date.now() - sessionStart) / 1000); $('#session-clock').textContent = `${Math.floor(seconds / 3600).toString().padStart(2, '0')}:${time(seconds % 3600)}`; }
   const recordTime=time(recorder.duration);if($('#record-timer').textContent!==recordTime)$('#record-timer').textContent=recordTime;
   publishProgramFrame(level);
@@ -643,8 +639,8 @@ function remotePeaks(track){if(!track)return [];let peaks=remotePeakCache.get(tr
 function remoteSnapshot(){
  const active=engine.transition?.source??(engine.crossfade<.5?0:1),current=engine.decks[active].track,t=engine.transition,ranked=djSession.enabled?djSession.recommendations(current).slice(0,8):[],io=audioIO.state;
  const signature=tracks.map(t=>[t.id,t.bpm,t.keyRoot,t.keyMode,t.favorite,t.coverRevision||0].join(':')).join('|');if(signature!==remoteLibrarySignature){remoteLibrarySignature=signature;remoteLibraryRevision++;}const q=queue.join('|');if(q!==remoteQueueSignature){remoteQueueSignature=q;remoteQueueRevision++;}
- let masterDb=-100;if(engine.analyser){engine.analyser.getFloatTimeDomainData(levels);masterDb=20*Math.log10(Math.max(.00001,Math.sqrt(levels.reduce((sum,value)=>sum+value*value,0)/levels.length)));}
- return{capturedAt:Date.now(),skin:appearance.settings.skin,masterPeakDb:lastMasterPeakDb,decks:engine.decks.map(d=>({id:d.id,coverId:remoteCoverId(d.track),waveBands:remoteWaveBands(d.track),braking:Boolean(d.braking),trackId:d.track?.id,manualKey:d.track?.manualKey,title:d.track?.title||'',artist:d.track?.artist||'',bpm:d.track?(d.track.bpm||0)*engine.currentRate(d.id):0,nativeBpm:d.track?.bpm,rate:engine.currentRate(d.id),rateRamp:d.rateRamp?{to:d.rateRamp.to,remaining:Math.max(0,Math.min(d.rateRamp.duration,d.rateRamp.start+d.rateRamp.duration-engine.context.currentTime)),wait:Math.max(0,d.rateRamp.start-engine.context.currentTime)}:null,key:d.track?keyLabel(d.track):'',duration:d.track?.buffer.duration||0,position:engine.position(d.id),playing:d.playing,loaded:Boolean(d.track),volume:d.volume,scratching:d.scratching,eq:d.eq,filter:d.filter,echo:d.echo,loop:d.loop,cue:d.cue,hotCues:d.track?.hotCues,mixIn:d.track?.mixIn,mixOut:d.track?.mixOut,beatOffset:d.track?.downbeat??d.track?.beatOffset,peaks:remotePeaks(d.track),effect:{kind:d.fx?.kind,amount:d.fx?.amount},stems:{ready:Boolean(d.track?.stemBuffer),active:Boolean(d.stemGains)||!d.playing&&Boolean(d.track?.stemBuffer),preparing:d.track?.stemPreparing,status:d.track?.stemStatus,levels:d.track?.stemLevels}})),crossfader:engine.crossfade,master:engine.masterVolume,keyLock:engine.keyLock,masterDb,automix:{enabled:automix,mode:djSession.mode,scopeName:djSession.scope?.name||'',remaining:djSession.remaining(current)},transition:{active:Boolean(t),progress:t?clamp((engine.context.currentTime-t.start)/t.duration,0,1):0,label:t?transitionName(t.style):'Prêt',tempoBlend:Boolean(t?.tempoBlend),fromBpm:t?.bpmA,toBpm:t?.bpmB,bpm:t?(engine.decks[t.source].track?.bpm||120)*engine.currentRate(t.source):0,reason:t?.reason||$('#mix-advice').textContent,seconds:t?.duration,stages:t?.stages},transitionSettings:transitionOptions(),catalog:transitionCatalog,library:[],libraryTotal:tracks.length,libraryRevision:remoteLibraryRevision,recommendations:ranked.map(r=>({...remoteTrack(r.track),reason:r.reason})),queue:queue.slice(0,20).map(id=>remoteTrack(tracks.find(t=>t.id===id))).filter(Boolean),queueTotal:queue.length,queueRevision:remoteQueueRevision,sampler:sampleBank.state,program:engine.programOptions,pumping:engine.pumping?.state||{available:null,reductionDb:0,kick:false},liveInputs:liveMixer.state.inputs,duckReductionDb:liveMixer.state.reductionDb,audio:{...io,inputId:io.options.inputDeviceId,outputId:io.actualOutputId,outputLabel:io.devices.find(device=>device.kind==='audiooutput'&&device.deviceId===io.actualOutputId)?.label||'Sortie Windows par défaut'},recording:{id:remoteRecordId,state:recorder.state,duration:recorder.duration,available:remoteRecordReady,bytes:recorder.result?.blob?.size||0,error:recorder.error?.message||remoteRecordError},jobs:remoteJobs,history:engine.performanceLog.slice(-20)};
+ const metrics=engine.readAudioMetrics(),masterDb=metrics.available?Math.max(metrics.master.left.rmsDb,metrics.master.right.rmsDb):-100,masterPeakDb=metrics.available?Math.max(metrics.master.left.peakDb,metrics.master.right.peakDb):-100;
+ return{capturedAt:Date.now(),skin:appearance.settings.skin,masterPeakDb,meters:metrics,decks:engine.decks.map(d=>({id:d.id,coverId:remoteCoverId(d.track),waveBands:remoteWaveBands(d.track),braking:Boolean(d.braking),trackId:d.track?.id,manualKey:d.track?.manualKey,title:d.track?.title||'',artist:d.track?.artist||'',bpm:d.track?(d.track.bpm||0)*engine.currentRate(d.id):0,nativeBpm:d.track?.bpm,rate:engine.currentRate(d.id),rateRamp:d.rateRamp?{to:d.rateRamp.to,remaining:Math.max(0,Math.min(d.rateRamp.duration,d.rateRamp.start+d.rateRamp.duration-engine.context.currentTime)),wait:Math.max(0,d.rateRamp.start-engine.context.currentTime)}:null,key:d.track?keyLabel(d.track):'',duration:d.track?.buffer.duration||0,position:engine.position(d.id),playing:d.playing,loaded:Boolean(d.track),volume:d.volume,scratching:d.scratching,eq:d.eq,filter:d.filter,echo:d.echo,loop:d.loop,cue:d.cue,hotCues:d.track?.hotCues,mixIn:d.track?.mixIn,mixOut:d.track?.mixOut,beatOffset:d.track?.downbeat??d.track?.beatOffset,peaks:remotePeaks(d.track),effect:{kind:d.fx?.kind,amount:d.fx?.amount},stems:{ready:Boolean(d.track?.stemBuffer),active:Boolean(d.stemGains)||!d.playing&&Boolean(d.track?.stemBuffer),preparing:d.track?.stemPreparing,status:d.track?.stemStatus,levels:d.track?.stemLevels}})),crossfader:engine.crossfade,master:engine.masterVolume,keyLock:engine.keyLock,masterDb,automix:{enabled:automix,mode:djSession.mode,scopeName:djSession.scope?.name||'',remaining:djSession.remaining(current),phase:automixScheduler.state.phase,holdRemaining:automixScheduler.state.remaining||0},transition:{active:Boolean(t),progress:t?clamp((engine.context.currentTime-t.start)/t.duration,0,1):0,label:t?transitionName(t.style):'Prêt',tempoBlend:Boolean(t?.tempoBlend),fromBpm:t?.bpmA,toBpm:t?.bpmB,bpm:t?(engine.decks[t.source].track?.bpm||120)*engine.currentRate(t.source):0,reason:t?.reason||(automixScheduler.state.phase==='holding'?'Secours · prochain titre en préparation':$('#mix-advice').textContent),seconds:t?.duration,stages:t?.stages},transitionSettings:transitionOptions(),catalog:transitionCatalog,library:[],libraryTotal:tracks.length,libraryRevision:remoteLibraryRevision,recommendations:ranked.map(r=>({...remoteTrack(r.track),reason:r.reason})),queue:queue.slice(0,20).map(id=>remoteTrack(tracks.find(t=>t.id===id))).filter(Boolean),queueTotal:queue.length,queueRevision:remoteQueueRevision,sampler:sampleBank.state,program:engine.programOptions,pumping:engine.pumping?.state||{available:null,reductionDb:0,kick:false},liveInputs:liveMixer.state.inputs,duckReductionDb:liveMixer.state.reductionDb,audio:{...io,inputId:io.options.inputDeviceId,outputId:io.actualOutputId,outputLabel:io.devices.find(device=>device.kind==='audiooutput'&&device.deviceId===io.actualOutputId)?.label||'Sortie Windows par défaut'},recording:{id:remoteRecordId,state:recorder.state,duration:recorder.duration,available:remoteRecordReady,bytes:recorder.result?.blob?.size||0,error:recorder.error?.message||remoteRecordError},jobs:remoteJobs,history:engine.performanceLog.slice(-20)};
 }
 async function publishRemoteRecording(){
  if(!recorder.result||recorder.result===remoteRecordResult||!window.sillageDesktop?.publishRecording)return;
@@ -780,6 +776,7 @@ function showAnalysis(id){
 brand=newBranding();
 consoleLayout=mountConsoleLayout({openAudio:()=>run(openAudioSettings),openBrand:()=>brand.open(),openSources:()=>{consoleLayout.sourcesDialog.showModal();sourcesPanel?.open();},onSeek:(id,seconds)=>run(async()=>{stopAutomix();await engine.seek(id,seconds);}),openSurface:mode=>run(async()=>{if(!window.sillageDesktop?.openSurface)throw new Error('Fenêtres disponibles dans l’application Windows.');await window.sillageDesktop.openSurface(mode);})});
 audioSettings=new LiveSettings(liveMixer,consoleLayout.liveRoot);
+meterViews=mountAudioMeters({deckRoots:$$('.deck'),canvas:$('#vu-meter'),onReset:()=>engine.resetAudioPeaks()});
 programSettings=new ProgramSettings(consoleLayout.programRoot,{get:()=>engine.programOptions,set:patch=>engine.setProgramOptions(patch),panic:panicProgram,meter:()=>engine.pumping?.state,onError:error=>toast(error.message)});
 engine.addEventListener('change',()=>programSettings?.update());
 const pumpControls=document.createElement('div');pumpControls.className='mixer-pumping';pumpControls.innerHTML='<button id="pump-quick" aria-pressed="false" title="Sidechain léger de la musique">PUMP</button><meter id="pump-quick-meter" min="0" max="6" value="0" aria-label="Réduction sidechain"></meter><button id="pump-open" aria-label="Réglages sidechain">⚙</button>';document.querySelector('.mixer').append(pumpControls);pumpQuick=document.querySelector('#pump-quick');

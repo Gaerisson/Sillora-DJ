@@ -3,6 +3,8 @@ import {PumpingBus} from './pumping-bus.mjs';
 import {scheduleReferenceFx,stopReferenceFx} from './reference-fx.mjs';
 import {contentAnalysisKey,cachedAnalysis,cacheAnalysis} from './analysis-cache.mjs';
 import {AnalysisQueue} from './analysis-queue.mjs';
+import {emptyMeterFrame} from './audio-meters.mjs';
+import {continuityWindow} from './continuity.mjs';
 import {DeckEffects,TextureBus,impulse} from './performance-fx.js';
 import {faderCurves,transitionProgress,textureNames} from './transition-design.mjs';
 import {eqCurves} from './transition-envelopes.mjs';
@@ -18,7 +20,7 @@ export class StudioEngine extends EventTarget {
     super();let program={};try{program=JSON.parse(globalThis.localStorage?.getItem('sillage:program-v13')||'{}');}catch{}this.programOptions=programOptions({...program,muted:false,dim:false}); this.context = null; this.crossfade = 0; this.masterVolume = 0.7;
     this.decks = [0, 1].map(id => ({ id, track: null, source: null, playing: false, offset: 0, started: 0, rate: 1, volume: 0.85, cue: 0, loop: null, eq: [0, 0, 0], filter: 0 }));
     this.transitionHistory=[]; this.performanceLog=[]; this.transition = null; this.keyLock = true; this.keyLockAvailable = false; this.starting = false;
-    this.analysisQueue=new AnalysisQueue();
+    this.analysisQueue=new AnalysisQueue();this.audioMetrics=emptyMeterFrame();this.emptyMetrics=emptyMeterFrame();
     this.clockTimer = setInterval(() => this.tick(), 25); this.clockTimer.unref?.();
   }
   async init() {
@@ -66,7 +68,7 @@ export class StudioEngine extends EventTarget {
         deck.gain.gain.value = deck.volume;
       }
       this.setCrossfade(this.crossfade);
-      this.dspReady = Promise.all([this.prepareKeyLock(),this.prepareLimiter(),this.prepareScratch().catch(()=>false),this.pumping.prepare()]);
+      this.dspReady = Promise.all([this.prepareKeyLock(),this.prepareLimiter(),this.prepareScratch().catch(()=>false),this.pumping.prepare()]).then(()=>this.prepareMeters());
     }
     await this.dspReady;
     if(this.context.state!=='running')await this.context.resume();
@@ -77,6 +79,23 @@ export class StudioEngine extends EventTarget {
     if(!this.context.audioWorklet||typeof AudioWorkletNode==='undefined')return;
     try{await this.context.audioWorklet.addModule('/limiter-worklet.js');const node=new AudioWorkletNode(this.context,'sillage-limiter',{outputChannelCount:[2]});this.limiter.disconnect();this.limiter.connect(node).connect(this.analyser);this.peakLimiter=node;this.output=node;node.port.postMessage({ceilingDb:this.programOptions.ceilingDb});}catch{this.output=this.limiter;}
   }
+  async prepareMeters(){
+    const ctx=this.context;if(!ctx.audioWorklet||typeof AudioWorkletNode==='undefined')return false;
+    try{
+      await ctx.audioWorklet.addModule('/meter-worklet.js');
+      const node=new AudioWorkletNode(ctx,'sillora-meter',{numberOfInputs:3,numberOfOutputs:1,outputChannelCount:[2],channelCount:2,channelCountMode:'explicit',channelInterpretation:'speakers'});
+      node.port.onmessage=({data})=>{if(data?.available&&Number.isFinite(data.audioTime)){this.audioMetrics=data;this.metricsReceivedAt=performance.now();}};
+      node.onprocessorerror=()=>{this.audioMetrics=emptyMeterFrame();this.metricsReceivedAt=0;node.disconnect();};
+      // Master is measured after the final limiter; deck taps are post EQ,
+      // effects, volume and trim, before the crossfader. FX returns join master.
+      (this.output||this.limiter).connect(node,0,0);this.decks[0].trim.connect(node,0,1);this.decks[1].trim.connect(node,0,2);
+      node.connect(ctx.destination);this.meterNode=node;return true;
+    }catch{this.audioMetrics=emptyMeterFrame();return false;}
+  }
+  readAudioMetrics(){
+    return this.context?.state==='running'&&performance.now()-(this.metricsReceivedAt||0)<500?this.audioMetrics:this.emptyMetrics;
+  }
+  resetAudioPeaks(){this.meterNode?.port.postMessage({type:'reset'});}
   async prepareScratch(){
     if(!this.context?.audioWorklet||typeof AudioWorkletNode==='undefined')return false;
     this.scratchReady||=this.context.audioWorklet.addModule('/scratch-worklet.js').catch(error=>{this.scratchReady=null;throw error;});
@@ -164,6 +183,7 @@ export class StudioEngine extends EventTarget {
     else{try{source.stop();}catch{}cleanup();}
   }
   load(id, track) {
+    this.releaseContinuity(id);
     this.cancelTransition();
     this.analysisQueue.promote(track.id,0);
     if(!track.manualRegions&&track.envelope?.length){const regions=prepareAnalysisRegions(track,track.buffer.duration);Object.assign(track,{mixIn:regions.mixIn,mixOut:regions.mixOut,introEnd:regions.introEnd,regionAnalysisVersion:regions.regionAnalysisVersion});if(track.analysis)Object.assign(track.analysis,{mixIn:regions.mixIn,mixOut:regions.mixOut,introEnd:regions.introEnd,regionAnalysisVersion:regions.regionAnalysisVersion});}
@@ -221,6 +241,7 @@ export class StudioEngine extends EventTarget {
   }
   async beginScratch(id){
     const d=this.decks[id];if(!d?.track)return false;if(d.scratching)return true;
+    this.releaseContinuity(id);
     const track=d.track,request={};d.scratchRequest=request;
     await this.init();
     if(!this.context.audioWorklet||typeof AudioWorkletNode==='undefined'){
@@ -281,11 +302,13 @@ export class StudioEngine extends EventTarget {
   }
   async activateStems(id){const d=this.decks[id];if(!d.track?.stemBuffer||!d.playing)return;this.cancelTransition();this.pause(id);await this.play(id);}
   unload(id) {
+    this.releaseContinuity(id);
     this.cancelTransition(); const d=this.decks[id]; this.stopSource(d);
     Object.assign(d,{track:null,playing:false,endedNaturally:false,offset:0,rate:1,cue:0,loop:null,rateRamp:null});this.setEcho(id,false);
     this.dispatchEvent(new Event('change'));
   }
   pause(id) {
+    this.releaseContinuity(id);
     const d = this.decks[id], position=this.position(id);if(d.roll)d.loop=null;d.roll=null;
     if(d.rateRamp) d.rate=this.currentRate(id);
     d.offset=position; d.rateRamp=null; d.playing = false;d.endedNaturally=false; this.stopSource(d); this.dispatchEvent(new Event('change'));
@@ -395,6 +418,7 @@ export class StudioEngine extends EventTarget {
   }
   loop(id, beats,{quantize=false}={}) {
     const d = this.decks[id]; if (!d.track) return;
+    this.releaseContinuity(id);
     this.cancelTransition();
     if (d.loop) {
       // Native BufferSource continues from its audible loop position on release.
@@ -415,6 +439,28 @@ export class StudioEngine extends EventTarget {
     this.dispatchEvent(new Event('change'));
   }
   setDeckEffect(id,kind,amount){const d=this.decks[id];d.fx?.set(kind,amount,(d.track?.bpm||120)*this.currentRate(id));this.dispatchEvent(new Event('change'));}
+  holdForNext(id,{maxSeconds=30}={}){
+    const d=this.decks[id];if(d.continuity)return true;
+    if(!d.playing||!d.source||d.loop||d.scratching||d.braking||this.transition||this.context.currentTime<d.started)return false;
+    const position=this.position(id),window=continuityWindow(d.track,position);if(!window)return false;
+    this.settleRate(id);const now=this.context.currentTime,period=(window.end-window.start)/d.rate,firstEdge=now+(window.end-position)/d.rate,seconds=.004;
+    const gain=d.voiceGain.gain;gain.cancelScheduledValues(now);gain.setValueAtTime(1,now);
+    let lastEdge=firstEdge;
+    // Schedule both sides of every seam before the hold starts. These 4 ms
+    // ramps run on the audio clock, including when the UI is stalled.
+    for(let edge=firstEdge;edge<=now+clamp(maxSeconds,1,30)+period;edge+=period){gain.setValueAtTime(1,edge-seconds);gain.linearRampToValueAtTime(0,edge);gain.linearRampToValueAtTime(1,edge+seconds);lastEdge=edge;}
+    d.continuity={track:d.track,armedAt:now,window,fade:{firstEdge,lastEdge,period,seconds}};d.loop=window;
+    d.source.loopStart=window.start;d.source.loopEnd=window.end;d.source.loop=true;
+    this.dispatchEvent(new Event('change'));return true;
+  }
+  releaseContinuity(id){
+    const d=this.decks[id];if(!d?.continuity)return;
+    const held=d.continuity,owned=d.loop===held.window;d.continuity=null;if(!owned)return;
+    const position=this.position(id);this.settleRate(id);d.loop=null;d.offset=position;d.started=this.context?.currentTime||0;
+    if(d.source)d.source.loop=false;
+    if(d.voiceGain&&held.fade){const now=this.context.currentTime,f=held.fade,edge=f.firstEdge+Math.round((now-f.firstEdge)/f.period)*f.period,level=edge>=f.firstEdge&&edge<=f.lastEdge?clamp(Math.abs(now-edge)/f.seconds,0,1):1;const gain=d.voiceGain.gain;gain.cancelScheduledValues(now);gain.setValueAtTime(level,now);gain.linearRampToValueAtTime(1,now+.004);}
+    this.dispatchEvent(new Event('change'));
+  }
   async roll(id,beats){
     const d=this.decks[id];if(!d.track)return;this.cancelTransition();if(d.roll){await this.endRoll(id);return;}
     if(!d.playing)await this.play(id);if(d.loop)this.loop(id,1);const position=this.position(id),now=this.context.currentTime;
@@ -464,6 +510,7 @@ export class StudioEngine extends EventTarget {
     if (!a.playing&&!recovering) await this.play(source);
     // A scheduled transition leaves the loop before calculating its start.
     if(a.roll)await this.endRoll(source);if(b.roll)await this.endRoll(target);
+    this.releaseContinuity(source);this.releaseContinuity(target);
     if (a.loop) this.loop(source, 4);
     if (b.loop) this.loop(target, 4);
     const plan=makeTransitionPlan(a,b,{...options,tempoBlend,history:this.transitionHistory,position:this.position(source),stemsAvailable:Boolean(a.stemGains&&b.track.stemBuffer)});

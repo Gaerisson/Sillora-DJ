@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 27 octobre 2026. Version de départ : 0.16.1. Premier lot : 0.17.0.
+État au 28 octobre 2026. Version de départ : 0.16.1. Lots livrés : 0.17.0 puis 0.18.0.
 
 ## Objectif
 
@@ -83,3 +83,18 @@ La baseline de **213 tests** a été réexécutée avec succès. La maquette a �
 Écarts majeurs confirmés : grille constante et structure énergétique non sémantique, secours avant EOF incomplet, absence de scratch sur l'onde, VU master non séparé L/R, préparation/reprise de bibliothèque incomplète, manque de playlists et d'updates. La comparaison d'écoute avec les vidéos reste à faire.
 
 La version audio **0.17.0 est inchangée** par cette proposition. Les nouvelles fonctions montrées dans la maquette restent à implémenter et à brancher sur des états/mesures réels, par lots documentés dans la proposition. Une interface affichée ne vaut pas une fonction livrée.
+
+## Lot A — continuité et mesures réelles — 0.18.0
+
+Le développement de l'application reprend après la proposition UI. Ce lot modifie le moteur et le studio exécuté ; la maquette reste distincte.
+
+- Mesures AudioWorklet L/R indépendantes : master après limiteur et platines avant crossfader, après EQ/effets directs/volume/trim. RMS, sample peak, peak hold, clipping mémorisé et invalid samples ; aucun faux true peak ni compteur d'underruns.
+- Composant de mètre partagé entre PC et Remote, valeurs du même moteur, signalement d'indisponibilité et effacement à la déconnexion. Remise à zéro locale des maintiens et compteurs avec PEAK.
+- Correction d'une course Remote : les réponses de polling et de flux arrivées après déconnexion ne réactivent plus l'affichage. Vérifiée dans la télécommande appairée.
+- Secours armé avant EOF pendant un import/préparation en cours : maintien court du morceau avec microfondus audio de 4 ms aux raccords, puis relais EQ court lorsque le titre suivant est prêt. Les boucles manuelles restent prioritaires ; pause/seek/rechargement/arrêt retirent le secours.
+- Budget de 30 s sous surveillance du planificateur, sans réarmement permanent. L'expiration dépend encore de la reprise du planificateur si l'interface reste bloquée. Un set terminé n'est pas remis en boucle.
+- Versions PC, serveur et Remote harmonisées sur 0.18.0. Les preuves de l'audit initial sont figées sur le commit de référence 0.17.0 pour conserver des lignes de code vérifiables après évolution.
+
+Validation : **225 tests automatisés**, lecture des deux MP3 sous Electron, vraie mesure stéréo avec programme droit coupé sur Remote 390×844, rendu AudioWorklet comparé sans branche de mesure (écart maximal 0). Rendu musical de 12 s : secours au-delà de la fin initiale, relais après préparation tardive, aucune valeur non finie ni fenêtre silencieuse de 50 ms dans le passage mesuré de 0,1 à 10 s ; crête maximale inférieure à 0,937. Les essais ont aussi révélé puis permis de corriger un montage DOM incompatible avec une collection d'éléments. Les fichiers musicaux restent hors du dépôt.
+
+Voir [les notes et limites 0.18.0](docs/CHANGELOG-0.18.0.md). La validation du paquet Windows est consignée séparément avec ses empreintes. Le branchement complet de la nouvelle interface, les analyses sémantiques, les imports reprenables, les sessions prolongées et la comparaison d'écoute des références restent ouverts.

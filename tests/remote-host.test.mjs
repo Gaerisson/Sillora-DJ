@@ -8,6 +8,10 @@ async function fixture(t,options={}){
  return {host,status,origin,token,headers,get:()=>fetch(origin+'/api/state',{headers}),post:(command,revision=host.revision,extra={})=>fetch(origin+'/api/command',{method:'POST',headers:{...headers,'Content-Type':'application/json',...extra},body:JSON.stringify({command,revision})})};
 }
 
+test('shared stereo meter modules are available to the paired remote interface',async t=>{
+ const f=await fixture(t);for(const asset of ['/audio-meter-view.js','/audio-meters.mjs','/audio-meter.css']){const response=await fetch(f.origin+asset);assert.equal(response.status,200,asset);assert.ok((await response.text()).length>500);}
+});
+
 test('state is explicitly filtered, bounded and excludes audio, local paths and credentials',()=>{
  assert.equal(sanitizeState(null).decks.length,2);
  const raw=snapshot();Object.assign(raw,{token:'private-pair-secret',path:'C:\\Users\\Name\\Music',audio:new Uint8Array(1000)});raw.decks[0].buffer={secret:'audio'};raw.decks[0].title='C:\\Users\\Name\\Music\\song.mp3';raw.library=Array.from({length:400},(_,i)=>({id:'track-'+i,title:'x'.repeat(300),path:'C:\\private',token:'audio-token',duration:Infinity}));raw.recommendations.push({id:'foreign',title:'outside collection'});
