@@ -4,6 +4,14 @@ import {AnalysisQueue} from '../public/analysis-queue.mjs';
 import {contentAnalysisKey} from '../public/analysis-cache.mjs';
 const turn=()=>new Promise(resolve=>setImmediate(resolve));
 
+test('background suspension preempts a worker but preserves a foreground request and resumes the old job',async()=>{
+ const q=new AnalysisQueue(),order=[];let count=0;const old=q.enqueue('background',signal=>{order.push('background');if(++count===1)return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('pause','AbortError'))));return 1;});await turn();q.setBackgroundPaused(true);await turn();assert.equal(q.running,null);const front=q.enqueue('play',()=>{order.push('play');return 2;},{priority:0});assert.equal(await front,2);q.setBackgroundPaused(false);assert.equal(await old,1);assert.deepEqual(order,['background','play','background']);
+});
+
+test('updated priorities demote obsolete background requests but keep explicit reanalysis ahead of folder scans',async()=>{
+ const q=new AnalysisQueue();q.setBackgroundPaused(true);const order=[],first=q.enqueue('old',()=>{order.push('old');return 1;},{priority:20}),manual=q.enqueue('manual',()=>{order.push('manual');return 2;},{priority:20,sticky:true}),folder=q.enqueue('folder',()=>{order.push('folder');return 3;},{priority:35});q.setPriorities(new Map([['folder',35]]));assert.equal(q.jobs.get('old').priority,50);assert.equal(q.jobs.get('manual').priority,20);q.setBackgroundPaused(false);await Promise.all([first,manual,folder]);assert.deepEqual(order,['manual','folder','old']);
+});
+
 test('queued analysis priorities are independent from discovery order and deduplicate a request',async()=>{
  const queue=new AnalysisQueue(),order=[];
  const a=queue.enqueue('background',()=>{order.push('background');return 1;});

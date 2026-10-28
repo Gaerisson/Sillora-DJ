@@ -2,6 +2,8 @@ const {app,BrowserWindow,session,ipcMain,dialog,powerSaveBlocker,nativeImage,cli
 const path=require('node:path');const fs=require('node:fs/promises');const {randomUUID}=require('node:crypto');const {pathToFileURL}=require('node:url');
 const {StemService}=require('./stem-service.cjs');
 const {FolderLibrary}=require('./folder-library.cjs');
+const {LibraryIndex}=require('./library-index.cjs');
+const {AnalysisStore}=require('./analysis-store.cjs');
 const {openStudioHost}=require('./studio-host.cjs');
 const {RemoteHost}=require('./remote-host.cjs');
 const {allowStudioPermission}=require('./studio-permissions.cjs');
@@ -48,7 +50,11 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   ipcMain.handle('stems:status',(event,id)=>{permitted(event);return stems.status(id);});
   ipcMain.handle('stems:read',(event,id,name)=>{permitted(event);return stems.read(id,name);});
   ipcMain.handle('stems:cancel',(event,id)=>{permitted(event);return stems.cancel(id);});
-  const describe=async file=>{const stat=await fs.stat(file);if(!stat.isFile()||!/[.](mp3|wav|flac|ogg|m4a|aac|aiff|opus|webm)$/i.test(file))throw new Error('Format audio non pris en charge.');const token=randomUUID();allowed.set(token,file);return {token,name:path.basename(file),size:stat.size,lastModified:Math.floor(stat.mtimeMs)};};
+  const describedFiles=new Map(),descriptionsByToken=new Map();
+  const describe=async file=>{const real=await fs.realpath(file),stat=await fs.stat(real);if(!stat.isFile()||!/[.](mp3|wav|flac|ogg|m4a|aac|aiff|opus|webm)$/i.test(real))throw new Error('Format audio non pris en charge.');const previous=describedFiles.get(real),stamp=Math.floor(stat.mtimeMs);if(previous&&previous.size===stat.size&&previous.lastModified===stamp)return {...previous};const token=randomUUID(),fileId=require('node:crypto').createHash('sha256').update(process.platform==='win32'?real.toLowerCase():real).digest('hex'),entry={token,fileId,name:path.basename(real),size:stat.size,lastModified:stamp};allowed.set(token,real);descriptionsByToken.set(token,entry);describedFiles.set(real,entry);return {...entry};};
+  const libraryIndex=new LibraryIndex({file:libraryFile,resolveToken:token=>allowed.get(token),describe}),analysisStore=new AnalysisStore({directory:path.join(profile,'analysis-cache')});
+  ipcMain.handle('analysis:read',(event,key)=>{permitted(event);return analysisStore.get(key);});
+  ipcMain.handle('analysis:save',(event,key,analysis)=>{permitted(event);return analysisStore.put(key,analysis);});
   const folders=new FolderLibrary({music:app.getPath('music'),settingsFile:path.join(profile,'music-folders.json'),describe});await folders.init();
   downloads=new DownloadService({music:app.getPath('music'),profileDir:profile,vendorDir:app.isPackaged?path.join(process.resourcesPath,'media'):path.join(__dirname,'vendor','media'),describe,nativeImage,onEvent:state=>{if(mainWindow&&!mainWindow.isDestroyed())mainWindow.webContents.send('downloads:progress',state);}});
   ipcMain.handle('downloads:info',event=>{permitted(event);return downloads.init();});
@@ -59,9 +65,12 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   ipcMain.handle('folders:roots',event=>{permitted(event);return folders.listRoots();});
   ipcMain.handle('folders:list',(event,token)=>{permitted(event);return folders.list(token);});
   ipcMain.handle('folders:choose',async event=>{permitted(event);const choice=await dialog.showOpenDialog(mainWindow,{title:'Ajouter un dossier de musique',properties:['openDirectory']});return choice.canceled?folders.listRoots():folders.add(choice.filePaths[0]);});
-  ipcMain.handle('studio:choose',async event=>{permitted(event);const choice=await dialog.showOpenDialog(mainWindow,{title:'Ajouter des morceaux au studio',properties:['openFile','multiSelections'],filters:[{name:'Audio',extensions:['mp3','wav','flac','ogg','m4a','aac','aiff','opus']}]});if(choice.canceled)return [];const result=[];for(const file of choice.filePaths)try{result.push(await describe(file));}catch{}let previous=[];try{previous=JSON.parse(await fs.readFile(libraryFile,'utf8'));}catch{}await fs.writeFile(libraryFile,JSON.stringify([...new Set([...previous,...choice.filePaths])].slice(-1000)));return result;});
-  ipcMain.handle('studio:library',async event=>{permitted(event);let files=[];try{files=JSON.parse(await fs.readFile(libraryFile,'utf8'));}catch{}const result=[];for(const file of files)try{result.push(await describe(file));}catch{}return result;});
-  ipcMain.handle('studio:read',async(event,token)=>{permitted(event);if(typeof token!=='string'||!allowed.has(token))throw new Error('Fichier non sélectionné.');const file=allowed.get(token),stat=await fs.stat(file);if(stat.size>800*1024*1024)throw new Error('Ce fichier dépasse 800 Mo.');const data=await fs.readFile(file);return data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength);});
+  ipcMain.handle('studio:choose',async event=>{permitted(event);const choice=await dialog.showOpenDialog(mainWindow,{title:'Ajouter des morceaux au studio',properties:['openFile','multiSelections'],filters:[{name:'Audio',extensions:['mp3','wav','flac','ogg','m4a','aac','aiff','opus']}]});if(choice.canceled)return [];const result=[];for(const file of choice.filePaths)try{result.push(await describe(file));}catch{}await libraryIndex.remember(result.map(entry=>entry.token));return result;});
+  ipcMain.handle('studio:library',async event=>{permitted(event);return libraryIndex.restore();});
+  ipcMain.handle('studio:remember',async(event,tokens)=>{permitted(event);return libraryIndex.remember(tokens);});
+  ipcMain.handle('studio:catalog-read',event=>{permitted(event);return libraryIndex.loadCatalog();});
+  ipcMain.handle('studio:catalog-save',(event,value)=>{permitted(event);return libraryIndex.saveCatalog(value);});
+  ipcMain.handle('studio:read',async(event,token)=>{permitted(event);if(typeof token!=='string'||!allowed.has(token))throw new Error('Fichier non sélectionné.');const file=allowed.get(token),real=await fs.realpath(file),fold=p=>process.platform==='win32'?p.toLowerCase():p;if(fold(real)!==fold(file))throw new Error('Le fichier a été déplacé. Actualisez le dossier.');const stat=await fs.stat(file),selected=descriptionsByToken.get(token);if(selected&&(stat.size!==selected.size||Math.floor(stat.mtimeMs)!==selected.lastModified))throw new Error('Le fichier a changé. Actualisez le dossier.');if(stat.size>800*1024*1024)throw new Error('Ce fichier dépasse 800 Mo.');const data=await fs.readFile(file);return data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength);});
   ipcMain.handle('studio:playing',async(event,playing)=>{permitted(event);if(playing===true){if(blocker===undefined)blocker=powerSaveBlocker.start('prevent-app-suspension');}else if(blocker!==undefined){powerSaveBlocker.stop(blocker);blocker=undefined;}});
   ipcMain.handle('studio:ready',async(event,state)=>{permitted(event);await log({ready:true,origin,backend:server?'embedded':'existing',audioReady:state?.audioReady===true});return true;});
   session.defaultSession.setPermissionRequestHandler((webContents,permission,callback,details)=>callback(allowStudioPermission({webContents,mainWindow,origin,permission,details,request:true})));

@@ -33,7 +33,7 @@ export class SampleBank extends EventTarget {
   return result;
  }
  async capture(slot,deck,{seconds=4}={}){
-  await this.ready;const pad=this.pads[slotId(slot)],d=this.engine.decks[Number(deck)];if(!d?.track?.buffer)throw new Error('Charge un titre sur cette platine.');const revision=++pad.revision;await this.engine.init();if(pad.revision!==revision)return this.state[pad.id];
+  await this.ready;const pad=this.pads[slotId(slot)],d=this.engine.decks[Number(deck)];if(!d?.track?.buffer)throw new Error('Charge un titre sur cette platine.');const revision=++pad.revision,track=d.track;await this.engine.init();if(track.ensureAudio&&!track.buffer.getChannelData)await track.ensureAudio({priority:0});if(pad.revision!==revision||d.track!==track)return this.state[pad.id];
   const start=this.engine.position(d.id),buffer=this.copy(d.track.buffer,start,bounded(seconds,1,16,4));this.stop(pad.id);Object.assign(pad,{buffer,saved:null,title:(d.track.title||'Platine '+(d.id+1))+' · '+start.toFixed(1)+' s'});this.changed();await this.persist(pad);return this.state[pad.id];
  }
  async loadFile(slot,file){

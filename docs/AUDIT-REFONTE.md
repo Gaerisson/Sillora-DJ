@@ -2,7 +2,7 @@
 
 Base examinée : **0.17.0**, le 28 octobre 2026. **333 éléments de listes et 41 exigences transversales** sont classés. Ce relevé couvre les 20 sections du cahier des charges ; il ne déclare pas la refonte terminée.
 
-Les états et preuves ci-dessous décrivent le [code de référence 0.17.0](https://github.com/Gaerisson/Sillora-DJ/tree/d0f28182ae3d97436281d788fd68289cb31f87ac/). Les évolutions ultérieures sont suivies dans [PROGRESS.md](../PROGRESS.md) et les [notes 0.18.0](CHANGELOG-0.18.0.md). Les preuves sont figées sur cette base pour conserver leurs numéros de ligne.
+Les états et preuves ci-dessous décrivent le [code de référence 0.17.0](https://github.com/Gaerisson/Sillora-DJ/tree/d0f28182ae3d97436281d788fd68289cb31f87ac/). Les évolutions ultérieures sont suivies point par point dans [AUDIT-SUIVI.md](AUDIT-SUIVI.md), [PROGRESS.md](../PROGRESS.md) et les notes [0.18.0](CHANGELOG-0.18.0.md) / [0.19.0](CHANGELOG-0.19.0.md). Les preuves sont figées sur cette base pour conserver leurs numéros de ligne.
 
 ## Lecture des états
 

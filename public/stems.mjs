@@ -8,6 +8,7 @@ export function waveForSeparation(buffer){
  return bytes;
 }
 export async function prepareStems(track,context,desktop,onProgress=()=>{},signal){
+ if(signal?.aborted)throw new Error('Préparation annulée.');if(track.ensureAudio&&!track.buffer?.getChannelData)await track.ensureAudio({priority:20});
  const available=await desktop.stemAvailability();if(!available.available)throw new Error(available.message);
  if(signal?.aborted)throw new Error('Préparation annulée.');
  const job=await desktop.prepareStems(waveForSeparation(track.buffer));

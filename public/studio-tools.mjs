@@ -25,7 +25,7 @@ export function sanitizePreferences(value = {}) {
 }
 
 export function trackKey(track) { return track.fileKey || track.id; }
-export function fileKey(file) { return JSON.stringify([file.name, file.size, file.lastModified]); }
+export function fileKey(file) { return JSON.stringify(file.fileId?[file.fileId,file.name,file.size,file.lastModified]:[file.name,file.size,file.lastModified]); }
 
 const keyNames=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
 const validManualKey=value=>value.manualKey===true&&Number.isInteger(value.keyRoot)&&value.keyRoot>=0&&value.keyRoot<12&&['major','minor'].includes(value.keyMode);

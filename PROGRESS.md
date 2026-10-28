@@ -6,6 +6,8 @@
 
 Améliorer en priorité le résultat audio et la continuité de lecture. Préserver les fonctions existantes. La présence d'une commande dans l'interface ne vaut pas validation de son comportement.
 
+Les constats et résultats des premiers lots ci-dessous sont historiques. Pour l’état courant : [suivi de l’audit](docs/AUDIT-SUIVI.md) et lot B en fin de document.
+
 ## Audit initial
 
 - Electron héberge un studio Web Audio. Les transitions programment leurs AudioParams sur `AudioContext.currentTime` ; la surveillance Automix reste dans `app.js`, toutes les 150 ms.
@@ -100,3 +102,24 @@ Validation : **225 tests automatisés**, lecture des deux MP3 sous Electron, vra
 Voir [les notes et limites 0.18.0](docs/CHANGELOG-0.18.0.md). La validation du paquet Windows est consignée séparément avec ses empreintes. Le branchement complet de la nouvelle interface, les analyses sémantiques, les imports reprenables, les sessions prolongées et la comparaison d'écoute des références restent ouverts.
 
 Le banc Windows est relançable depuis les sources avec `npm run test:audio:windows -- "piste-A.mp3" "piste-B.mp3"` (deux morceaux distincts de plus de 52 s). Il génère son rapport et son rendu dans `.runtime/audio-proof/results`, sans données musicales distribuées. Il a été exécuté avec succès sur les deux fichiers fournis ; les mêmes quatre scénarios passent depuis les sources incluses dans `app.asar`.
+
+## Lot B — bibliothèque et préparation — 0.19.0
+
+Catalogue distinct des buffers audio, découverte avant décodage et file d’import prioritaire intégrés au studio exécuté. Les demandes de platine passent devant le fond, puis viennent le prochain titre, la file Automix, les titres affichés, le dossier consulté et le reste de la collection.
+
+- Import avec pause, reprise, annulation et relance ; catalogue/checkpoint natif sans PCM ni tokens, références Windows revalidées au retour, aucune lecture automatique après redémarrage.
+- Cache d’analyse natif compressé identifié par contenu et version, indépendant du port serveur ; IndexedDB reste un repli navigateur.
+- Réanalyse manuelle préservant grille, régions, cues, tonalité et favoris, sans remplacer la source en lecture. Association des préparations au contenu connu.
+- Pagination à 100 lignes dans bibliothèque et dossiers, filtre conservé à l’actualisation ; nouveaux fichiers découverts sans décodage passif.
+- Budget souple de PCM original avec protection des platines et stems actifs, recharge à la demande et pause des analyses de fond pendant transition/scratch.
+- Disponibilité des titres et chargements transmis à Remote.
+
+Validation : **246 tests réussis** ; **six scénarios Electron bibliothèque** et **quatre audio/Remote**, sur deux vrais MP3. Le catalogue de 1 000 références du banc réutilise ces deux fichiers ; ce n’est pas une analyse de 1 000 titres distincts. Reprise native vérifiée avec nouveaux tokens et changement de port. La recette de réanalyse conserve la source audible et toutes les corrections testées. Les bancs sont relançables depuis les sources, avec profils isolés.
+
+Le suivi [AUDIT-SUIVI.md](docs/AUDIT-SUIVI.md) revoit les exigences de la section 4 sans réécrire la baseline de 374 points. [Notes et limites 0.19.0](docs/CHANGELOG-0.19.0.md). La validation du paquet Windows est consignée séparément avec ses empreintes avant remise des exécutables.
+
+Restent notamment l’indexation récursive, l’analyse passive du dossier consulté, les budgets de charge CPU/GPU et la préparation stems complète. L’appel natif en cours peut finir après annulation ; les fichiers glissés/navigateur nécessitent une nouvelle sélection au redémarrage.
+
+## Suite du document
+
+Priorité au planificateur musical et à la comparaison des transitions sur les références : phrases, tempo, graves, effets et points IN/OUT. La grille variable et l’identification sémantique restent ouvertes. Le branchement complet de la nouvelle UI, le scratch sur waveform, les playlists, les updates et les validations longues/acoustiques ne sont pas livrés par le lot B.

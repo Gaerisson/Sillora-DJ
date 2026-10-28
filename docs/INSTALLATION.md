@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.18.0.exe` et `Sillora-DJ-0.18.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.19.0.exe` et `Sillora-DJ-0.19.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -40,3 +40,14 @@ npm run pack:installer
 Le modèle officiel htdemucs est vérifié avec le préfixe SHA256 `8726e21a`. Le build refuse les ressources absentes. Les modèles, runtimes et sorties générées ne sont pas versionnés ; les distributions préparées les embarquent pour éviter un téléchargement au premier usage.
 
 `release/` contient les résultats. [Dépendances et licences](../THIRD_PARTY.md).
+
+## Recettes Windows isolées
+
+Avec deux morceaux distincts de plus de 52 s :
+
+```powershell
+npm run test:library:windows -- "piste-A.mp3" "piste-B.mp3"
+npm run test:audio:windows -- "piste-A.mp3" "piste-B.mp3"
+```
+
+Rapports, rendus et profils de test sont générés dans `.runtime/library-proof` et `.runtime/audio-proof`. Les recettes ne touchent pas au profil installé. Le banc bibliothèque simule 1 000 références à partir des deux fichiers ; il ne mesure pas 1 000 décodages de musiques distinctes. [Périmètre et limites](CHANGELOG-0.19.0.md).

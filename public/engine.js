@@ -20,7 +20,7 @@ export class StudioEngine extends EventTarget {
     super();let program={};try{program=JSON.parse(globalThis.localStorage?.getItem('sillage:program-v13')||'{}');}catch{}this.programOptions=programOptions({...program,muted:false,dim:false}); this.context = null; this.crossfade = 0; this.masterVolume = 0.7;
     this.decks = [0, 1].map(id => ({ id, track: null, source: null, playing: false, offset: 0, started: 0, rate: 1, volume: 0.85, cue: 0, loop: null, eq: [0, 0, 0], filter: 0 }));
     this.transitionHistory=[]; this.performanceLog=[]; this.transition = null; this.keyLock = true; this.keyLockAvailable = false; this.starting = false;
-    this.analysisQueue=new AnalysisQueue();this.audioMetrics=emptyMeterFrame();this.emptyMetrics=emptyMeterFrame();
+    this.analysisQueue=new AnalysisQueue();this.addEventListener('change',()=>this.analysisQueue.setPerformanceBusy(Boolean(this.transition||this.decks.some(d=>d.scratching))));this.audioMetrics=emptyMeterFrame();this.emptyMetrics=emptyMeterFrame();
     this.clockTimer = setInterval(() => this.tick(), 25); this.clockTimer.unref?.();
   }
   async init() {
@@ -130,22 +130,29 @@ export class StudioEngine extends EventTarget {
     if (d.loop && pos >= d.loop.end) pos = d.loop.start + (pos - d.loop.start) % (d.loop.end - d.loop.start);
     return clamp(pos, 0, d.track?.buffer.duration || 0);
   }
-  async importFile(file,{deferAnalysis=false,priority=50}={}) {
-    await this.init();
-    const began=performance.now(),bytes=await file.arrayBuffer();
-    // Hash encoded bytes before decodeAudioData detaches their ArrayBuffer.
-    const cacheKey=await contentAnalysisKey(bytes);
-    const buffer=await this.context.decodeAudioData(bytes);
-    const parts=file.name.replace(/\.[^.]+$/,'').split(' - ');
-    const track={id:crypto.randomUUID(),title:parts.length>1?parts.slice(1).join(' - '):parts[0],artist:parts.length>1?parts[0]:'Fichier local',buffer,source:'local',color:Math.random()*360,bpm:null,peaks:[],mixIn:0,mixOut:Math.max(0,buffer.duration-8),audibleEnd:buffer.duration,confidence:'low',analysisStatus:'queued',decodeMs:performance.now()-began};
-    let analysis=cacheKey?await cachedAnalysis(cacheKey):null;
+  async decodeFile(file,{signal}={}) {
+    signal?.throwIfAborted();await this.init();signal?.throwIfAborted();const began=performance.now(),bytes=await file.arrayBuffer();signal?.throwIfAborted();
+    const contentKey=await contentAnalysisKey(bytes);signal?.throwIfAborted();const buffer=await this.context.decodeAudioData(bytes);signal?.throwIfAborted();return{buffer,contentKey,decodeMs:performance.now()-began};
+  }
+  async importFile(file,{deferAnalysis=false,priority=50,id=crypto.randomUUID(),signal}={}) {
+    const decoded=await this.decodeFile(file,{signal}),buffer=decoded.buffer,parts=file.name.replace(/\.[^.]+$/,'').split(' - ');
+    const track={id,title:parts.length>1?parts.slice(1).join(' - '):parts[0],artist:parts.length>1?parts[0]:'Fichier local',...decoded,source:'local',color:Math.random()*360,bpm:null,peaks:[],mixIn:0,mixOut:Math.max(0,buffer.duration-8),audibleEnd:buffer.duration,confidence:'low',analysisStatus:'queued'};
+    return this.analyzeTrack(track,{deferAnalysis,priority,signal});
+  }
+  async analyzeTrack(track,{force=false,deferAnalysis=false,priority=20,signal}={}) {
+    signal?.throwIfAborted();
+    if(track.analysisTask&&['queued','analyzing'].includes(track.analysisStatus)){this.analysisQueue.promote(track.id,priority);if(!deferAnalysis)await track.analysisTask;return track;}
+    if(!track.buffer?.getChannelData&&track.ensureAudio)await track.ensureAudio({priority});
+    const buffer=track.buffer,cacheKey=track.contentKey;track.analysisStatus='queued';track.analysisReanalyzing=Boolean(track.analysis);track.analysisError=null;
+    this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));
+    let analysis=!force&&cacheKey?await cachedAnalysis(cacheKey):null;
     if(analysis?.waveformVersion!==2||!analysis?.regionAnalysisVersion)analysis=null;
     const apply=result=>{
       const preserved={};
       if(track.manualRegions)for(const key of ['manualRegions','mixIn','mixOut'])preserved[key]=track[key];
       if(track.manualGrid)for(const key of ['manualGrid','bpm','downbeat','beatOffset','confidence'])preserved[key]=track[key];
       if(track.manualKey)for(const key of ['manualKey','key','keyRoot','keyMode','keyConfidence'])preserved[key]=track[key];
-      Object.assign(track,result,preserved,{analysis:result,analysisStatus:'ready'});
+      Object.assign(track,result,preserved,{analysis:result,analysisStatus:'ready',analysisError:null,analysisReanalyzing:false});
       for(const deck of this.decks)if(deck.track===track&&deck.input){
         const now=this.context.currentTime;deck.input.gain.cancelScheduledValues(now);
         deck.input.gain.setTargetAtTime(track.autoGain||1,now,.35);
@@ -155,7 +162,7 @@ export class StudioEngine extends EventTarget {
     if(analysis){track.cacheHit=true;apply(analysis);return track;}
     track.cacheHit=false;
     track.analysisTask=this.analysisQueue.enqueue(track.id,async signal=>{
-      track.analysisStatus='analyzing';this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));
+      track.analysisStatus='analyzing';this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));signal.throwIfAborted();
       const start=performance.now();
       const result=typeof Worker==='undefined'?analyzeAudio(Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i)),buffer.sampleRate):await new Promise((resolve,reject)=>{
         const worker=new Worker('/analysis-worker.js',{type:'module'});
@@ -171,7 +178,8 @@ export class StudioEngine extends EventTarget {
       if(cacheKey)await cacheAnalysis(cacheKey,result);
       if(signal.aborted)throw new DOMException('Analyse annulée','AbortError');
       track.analysisMs=performance.now()-start;return apply(result);
-    },{priority}).catch(error=>{track.analysisStatus=error.name==='AbortError'?'cancelled':'error';track.analysisError=error.message;this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));if(!deferAnalysis)throw error;return track;});
+    },{priority,sticky:force}).catch(error=>{track.analysisStatus=track.analysis?'ready':error.name==='AbortError'?'cancelled':'error';track.analysisReanalyzing=false;track.analysisError=error.message;this.dispatchEvent(new CustomEvent('analysis',{detail:{track}}));if(!deferAnalysis)throw error;return track;});
+    if(signal){const cancel=()=>this.analysisQueue.cancel(track.id);signal.addEventListener('abort',cancel,{once:true});track.analysisTask.then(()=>signal.removeEventListener('abort',cancel),()=>signal.removeEventListener('abort',cancel));if(signal.aborted)cancel();}
     if(!deferAnalysis)await track.analysisTask;return track;
   }
   stopSource(d){
@@ -183,6 +191,7 @@ export class StudioEngine extends EventTarget {
     else{try{source.stop();}catch{}cleanup();}
   }
   load(id, track) {
+    this.decks[id].playRequest=null;
     this.releaseContinuity(id);
     this.cancelTransition();
     this.analysisQueue.promote(track.id,0);
@@ -197,7 +206,11 @@ export class StudioEngine extends EventTarget {
     this.dispatchEvent(new Event('change'));
   }
   async play(id, when) {
-    await this.init(); const d = this.decks[id];
+    const d=this.decks[id];if(!d.track||d.playing)return;if(d.playRequest)return d.playRequest.promise;
+    const track=d.track,request={};d.playRequest=request;this.dispatchEvent(new Event('change'));
+    request.promise=(async()=>{try{await this.init();
+    if(track.ensureAudio&&!track.buffer?.getChannelData)await track.ensureAudio({priority:0});
+    if(d.playRequest!==request||d.track!==track)return;
     if(d.scratching)await this.endScratch(id,{resume:false});
     if (!d.track || d.playing) return;
     if (d.offset >= d.track.buffer.duration - 0.02) d.offset = 0;
@@ -227,6 +240,7 @@ export class StudioEngine extends EventTarget {
     source.onended=()=>{if(d.source===source){if(d.braking?.source===source)this.pause(id);else{d.playing=false;d.endedNaturally=true;d.offset=d.track.buffer.duration;d.source=null;d.stemGains=null;d.stemTransitionGains=null;this.dispatchEvent(new Event('naturalend'));this.dispatchEvent(new Event('change'));}}setTimeout(()=>{source.disconnect();voice.disconnect();for(const n of stemNodes||[])n.disconnect();if(pitch){pitch.disconnect();pitch.port.close();}if(d.pitchNode===pitch)d.pitchNode=null;if(d.voiceGain===voice)d.voiceGain=null;if(d.stemNodes===stemNodes)d.stemNodes=null;},Math.ceil((d.latency+.1)*1000));};
     source.start(sourceStart, d.offset);
     this.dispatchEvent(new Event('change'));
+    }finally{if(d.playRequest===request)d.playRequest=null;this.dispatchEvent(new Event('change'));}})();return request.promise;
   }
   disposeScratch(d){
     d.scratchRequest=null;
@@ -249,6 +263,7 @@ export class StudioEngine extends EventTarget {
       throw new Error('Le scratch audio nécessite AudioWorklet. Ouvre la version Windows de Sillage.');
     }
     try{
+      if(track.ensureAudio&&!track.buffer?.getChannelData)await track.ensureAudio({priority:0});
       await this.prepareScratch();
       if(d.scratchRequest!==request||d.track!==track)return false;
       this.cancelTransition();
@@ -302,12 +317,14 @@ export class StudioEngine extends EventTarget {
   }
   async activateStems(id){const d=this.decks[id];if(!d.track?.stemBuffer||!d.playing)return;this.cancelTransition();this.pause(id);await this.play(id);}
   unload(id) {
+    this.decks[id].playRequest=null;
     this.releaseContinuity(id);
     this.cancelTransition(); const d=this.decks[id]; this.stopSource(d);
     Object.assign(d,{track:null,playing:false,endedNaturally:false,offset:0,rate:1,cue:0,loop:null,rateRamp:null});this.setEcho(id,false);
     this.dispatchEvent(new Event('change'));
   }
   pause(id) {
+    this.decks[id].playRequest=null;
     this.releaseContinuity(id);
     const d = this.decks[id], position=this.position(id);if(d.roll)d.loop=null;d.roll=null;
     if(d.rateRamp) d.rate=this.currentRate(id);
@@ -487,6 +504,7 @@ export class StudioEngine extends EventTarget {
     if(!tail)for(const voice of t.voices||[])this.textures.stop(voice);
   }
   cancelTransition() {
+    this.startPreparation=(this.startPreparation||0)+1;
     if (!this.transition || !this.context) return;
     const t = this.transition, p = clamp((this.context.currentTime - t.start) / t.duration, 0, 1);
     this.transition = null;this.settleRate(0);this.settleRate(1);
@@ -498,13 +516,16 @@ export class StudioEngine extends EventTarget {
   }
   async startTransition(options = {}) {
     if (this.transition || this.starting) return;
-    this.starting=true;
+    this.starting=true;const preparation=this.startPreparation=(this.startPreparation||0)+1;
     try {
     const {quantize=true,tempoBlend=false}=options;
     await this.init();
     const source = this.crossfade < 0.5 ? 0 : 1, target = 1 - source;
     const a = this.decks[source], b = this.decks[target];
     if (!a.track || !b.track) throw new Error('Charge un morceau sur chaque platine.');
+    const originalA=a.track,originalB=b.track;
+    await Promise.all([a,b].map(d=>d.track.ensureAudio&&!d.track.buffer?.getChannelData?d.track.ensureAudio({priority:5}):null));
+    if(preparation!==this.startPreparation||a.track!==originalA||b.track!==originalB)return;
     if(a.braking)this.pause(source);if(b.braking)this.pause(target);
     const recovering=Boolean(options.automix&&a.endedNaturally);
     if (!a.playing&&!recovering) await this.play(source);

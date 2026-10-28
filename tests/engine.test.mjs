@@ -30,6 +30,19 @@ class Context {
 globalThis.AudioContext = Context;
 const track = (id, bpm = 120, duration = 60) => ({ id, bpm, beatOffset: 0, buffer: { duration }, peaks: [] });
 
+test('pausing or replacing a deck during buffer reacquisition cannot start obsolete playback',async()=>{
+ for(const change of ['pause','load']){const e=new StudioEngine();await e.init();let release;const t=track('evicted');t.ensureAudio=()=>new Promise(resolve=>release=()=>{t.buffer={duration:60,getChannelData:()=>new Float32Array(1)};resolve(t);});e.load(0,t);const pending=e.play(0);await new Promise(r=>setImmediate(r));if(change==='pause')e.pause(0);else e.load(0,track('replacement'));release();await pending;assert.equal(e.decks[0].playing,false);assert.equal(e.decks[0].source,null);assert.equal(e.decks[0].playRequest,null);}
+});
+test('a cancelled transition waiting for an evicted target never schedules sources after the data arrives',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('a'));const b=track('b');let release;b.ensureAudio=()=>new Promise(resolve=>release=()=>{b.buffer={duration:60,getChannelData:()=>new Float32Array(1)};resolve(b);});e.load(1,b);await e.play(0);const source=e.decks[0].source,pending=e.startTransition({style:'bass',quantize:false});await new Promise(r=>setImmediate(r));e.cancelTransition();release();await pending;assert.equal(e.transition,null);assert.equal(e.decks[0].source,source);assert.equal(e.decks[1].playing,false);
+});
+test('manual reanalysis keeps playing transport and user grid, regions, key, cues and favorite',async()=>{
+ const e=new StudioEngine();await e.init();const samples=new Float32Array(11025*12);for(let i=0;i<samples.length;i++)samples[i]=Math.sin(i*.04)*.1;const buffer={duration:12,length:samples.length,sampleRate:11025,numberOfChannels:1,getChannelData:()=>samples},t={...track('reanalyze'),buffer,analysis:{rms:.2},manualGrid:true,bpm:127,downbeat:.23,beatOffset:.23,manualRegions:true,mixIn:1,mixOut:10,manualKey:true,keyRoot:0,keyMode:'minor',key:'Cm',keyConfidence:1,hotCues:[2,3,null,null],favorite:true};e.load(0,t);await e.play(0);const source=e.decks[0].source,old=t.analysis;await e.analyzeTrack(t,{force:true});assert.notEqual(t.analysis,old);assert.equal(t.bpm,127);assert.equal(t.downbeat,.23);assert.equal(t.mixIn,1);assert.equal(t.mixOut,10);assert.equal(t.key,'Cm');assert.deepEqual(t.hotCues,[2,3,null,null]);assert.equal(t.favorite,true);assert.equal(e.decks[0].source,source);assert.equal(e.decks[0].playing,true);
+});
+test('failed reanalysis retains the previous result and leaves playback usable',async()=>{
+ const e=new StudioEngine();await e.init();const t={...track('failed'),buffer:{duration:1,length:8,numberOfChannels:1,sampleRate:8,getChannelData:()=>new Float32Array(8)},analysis:{rms:.123},analysisStatus:'ready'},old=t.analysis;e.load(0,t);await e.play(0);const Worker=globalThis.Worker;globalThis.Worker=class{constructor(){throw Error('Worker indisponible');}};try{await assert.rejects(e.analyzeTrack(t,{force:true}),/Worker indisponible/);}finally{globalThis.Worker=Worker;}assert.equal(t.analysis,old);assert.equal(t.analysisStatus,'ready');assert.equal(t.analysisReanalyzing,false);assert.equal(e.decks[0].playing,true);
+});
+
 test('emergency hold is armed before EOF, follows the audible cursor and releases without a position jump',async()=>{
  const e=new StudioEngine();await e.init();e.load(0,track('a',120,20));await e.play(0);e.context.currentTime=17;
  assert.equal(e.holdForNext(0),true);const d=e.decks[0],source=d.source,window=d.loop;assert.equal(window.kind,'continuity');assert.ok(window.end>17&&window.end<20);assert.equal(source.loop,true);
