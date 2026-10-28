@@ -1,6 +1,6 @@
 # Proposition de refonte Sillora DJ
 
-Maquette interactive distincte de l'application 0.17.0. Les titres, analyses, niveaux et commandes sont illustratifs. Elle ne joue pas de musique et ne modifie aucune session, aucun périphérique, aucun fichier musical ni aucun réglage de l'application.
+Maquette interactive distincte de l’application exécutée. Le registre intégré reste la baseline 0.17.0 ; les évolutions réelles 0.18–0.19 sont détaillées dans le [suivi de l’audit](../../docs/AUDIT-SUIVI.md). Les titres, analyses, niveaux et commandes de la maquette sont illustratifs. Elle ne joue pas de musique et ne modifie aucune session, aucun périphérique, aucun fichier musical ni aucun réglage de l’application.
 
 Ouvrir `index.html` dans un navigateur, ou lancer depuis la racine du projet :
 
