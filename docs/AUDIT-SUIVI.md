@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.23.0
+# Suivi de l’audit — Sillora DJ 0.24.0
 
 Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -12,6 +12,7 @@ Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | D · 0.21.0 | Mesure acoustique après Key Lock, profil Rythme optionnel et réglage partagé PC/Remote | 261 tests ; 48 scénarios depuis le paquet : 16 cas acoustiques, quatre UI/IPC, 18 rendus musicaux, six bibliothèque, quatre audio/Remote. [Mesures et architecture](KEYLOCK-0.21.md) |
 | E · 0.22.0 | Repères d’arrangement, préparation et relais avec phase conservée ; migration des préparations par digest | 282 tests ; 60 cas natifs depuis le paquet, dont huit de préparation et quatre rendus de régions. [Architecture et limites](ARRANGEMENT-0.22.md) |
 | F · 0.23.0 | Précision de grille séparée de la couverture, contrôles de contraste/support, mesures partagées PC/Remote | 296 tests ; 68 cas natifs depuis le paquet, dont quatre grille PC/Remote/cache et quatre rendus sans correction manuelle. [Diagnostic et portée](GRID-0.23.md) |
+| G · 0.24.0 | Gestes d’onde PC/Remote, propriété des prises et relais sur grille incertaine ; corpus élargi | 313 tests ; 99 fichiers analysés et 50 cas natifs depuis le paquet, dont 20 rendus de transitions et 20 cas de gestes MP3/Opus. [Gestes](GESTURES-0.24.md) · [Corpus](CORPUS-0.24.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -147,6 +148,21 @@ Le défaut reproduit abaissait la stabilité des deux fichiers de référence en
 Les tests adverses couvrent pauses, accents rares, subdivisions ambiguës, événements aléatoires, silence et dérive. La relecture par l’auteur a ajouté un cas où 40 attaques régulières sont concentrées dans les 19,5 premières secondes d’un fichier de 120 s : leur précision locale ne suffit pas à valider la grille globale. Les 296 tests passent après cette correction.
 
 La recette complète du paquet passe : 68 cas natifs, 142 sources comparées, ressources vérifiées et contenu identique dans les deux exécutables avec intégrité des 7 215 fichiers validée. L’installation sur le profil personnel n’est pas exécutée. Les limites, mesures et empreintes sont rassemblées dans les [notes 0.23.0](CHANGELOG-0.23.0.md). La remarque historique du lot E sur les grilles reste conservée ; les mesures du lot F la remplacent pour ces deux fichiers seulement.
+
+## Sections 3, 6 et 7 — points revus dans le lot G
+
+| Référence | État actuel | Résultat et limite |
+| :--- | :---: | :--- |
+| R6.commandes-02, R6.configuration-01, X6-01 | V | Choix Déplacer/Scratch sur les ondes détaillées et verticales, avec vrai son bidirectionnel ; aperçu global conservé pour naviguer. Départ sans saut, état pause/lecture, remplacement de piste et relâchement validés dans le périmètre des recettes. |
+| R6.configuration-02, R6.configuration-07 | P | Sensibilité de l’onde réglable et mémorisée par platine/client, sans modifier le vinyle. Les réglages complets du vinyle et leur comparaison restent à exposer. |
+| R6.configuration-03, R6.configuration-04, R6.configuration-05, R6.configuration-06 | A | Comportements par défaut bornés et testés ; les réglages d’inertie, de courbe de vitesse, de retour et de relâchement ne sont pas exposés. |
+| R7-03, R7-04 | P | La prise utilise la tête rendue et conserve l’échelle/sensibilité du calcul ; les commandes Remote portent l’identité de piste et de prise. Cela ne mesure pas les FPS ni une latence réseau/matérielle garantie. |
+| R3.2-09, R3.1-12, R3.1-13 | P | Un cas réel à grille sortante incertaine a révélé une divergence plan/exécution pendant le morphing. Régression dans les deux sens, puis garde de quantification commun avec le planificateur. Les points sémantiques et la pertinence à l’écoute restent ouverts. |
+| R3.1-01, R3.1-02, R3.1-04 | P | 99 fichiers Opus analysés : 33 grilles acceptées, 66 incertaines, 31 cartes. Aucun jeu annoté ne certifie ces tempos ou premiers temps ; le statut demeure partiel. |
+
+La revue indépendante a permis de reproduire puis corriger trois défauts Remote : position de départ perdue dans la réponse du host, commandes anciennes sans identité de prise et maintien immobile avec intervalle invalide. Les régressions et la revue ciblée passent. Le banc natif vérifie aussi les deux thèmes à 1440/480 px et le téléphone appairé ; il ne livre pas l’intégration de toute la maquette.
+
+Le paquet final passe ses 50 cas natifs ; 145 sources comparées, versions et ressources vérifiées, contenu identique et intégrité des 7 215 fichiers validée. Le contraste Porcelaine de Remote est également mesuré après correction. Installation sur le profil personnel non exécutée. [Fonctionnement](GESTURES-0.24.md) · [Essais élargis et limites](CORPUS-0.24.md) · [Notes de version](CHANGELOG-0.24.0.md).
 
 ## Prochain travail prioritaire
 

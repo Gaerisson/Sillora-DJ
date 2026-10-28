@@ -482,7 +482,7 @@ async function importDesktop(entries,target=null,options){
 }
 $('#import-top').onclick=()=>run(async()=>{fileDeck=null;if(window.sillageDesktop)await importDesktop(await window.sillageDesktop.chooseAudio());else $('#file-input').click();});
 if(window.sillageDesktop){
- document.body.dataset.platform='windows';$('.workspace-label').firstChild.textContent='';$('.workspace-label').innerHTML='<span class="live-dot"></span> STUDIO WINDOWS <span class="version">/ 023.0</span>';
+ document.body.dataset.platform='windows';$('.workspace-label').firstChild.textContent='';$('.workspace-label').innerHTML='<span class="live-dot"></span> STUDIO WINDOWS <span class="version">/ 024.0</span>';
  $('#desktop-library').hidden=false;$('#desktop-library').onclick=()=>run(async()=>{const entries=await window.sillageDesktop.library();if(!entries.length)return toast('Importez des fichiers avec le sélecteur Windows pour mémoriser votre bibliothèque.');await importDesktop(entries);});
  window.sillageDesktop.ready({audioReady:false}).catch(()=>{});let lastPlaying=null;setInterval(()=>{const playing=engine.decks.some(d=>d.playing);if(playing!==lastPlaying){lastPlaying=playing;window.sillageDesktop.setPlaying(playing).catch(()=>{});if(playing)window.sillageDesktop.ready({audioReady:true}).catch(()=>{});}},500);
 }
@@ -697,9 +697,9 @@ async function remoteCommand(command){
   if(c.marker==='downbeat')engine.setDownbeat(deck);else if(c.marker==='cue')d.cue=engine.position(deck);else if(c.marker==='auto'){d.track.manualRegions=false;d.track.mixIn=d.track.analysis?.mixIn||0;d.track.mixOut=d.track.analysis?.mixOut??d.track.buffer.duration;d.cue=d.track.mixIn;}else{const pos=engine.position(deck);if(c.marker==='in'){if(pos>=(d.track.mixOut??d.track.buffer.duration)-.1)throw new Error('IN doit précéder OUT.');d.track.mixIn=pos;d.cue=pos;}else{if(pos<=(d.track.mixIn||0)+.1)throw new Error('OUT doit suivre IN.');d.track.mixOut=pos;}d.track.manualRegions=true;}savePreparation(d.track);
  }else if(type==='deck:key'){
   const select=$('.deck[data-deck="'+deck+'"] .deck-key-select'),option=[...select.options].find(o=>c.value==='auto'?o.value==='auto':o.textContent.endsWith('· '+c.value));if(!option)throw new Error('Clé inconnue.');select.value=option.value;select.onchange({target:select});
- }else if(type==='deck:scratchStart'){await prepareLocalPlayback();stopAutomix();if(!await engine.beginScratch(deck))throw new Error('Scratch indisponible.');remoteHands.set(deck,Date.now());
- }else if(type==='deck:scratchMove'){if(!remoteHands.has(deck)||!d.scratching)throw new Error('Geste de scratch terminé.');remoteHands.set(deck,Date.now());engine.scratchBy(deck,c.delta,c.elapsedMs);
- }else if(type==='deck:scratchEnd'){remoteHands.delete(deck);await engine.endScratch(deck);
+  }else if(type==='deck:scratchStart'){const track=d.track;if(d.scratching||d.scratchRequest)throw new Error('Un geste est déjà en cours.');await prepareLocalPlayback();if(d.track!==track||d.scratching||d.scratchRequest)throw new Error('La platine a changé.');stopAutomix();if(!await engine.beginScratch(deck))throw new Error('Scratch indisponible.');remoteHands.set(deck,{at:Date.now(),session:d.scratchSession,gestureId:c.gestureId});
+ }else if(type==='deck:scratchMove'||type==='deck:scratchTo'){const hand=remoteHands.get(deck);if(!hand||hand.session!==d.scratchSession||hand.gestureId!==c.gestureId||!d.scratching)throw new Error('Geste de scratch terminé.');hand.at=Date.now();engine.scratchBy(deck,type==='deck:scratchTo'?c.position-hand.session.target:c.delta,c.elapsedMs);
+ }else if(type==='deck:scratchEnd'){const hand=remoteHands.get(deck);if(!hand||hand.gestureId!==c.gestureId||hand.session!==d.scratchSession)throw new Error('Geste de scratch terminé.');remoteHands.delete(deck);await engine.endScratch(deck);
  }else if(type==='stems:level'){if(!d.track?.stemBuffer||d.playing&&!d.stemGains)throw new Error('Préparez et activez les stems avant le dosage.');engine.setStemLevel(deck,c.stem,c.value);
  }else if(type==='stems:cancel'){stemControllers.get(d.track)?.abort();}
  else if(type==='stems:prepare'){
@@ -760,13 +760,13 @@ async function remoteCommand(command){
  else if(type==='texture:play'){await prepareLocalPlayback();await engine.init();const active=engine.crossfade<.5?0:1,item=engine.decks[active],bpm=(item.track?.bpm||120)*engine.currentRate(active);await engine.playTexture(c.kind,{duration:c.beats*60/bpm,intensity:c.intensity});}
  else if(type==='texture:stop')engine.stopTextures();
  else throw new Error('Commande indisponible.');
- update();window.sillageDesktop?.publishRemoteState?.(remoteSnapshot());return{ok:true};
+ update();window.sillageDesktop?.publishRemoteState?.(remoteSnapshot());return{ok:true,...(type==='deck:scratchStart'?{position:engine.position(deck)}:{})};
 }
 let remoteUnsubscribe,remotePublishing=false;
 if(window.sillageDesktop?.onRemoteCommand){
  remoteUnsubscribe=window.sillageDesktop.onRemoteCommand(remoteCommand);
  const publish=async()=>{if(remotePublishing)return;remotePublishing=true;try{await window.sillageDesktop.publishRemoteState(remoteSnapshot());}catch{}finally{remotePublishing=false;}};
- publish();const timer=setInterval(publish,100),handTimer=setInterval(()=>{for(const [deck,last]of remoteHands)if(Date.now()-last>1200){remoteHands.delete(deck);engine.endScratch(deck).catch(()=>{});}},250);
+ publish();const timer=setInterval(publish,100),handTimer=setInterval(()=>{for(const [deck,hand]of remoteHands)if(Date.now()-hand.at>1200){remoteHands.delete(deck);if(engine.decks[deck].scratchSession===hand.session)engine.endScratch(deck).catch(()=>{});}},250);
  window.addEventListener('beforeunload',()=>{clearInterval(timer);clearInterval(handTimer);remoteUnsubscribe?.();});
 }
 
@@ -787,7 +787,14 @@ function showAnalysis(id){
 
 // Shared desktop views keep a single audio engine in the main studio window.
 brand=newBranding();
-consoleLayout=mountConsoleLayout({openAudio:()=>run(openAudioSettings),openBrand:()=>brand.open(),openSources:()=>{consoleLayout.sourcesDialog.showModal();sourcesPanel?.open();},onSeek:(id,seconds)=>run(async()=>{stopAutomix();await engine.seek(id,seconds);}),openSurface:mode=>run(async()=>{if(!window.sillageDesktop?.openSurface)throw new Error('Fenêtres disponibles dans l’application Windows.');await window.sillageDesktop.openSurface(mode);})});
+consoleLayout=mountConsoleLayout({openAudio:()=>run(openAudioSettings),openBrand:()=>brand.open(),openSources:()=>{consoleLayout.sourcesDialog.showModal();sourcesPanel?.open();},onSeek:(id,seconds)=>run(async()=>{stopAutomix();await engine.seek(id,seconds);}),waveScratch:{
+ getContext:deck=>{const track=engine.decks[deck].track;return track?{deck,track,duration:track.buffer.duration}:null;},
+ isCurrent:context=>engine.decks[context.deck].track===context.track,
+ getPosition:context=>engine.position(context.deck),getDuration:context=>context.duration,
+ startScratch:async context=>{const d=engine.decks[context.deck];if(d.track!==context.track||d.scratching||d.scratchRequest)return false;await prepareLocalPlayback();if(d.track!==context.track||d.scratching||d.scratchRequest)return false;stopAutomix();const ready=await engine.beginScratch(context.deck);if(!ready||d.track!==context.track)return false;context.owner=d.scratchSession;return{position:engine.position(context.deck)};},
+ moveScratch:(position,elapsed,context)=>{const d=engine.decks[context.deck];if(d.track===context.track&&d.scratchSession===context.owner)engine.scratchBy(context.deck,position-context.owner.target,elapsed);},
+ endScratch:context=>{if(engine.decks[context.deck].scratchSession===context.owner)return engine.endScratch(context.deck);},onError:error=>toast(error.message)
+ },openSurface:mode=>run(async()=>{if(!window.sillageDesktop?.openSurface)throw new Error('Fenêtres disponibles dans l’application Windows.');await window.sillageDesktop.openSurface(mode);})});
 audioSettings=new LiveSettings(liveMixer,consoleLayout.liveRoot);
 meterViews=mountAudioMeters({deckRoots:$$('.deck'),canvas:$('#vu-meter'),onReset:()=>engine.resetAudioPeaks()});
 keyLockSettings=new KeyLockSettings($('#keylock-settings'),{get:()=>({profile:engine.keyLockProfile,busy:!engine.canChangeKeyLockProfile(),changing:Boolean(engine.keyLockProfileChanging),latencyMs:engine.keyLockLatency*1000,available:engine.keyLockAvailable,enabled:engine.keyLock}),set:async value=>{await engine.setKeyLockProfile(value);savePreferences();},onError:error=>toast(error.message)});

@@ -1,0 +1,11 @@
+.wave-gesture-controls{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:wrap;font:10px system-ui,sans-serif;letter-spacing:0}
+.wave-mode-switch{display:flex;padding:2px;border:1px solid var(--line,#35414b);border-radius:7px;background:var(--inset,#131b23)}
+.wave-gesture-controls .wave-mode-switch button{min-height:29px;padding:4px 9px;border:0;border-radius:4px;background:transparent;color:var(--text,inherit);font:inherit;cursor:pointer}
+.wave-gesture-controls .wave-mode-switch button[aria-pressed=true]{background:var(--accent,var(--a,#75d7df));color:#10232a;font-weight:650}
+.wave-gesture-controls select{min-height:29px;max-width:57px;border:1px solid var(--line,#35414b);border-radius:5px;background:var(--panel2,#1b2732);color:var(--text,inherit);padding:3px;font:inherit}
+.wave-gesture-controls :focus-visible{outline:2px solid var(--accent,var(--a,#75d7df));outline-offset:2px}
+.wave-gesture-controls .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+canvas[data-gesture-mode=scratch]{cursor:grab!important}canvas.wave-held{cursor:grabbing!important;outline:2px solid var(--accent,var(--a,#75d7df));outline-offset:1px}
+.pro-console .deck-focus-toolbar{flex-wrap:wrap;gap:5px}.pro-console .deck-focus-toolbar>.wave-gesture-controls{order:2;width:100%}
+:root[data-skin=porcelain] .wave-mode-switch{background:#edf3ee}:root[data-skin=porcelain] .wave-mode-switch button[aria-pressed=true]{background:#17675b;color:#fff}
+.wave-toolbar{flex-wrap:wrap}.wave-toolbar>.wave-gesture-controls{flex:1 0 100%}

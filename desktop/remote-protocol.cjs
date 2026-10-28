@@ -28,8 +28,9 @@ function sanitizeCommand(input,state){
  const bool=key=>{if(typeof c[key]!=='boolean')throw failure('Valeur booléenne invalide.');out[key]=c[key];};
  const id=key=>{if(!validId(c[key]))throw failure('Identifiant invalide.');out[key]=c[key];};
  const device=key=>{if(typeof c[key]!=='string'||c[key].length>256||/[\x00-\x1f]/.test(c[key]))throw failure('Périphérique invalide.');out[key]=c[key];};
- const deckCommands=['deck:play','deck:pause','deck:toggle','deck:cue','deck:volume','deck:seek','deck:rate','deck:bpm','deck:sync','deck:loop','deck:jump','deck:hotcue','deck:eq','deck:filter','deck:echo','deck:fx','deck:roll','deck:rollEnd','deck:marker','deck:key','deck:scratchStart','deck:scratchMove','deck:scratchEnd','stems:prepare','stems:cancel','stems:level'];
+ const deckCommands=['deck:play','deck:pause','deck:toggle','deck:cue','deck:volume','deck:seek','deck:rate','deck:bpm','deck:sync','deck:loop','deck:jump','deck:hotcue','deck:eq','deck:filter','deck:echo','deck:fx','deck:roll','deck:rollEnd','deck:marker','deck:key','deck:scratchStart','deck:scratchMove','deck:scratchTo','deck:scratchEnd','stems:prepare','stems:cancel','stems:level'];
  if(deckCommands.includes(type)){if(![0,1].includes(c.deck))throw failure('Platine invalide.');out.deck=c.deck;if(type!=='deck:volume'&&!state.decks[c.deck]?.loaded)throw failure('Chargez un titre sur cette platine.');if(c.trackId!==undefined){if(!validId(c.trackId)||c.trackId!==state.decks[c.deck]?.trackId)throw failure('Le titre de cette platine a changé. Actualisez la console.');out.trackId=c.trackId;}}
+ if(['deck:scratchStart','deck:scratchMove','deck:scratchTo','deck:scratchEnd'].includes(type))id('gestureId');
  if(['audio:start','audio:stop','audio:input','audio:configure','audio:talk','audio:resetFeedback'].includes(type)){if(c.channel!==undefined&&(!Number.isInteger(c.channel)||c.channel<0||c.channel>3))throw failure('Entrée invalide.');out.channel=c.channel??0;}
  switch(type){
  case 'deck:play':case 'deck:pause':case 'deck:toggle':case 'deck:cue':case 'deck:sync':case 'deck:rollEnd':case 'deck:scratchStart':case 'deck:scratchEnd':case 'stems:prepare':case 'stems:cancel':case 'automix:toggle':case 'automix:next':case 'transition:start':case 'transition:cancel':case 'transition:audition':case 'queue:clear':case 'queue:organize':case 'queue:undo':case 'record:start':case 'record:stop':case 'audio:start':case 'audio:stop':case 'texture:stop':case 'sampler:stopAll':case 'audio:muteAll':case 'audio:resetFeedback':case 'program:panic':case 'automix:mixNext':break;
@@ -54,6 +55,7 @@ function sanitizeCommand(input,state){
  case 'deck:marker':if(!['in','out','auto','downbeat','cue'].includes(c.marker))throw failure('Repère invalide.');out.marker=c.marker;break;
  case 'deck:key':if(c.value!=='auto'&&!/^(?:[1-9]|1[0-2])[AB]$/.test(c.value))throw failure('Clé invalide.');out.value=c.value;break;
  case 'deck:scratchMove':range('delta',-.35,.35);range('elapsedMs',8,120);break;
+ case 'deck:scratchTo':if(!c.trackId)throw failure('Identité de piste requise.');range('position',0,state.decks[c.deck].duration);range('elapsedMs',8,120);break;
  case 'stems:level':if(!stems.includes(c.stem))throw failure('Stem invalide.');out.stem=c.stem;range('value',0,1);break;
  case 'automix:mode':if(!modes.has(c.mode))throw failure('Mode Automix invalide.');out.mode=c.mode;break;
  case 'library:load':case 'recommendation:load':id('trackId');if(!(type==='recommendation:load'?state.recommendations.some(t=>t.id===c.trackId):state.knownTrackIds?.has(c.trackId)||state.library.some(t=>t.id===c.trackId)))throw failure('Titre inconnu.');if(![0,1].includes(c.deck))throw failure('Platine invalide.');out.deck=c.deck;break;
@@ -81,6 +83,7 @@ function sanitizeCommand(input,state){
 }
 function sanitizeResult(type,input){
  const v=object(input),named=item=>({id:validId(item.id)?item.id:'',name:text(item.name,180)});
+ if(type==='deck:scratchStart')return{position:num(v.position,0,0,86400)};
  if(type==='query:library'||type==='query:queue')return{items:(v.items||[]).slice(0,100).map(item=>{const t=trackState(item);return t?{...t,...(Number.isInteger(item.index)?{index:Math.max(0,item.index)}:{})}:null;}).filter(Boolean),total:Math.floor(num(v.total,0,0,100000)),offset:Math.floor(num(v.offset,0,0,100000))};
  if(type==='query:folders')return{roots:(v.roots||[]).slice(0,100).map(named).filter(i=>i.id)};
  if(type==='query:folder')return{id:validId(v.id)?v.id:'',name:text(v.name),crumbs:(v.crumbs||[]).slice(0,64).map(named),directories:(v.directories||[]).slice(0,2000).map(named),files:(v.files||[]).slice(0,100).map(f=>({...named(f),size:num(f.size,0,0,2**40)})),total:Math.floor(num(v.total,0,0,100000)),offset:Math.floor(num(v.offset,0,0,100000)),truncated:v.truncated===true};

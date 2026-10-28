@@ -1,6 +1,16 @@
 # Sillora DJ en images
 
-Les vues générales proviennent de la 0.16.1 exécutée ; les vues de préparation sont datées ci-dessous. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
+Les vues générales proviennent de la 0.16.1 exécutée ; les vues de préparation et de gestes sont datées ci-dessous. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
+
+## Gestes d’onde · 0.24.0
+
+![Déplacer, Scratch et sensibilité indépendante sur les ondes détaillées](images/gestures-024.png)
+
+![Les commandes d’onde dans le thème Porcelaine](images/gestures-porcelain-024.png)
+
+<img src="images/gestures-remote-024.png" alt="Choix du geste sur l’onde de Remote" width="390">
+
+Le clic Scratch saisit la tête actuelle ; Déplacer conserve la navigation. La sensibilité de l’onde est mémorisée sans modifier le vinyle. Ces captures proviennent du code du paquet Windows avec des fichiers réels ; la refonte complète de la maquette reste distincte. [Fonctionnement et limites](GESTURES-0.24.md).
 
 ## Analyse automatique · 0.23.0
 

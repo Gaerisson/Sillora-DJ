@@ -560,7 +560,8 @@ export class StudioEngine extends EventTarget {
     const now = this.context.currentTime;
     const pos=this.position(source), lookahead=Math.max(.12,(this.keyLockLatency||0)+.04);
     const requestedPoint=options.automix&&!options.startNow&&!recovering?(options.plannedPoint??plan.outPoint??a.track.mixOut??0):0;
-    const alignStart=!recovering&&quantize&&a.track.bpm&&(!plan.automatic||plan.trustworthy||plan.quantizeHandoff||plan.tempoBlend)&&!(options.automix&&a.track.manualRegions);
+    const canQuantizeSource=!plan.automatic||!options.automix||options.startNow||gridReliable(a.track);
+    const alignStart=!recovering&&canQuantizeSource&&quantize&&a.track.bpm&&(!plan.automatic||plan.trustworthy||plan.quantizeHandoff||plan.tempoBlend)&&!(options.automix&&a.track.manualRegions);
     const alignmentOffset=(a.track.downbeat??a.track.beatOffset??0)-(options.automix&&!options.startNow&&plan.score&&gridReliable(a.track)?plan.sourceSpanSeconds*plan.score.handoffFraction:0);
     const targetPosition=alignStart?nextMusicalTime(Math.max(pos+lookahead*a.rate,requestedPoint),a.track.bpm,alignmentOffset,options.quantizeBeats||(options.startNow?1:4)):Math.max(pos+lookahead*a.rate,requestedPoint);
     const endPosition=Math.min(a.track.audibleEnd||a.track.buffer.duration,a.track.buffer.duration);

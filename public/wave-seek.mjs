@@ -1,10 +1,10 @@
 // Freeze the visible range for the gesture so a scrolling waveform cannot move
 // the destination beneath the pointer. At most one seek is in flight.
-export function bindWaveSeek(canvas,{getRange,seek,interval=35,orientation='horizontal',getContext=()=>null}){
- let gesture=null,busy=false,pending=null,last=0,timer=null;
- const drain=async()=>{clearTimeout(timer);timer=null;if(busy||pending===null)return;const value=pending;pending=null;busy=true;last=performance.now();try{await seek(value.position,value.context);}finally{busy=false;if(pending!==null)timer=setTimeout(drain,Math.max(0,interval-(performance.now()-last)));}};
+export function bindWaveSeek(canvas,{getRange,seek,interval=35,orientation='horizontal',getContext=()=>null,enabled=()=>true,isCurrent=()=>true}){
+ let gesture=null,busy=false,pending=null,last=0,timer=null,disposed=false;
+ const drain=async()=>{clearTimeout(timer);timer=null;if(disposed||busy||pending===null)return;const value=pending;pending=null;if(!isCurrent(value.context))return;busy=true;last=performance.now();try{await seek(value.position,value.context);}finally{busy=false;if(!disposed&&pending!==null)timer=setTimeout(drain,Math.max(0,interval-(performance.now()-last)));}};
  const move=e=>{if(!gesture||e.pointerId!==gesture.id)return;const rect=canvas.getBoundingClientRect(),vertical=orientation==='vertical',x=Math.max(0,Math.min(1,vertical?(e.clientY-rect.top)/Math.max(1,rect.height):(e.clientX-rect.left)/Math.max(1,rect.width)));pending={position:gesture.range[0]+x*(gesture.range[1]-gesture.range[0]),context:gesture.context};if(!busy&&!timer){const delay=interval-(performance.now()-last);if(delay>0)timer=setTimeout(drain,delay);else drain();}};
- canvas.onpointerdown=e=>{if(e.button!==0||gesture)return;e.preventDefault();gesture={id:e.pointerId,range:[...getRange()],context:getContext()};canvas.setPointerCapture(e.pointerId);move(e);};canvas.onpointermove=move;
+ canvas.onpointerdown=e=>{if(disposed||!enabled()||e.button!==0||gesture)return;e.preventDefault();gesture={id:e.pointerId,range:[...getRange()],context:getContext()};canvas.setPointerCapture(e.pointerId);move(e);};canvas.onpointermove=move;
  const end=e=>{if(!gesture||e.pointerId!==gesture.id)return;move(e);gesture=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);drain();};canvas.onpointerup=end;canvas.onpointercancel=end;canvas.onlostpointercapture=e=>{if(gesture?.id===e.pointerId){gesture=null;drain();}};canvas.style.touchAction='none';
- return()=>{clearTimeout(timer);canvas.onpointerdown=canvas.onpointermove=canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=null;};
+ return()=>{disposed=true;clearTimeout(timer);pending=null;const previous=gesture;gesture=null;if(previous&&canvas.hasPointerCapture(previous.id))canvas.releasePointerCapture(previous.id);canvas.onpointerdown=canvas.onpointermove=canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=null;};
 }

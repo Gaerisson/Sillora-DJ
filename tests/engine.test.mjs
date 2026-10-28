@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { StudioEngine, createDemo } from '../public/engine.js';
 import {transitionProgress} from '../public/transition-design.mjs';
+import {makeTransitionPlan} from '../public/analysis.mjs';
 
 test('loading and correcting a measured arrangement keeps manual regions and the active voice',async()=>{
  const engine=new StudioEngine();await engine.init();const t=createDemo(engine.context,0);
@@ -44,6 +45,8 @@ class Context {
 }
 globalThis.AudioContext = Context;
 const track = (id, bpm = 120, duration = 60) => ({ id, bpm, beatOffset: 0, buffer: { duration }, peaks: [] });
+
+test('scheduled automatic morph retains the energy handoff when the outgoing grid is uncertain',async()=>{for(const [a,b]of [[116.07,123.42],[123.42,116.07]]){const e=new StudioEngine();await e.init();const source={...track('uncertain',a,240),tempoConfidence:.69,beatStability:.58,downbeat:.371,audibleEnd:240,envelope:new Float32Array(2400).fill(.2)},target={...track('reliable',b,240),tempoConfidence:.86,beatStability:.80,downbeat:.217,audibleEnd:240,envelope:new Float32Array(2400).fill(.2)};e.load(0,source);e.load(1,target);await e.play(0);const options={style:'auto',profile:'musical',sync:true,quantize:true,tempoBlend:true,automix:true,beats:16},plan=makeTransitionPlan(e.decks[0],e.decks[1],options);assert.equal(plan.trustworthy,false);assert.equal(plan.tempoBlend,true);await e.startTransition(options);assert.ok(Math.abs(e.transition.handoffPosition-plan.handoffPosition)<1e-5,JSON.stringify({a,b,planned:plan.handoffPosition,actual:e.transition.handoffPosition}));}});
 
 test('key-lock profile changes reject active playback without changing the running voice',async()=>{
  const e=new StudioEngine();await e.init();e.load(0,track('active'));await e.play(0);const source=e.decks[0].source;
