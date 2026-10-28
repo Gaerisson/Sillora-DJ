@@ -15,7 +15,8 @@
     "pack": "node scripts/build.mjs",
     "vendor:stems": "node scripts/vendor-stems.mjs",
     "vendor:media": "node scripts/vendor-media.mjs",
-    "pack:installer": "node scripts/build.mjs --installer"
+    "pack:installer": "node scripts/build.mjs --installer",
+    "test:audio:windows": "electron scripts/qa-audio-continuity.cjs"
   },
   "devDependencies": {
     "@soundtouchjs/audio-worklet": "2.1.1",

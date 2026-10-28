@@ -31,6 +31,16 @@ Le budget supervisé est de 30 secondes et empêche un réarmement permanent sur
 
 Le rendu personnel et les fichiers musicaux ne sont pas distribués dans le dépôt. Ces essais ne valident pas tous les styles de transition, le maintien de hauteur dans tous les cas, les sessions prolongées ou la qualité perceptive par comparaison aux vidéos.
 
+### Reproduire les essais Windows
+
+Après préparation des dépendances de développement, fournir deux morceaux locaux distincts d'au moins 52 secondes :
+
+```powershell
+npm run test:audio:windows -- "D:\Musique\piste-A.mp3" "D:\Musique\piste-B.mp3"
+```
+
+Le [banc de contrôle Electron](../scripts/qa-audio-continuity.cjs) utilise un profil isolé dans `.runtime/audio-proof`, sans ouvrir de micro ni modifier la session installée. Il vérifie les mesures réelles, le rendu sans modification par le mètre, le secours suivi du relais, puis l'affichage et la déconnexion Remote. Rapport, captures et extrait musical de test restent localement dans `.runtime/audio-proof/results`, hors du dépôt. Le son de la fenêtre de test est coupé. Les seuils mesurés portent sur ce scénario et ces fichiers, pas sur tous les morceaux.
+
 ## Suite du document
 
 Découverte immédiate et reprise des imports, réanalyse manuelle et file prioritaire complète ; planification musicale et analyse des références ; branchement progressif des composants de la nouvelle interface. Les 374 états de l'audit initial restent un instantané de la 0.17.0, pas un décompte actualisé après ce lot.
