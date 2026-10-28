@@ -9,3 +9,8 @@ test('region-two cache persists the measured arrangement without PCM or private 
  const store=await fixture(t),k=key(7).replace('region1','region2'),map={version:1,bpm:120,downbeat:0,landmarks:[{time:32,confidence:.9,kind:'lift',energyDeltaDb:8,bassDelta:.2}]};
  await store.put(k,{...analysis(),regionAnalysisVersion:2,arrangement:map});const result=await store.get(k);assert.deepEqual(result.arrangement,map);assert.equal(result.buffer,undefined);assert.equal(result.token,undefined);
 });
+
+test('analysis-three cache retains distinct timing, observation and coverage evidence',async t=>{
+ const store=await fixture(t),k=key(8).replace(':2:',':3:').replace('region1','region2'),evidence={beatJitterMs:12,beatCoverage:.35,beatObservationCount:161,beatPhaseContrast:.8,beatSupportSpanSeconds:173,tempoVariationPercent:.18};
+ await store.put(k,{...analysis(),analysisVersion:3,regionAnalysisVersion:2,...evidence});const r=await store.get(k);for(const [field,value]of Object.entries(evidence))assert.equal(r[field],value,field);
+});

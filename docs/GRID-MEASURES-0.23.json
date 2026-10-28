@@ -1,0 +1,325 @@
+{
+  "version": "0.23.0",
+  "analysisVersion": 3,
+  "scope": "Two reference MP3 files and three exploratory controls, with no annotated broad ground-truth dataset. Confidence is an internal heuristic, not a calibrated accuracy probability. No audio, private titles or file paths included.",
+  "sampleRate": 44100,
+  "referenceComparison": [
+    {
+      "reference": "A",
+      "duration": 253.20489795918368,
+      "before": {
+        "bpm": 110,
+        "tempoConfidence": 0.7245554977133739,
+        "beatStability": 0.43248378892452977
+      },
+      "after": {
+        "bpm": 110,
+        "tempoConfidence": 0.8265080962131018,
+        "beatStability": 0.8102698930322261,
+        "coverage": 0.34682395948309463,
+        "observations": 161,
+        "jitterMs": 12,
+        "phaseContrast": 0.7953698008009247,
+        "supportSpanSeconds": 173.4530612244898,
+        "tempoVariationPercent": 0.1851124407054297,
+        "landmarks": 5
+      }
+    },
+    {
+      "reference": "B",
+      "duration": 237.9116553287982,
+      "before": {
+        "bpm": 98,
+        "tempoConfidence": 0.6553235333038672,
+        "beatStability": 0.30434620443793814
+      },
+      "after": {
+        "bpm": 98,
+        "tempoConfidence": 0.9612021430606914,
+        "beatStability": 0.9041057690483255,
+        "coverage": 0.21874333406727478,
+        "observations": 85,
+        "jitterMs": 6,
+        "phaseContrast": 0.9995640439313696,
+        "supportSpanSeconds": 233.2908843537415,
+        "tempoVariationPercent": 0.10141512422122043,
+        "landmarks": 4
+      }
+    }
+  ],
+  "exploratoryControls": [
+    {
+      "reference": "C",
+      "annotatedGroundTruth": false,
+      "bpm": 101.29,
+      "tempoConfidence": 0.3090657286551656,
+      "beatStability": 0.48245371248220537,
+      "coverage": 0.42100856841709783,
+      "observations": 100,
+      "jitterMs": 34,
+      "phaseContrast": 0.07732122714766841,
+      "supportSpanSeconds": 136.30113378684808,
+      "tempoVariationPercent": 0.5477693886452075,
+      "landmarks": 0,
+      "automaticGridAccepted": false
+    },
+    {
+      "reference": "D",
+      "annotatedGroundTruth": false,
+      "bpm": 141.99,
+      "tempoConfidence": 0.8541196456595286,
+      "beatStability": 0.8040961837223128,
+      "coverage": 0.4037361494621773,
+      "observations": 184,
+      "jitterMs": 13,
+      "phaseContrast": 0.8712634403821697,
+      "supportSpanSeconds": 181.69614512471657,
+      "tempoVariationPercent": 0.13117704453235704,
+      "landmarks": 6,
+      "automaticGridAccepted": true
+    },
+    {
+      "reference": "E",
+      "annotatedGroundTruth": false,
+      "bpm": 120.16,
+      "tempoConfidence": 0.42176383456009864,
+      "beatStability": 0.4893267743244208,
+      "coverage": 0.6087985359501682,
+      "observations": 183,
+      "jitterMs": 34,
+      "phaseContrast": 0.0937918808498439,
+      "supportSpanSeconds": 143.70829931972787,
+      "tempoVariationPercent": 0.48917393974803536,
+      "landmarks": 0,
+      "automaticGridAccepted": false
+    }
+  ],
+  "packagedGridRecipe": {
+    "passed": true,
+    "cases": 4,
+    "scope": "Two stable-tempo MP3 files, automatic analysis without manual grid overrides, desktop/Remote evidence and native analysis-cache reload.",
+    "decodedSampleRate": null,
+    "sampleRateNote": "System-default context; its rate was not recorded in this recipe.",
+    "tracks": [
+      {
+        "reference": "A",
+        "bpm": 110,
+        "manualGrid": false,
+        "tempoConfidence": 0.8269539018197577,
+        "beatStability": 0.8105257316376072,
+        "coverage": 0.34897735930721596,
+        "observations": 162,
+        "jitterMs": 12,
+        "phaseContrast": 0.7972356937916272,
+        "landmarks": 5,
+        "analysisVersion": 3
+      },
+      {
+        "reference": "B",
+        "bpm": 98,
+        "manualGrid": false,
+        "tempoConfidence": 0.9612743158388902,
+        "beatStability": 0.9042383696061169,
+        "coverage": 0.22389006035978107,
+        "observations": 87,
+        "jitterMs": 6,
+        "phaseContrast": 0.9995639310694517,
+        "landmarks": 4,
+        "analysisVersion": 3
+      }
+    ]
+  },
+  "packagedAutomaticRenders": {
+    "passed": true,
+    "scope": "Real MP3 files with production automatic grids and regions, without manual grid or region overrides.",
+    "sampleRate": 44100,
+    "secondsPerRender": 26,
+    "keyLockProfile": "rhythm",
+    "sourceHashes": {
+      "public/engine.js": "594196a9a66559bc0548b7f906d9ac674192e2d428e5a89d78a8c3a1f0bf6f9e",
+      "public/arrangement.mjs": "84d644d27bfd8bbeba0f0a8b8614799b9b1f71f288214e526974f7a5a6b282c0",
+      "public/rhythm-evidence.mjs": "dc1bf189bb3d25be2d41bde04f32b4b35ed3a86bfa3b6f65ae0b189b07743abf",
+      "public/audio-analysis.mjs": "4a87f4164d1aba0239b40c3ce396ff2137323d9c03c34ba5758ad632f0b2a6fb",
+      "public/keylock-profiles.mjs": "2d61e16c0757bbd262889e44019a6a3fb3e3b6aa21998eb920a0219794f9dee2",
+      "public/keylock-node.mjs": "f7afc8135ab9de0b501f63e7a1a0bd33e2244161096492912a61598bc152ad42",
+      "public/vendor/soundtouch/sillora-processor.js": "d9899414994092124dd3df70db7811d38155982001158cab6bf1e0e1a15bc8ec",
+      "public/transition-score.mjs": "c2ca8da3d02ef9f07d384adb434f30ff91fdf806c32ea2eb8d3aecbf9b61b0b2",
+      "public/transition-design.mjs": "a77c78de18d17282ea585a2c45decc207162f9d536bea243a68c40ca41c96f2c",
+      "public/automatic-fx.mjs": "42ccbe4a942660a1a3825c203475684b4e13c7f35733d74bea80de60d102e338",
+      "public/tempo-automation.mjs": "2dab0bac6afe4806a6c9ccdf09625fea1029ef90e9f1abbe92c98991737392b5",
+      "public/musical-plan.mjs": "9254a1a141022d4c93de64ae615b09140377b47ee34bfebd5db0b87ebdcd5c3e"
+    },
+    "renders": [
+      {
+        "style": "riser",
+        "reverse": false,
+        "manualGrids": [
+          false,
+          false
+        ],
+        "gridConfidence": [
+          {
+            "tempo": 0.8265080962131018,
+            "stability": 0.8102698930322261
+          },
+          {
+            "tempo": 0.9612021430606914,
+            "stability": 0.9041057690483255
+          }
+        ],
+        "requestedStyle": "riser",
+        "actualStyle": "riser",
+        "bpmA": 110,
+        "bpmB": 98,
+        "tempoBlend": true,
+        "inPoint": 2.9422168473488908,
+        "outPoint": 221.79793313258352,
+        "plannedHandoff": 228.34338767803843,
+        "actualHandoff": 228.34338767803806,
+        "arrangementAnchor": {
+          "time": 228.34338767803843,
+          "confidence": 0.584,
+          "kind": "release",
+          "energyDeltaDb": -5.26,
+          "bassDelta": -0.271
+        },
+        "peak": 0.4502195715904236,
+        "nonFinite": 0,
+        "clipped": 0,
+        "silentWindows": 0,
+        "min50msRms": 0.02506368607639272,
+        "final": {
+          "playing": true,
+          "rate": 1,
+          "position": 23.448477095038086
+        }
+      },
+      {
+        "style": "riser",
+        "reverse": true,
+        "manualGrids": [
+          false,
+          false
+        ],
+        "gridConfidence": [
+          {
+            "tempo": 0.9612021430606914,
+            "stability": 0.9041057690483255
+          },
+          {
+            "tempo": 0.8265080962131018,
+            "stability": 0.8102698930322261
+          }
+        ],
+        "requestedStyle": "riser",
+        "actualStyle": "riser",
+        "bpmA": 98,
+        "bpmB": 110,
+        "tempoBlend": true,
+        "inPoint": 34.16156949621992,
+        "outPoint": 225.79935970449174,
+        "plannedHandoff": 233.14629848000195,
+        "actualHandoff": 233.14629848000195,
+        "arrangementAnchor": null,
+        "peak": 0.4531134068965912,
+        "nonFinite": 0,
+        "clipped": 0,
+        "silentWindows": 0,
+        "min50msRms": 0.023293124539460548,
+        "final": {
+          "playing": true,
+          "rate": 1,
+          "position": 53.59918410383453
+        }
+      },
+      {
+        "style": "auto",
+        "reverse": false,
+        "manualGrids": [
+          false,
+          false
+        ],
+        "gridConfidence": [
+          {
+            "tempo": 0.8265080962131018,
+            "stability": 0.8102698930322261
+          },
+          {
+            "tempo": 0.9612021430606914,
+            "stability": 0.9041057690483255
+          }
+        ],
+        "requestedStyle": "auto",
+        "actualStyle": "riser",
+        "bpmA": 110,
+        "bpmB": 98,
+        "tempoBlend": true,
+        "inPoint": 2.9422168473488908,
+        "outPoint": 221.79793313258352,
+        "plannedHandoff": 228.34338767803843,
+        "actualHandoff": 228.34338767803806,
+        "arrangementAnchor": {
+          "time": 228.34338767803843,
+          "confidence": 0.584,
+          "kind": "release",
+          "energyDeltaDb": -5.26,
+          "bassDelta": -0.271
+        },
+        "peak": 0.4502195119857788,
+        "nonFinite": 0,
+        "clipped": 0,
+        "silentWindows": 0,
+        "min50msRms": 0.025063687419683647,
+        "final": {
+          "playing": true,
+          "rate": 1,
+          "position": 23.448477095038086
+        }
+      },
+      {
+        "style": "auto",
+        "reverse": true,
+        "manualGrids": [
+          false,
+          false
+        ],
+        "gridConfidence": [
+          {
+            "tempo": 0.9612021430606914,
+            "stability": 0.9041057690483255
+          },
+          {
+            "tempo": 0.8265080962131018,
+            "stability": 0.8102698930322261
+          }
+        ],
+        "requestedStyle": "auto",
+        "actualStyle": "bass",
+        "bpmA": 98,
+        "bpmB": 110,
+        "tempoBlend": true,
+        "inPoint": 34.16156949621992,
+        "outPoint": 230.6973188881652,
+        "plannedHandoff": 233.14629848000195,
+        "actualHandoff": 233.14629848000195,
+        "arrangementAnchor": null,
+        "peak": 0.40191665291786194,
+        "nonFinite": 0,
+        "clipped": 0,
+        "silentWindows": 0,
+        "min50msRms": 0.04606527398141484,
+        "final": {
+          "playing": true,
+          "rate": 1,
+          "position": 53.85093235558279
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "No semantic phrase, vocal or drop recognition.",
+    "No reconstruction of variable-tempo beat grids.",
+    "Offline render checks do not measure hardware latency or underruns under long-session load.",
+    "No universal perceptual-quality or BPM-accuracy claim."
+  ]
+}

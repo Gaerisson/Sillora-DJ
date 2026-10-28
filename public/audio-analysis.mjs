@@ -1,5 +1,7 @@
 import {clamp,waveformPeaks} from './audio-math.mjs';
-export const ANALYSIS_VERSION=2;
+import {rhythmEvidence} from './rhythm-evidence.mjs';
+export {rhythmEvidence} from './rhythm-evidence.mjs';
+export const ANALYSIS_VERSION=3;
 const mean=a=>a.reduce((s,x)=>s+x,0)/Math.max(1,a.length);
 const median=a=>{const s=[...a].sort((a,b)=>a-b);return s[Math.floor(s.length/2)]||0;};
 function fft(real,imag){
@@ -59,10 +61,10 @@ function rhythm(s){
  const energy=[];const stride=Math.round(s.rate*.003);for(let i=0;i<s.audio.length;i+=stride){let sum=0;for(let j=i;j<Math.min(i+stride,s.audio.length);j++)sum+=s.audio[j]*s.audio[j];energy.push(Math.sqrt(sum/stride));}
  const corrections=[];for(const p of matched){const lo=Math.max(1,Math.floor((p.t-.045)*s.rate/stride)),hi=Math.min(energy.length-1,Math.ceil((p.t+.065)*s.rate/stride));let best=0,at=lo;for(let i=lo;i<=hi;i++){const delta=energy[i]-energy[i-1];if(delta>best){best=delta;at=i;}}if(best>.002)corrections.push(at*stride/s.rate-p.t);}
  phase+=clamp(median(corrections),-.04,.06);phase=((phase%period)+period)%period;
- const jitter=Math.sqrt(mean(matched.map(p=>(p.t-(phase-clamp(median(corrections),-.04,.06))-Math.round((p.t-(phase-clamp(median(corrections),-.04,.06)))/period)*period)**2))),coverage=matched.length/Math.max(1,n*dt/period),periodic=clamp(ac(period/dt)*3,0,1),stability=clamp((1-jitter/.075)*Math.min(1,coverage/.65),0,1),tempoMap=[];
+ const fitPhase=phase-clamp(median(corrections),-.04,.06),jitter=Math.sqrt(mean(matched.map(p=>(p.t-fitPhase-Math.round((p.t-fitPhase)/period)*period)**2))),periodic=clamp(ac(period/dt)*3,0,1),tempoMap=[];
  for(let start=0;start<n*dt;start+=12){const group=matched.filter(p=>p.t>=start&&p.t<start+12);if(group.length>5){const slopes=[];for(let i=1;i<group.length;i++){const d=group[i].k-group[i-1].k;if(d>0)slopes.push((group[i].t-group[i-1].t)/d);}const p=(group.at(-1).t-group[0].t)/(group.at(-1).k-group[0].k);if(p>0)tempoMap.push({time:start,bpm:Math.round(60/p*10)/10});}}
  const drift=tempoMap.length>1?Math.sqrt(mean(tempoMap.map(x=>(x.bpm-bpm)**2)))/bpm:0,beats=[];for(let t=phase;t<n*dt;t+=period)beats.push(Math.round(t*10000)/10000);
- return {bpm:Math.round(bpm*100)/100,beatOffset:phase,tempoConfidence:clamp(periodic*.5+stability*.5,0,1),beatStability:stability*clamp(1-drift*20,0,1),beatJitterMs:Math.round(jitter*1000),beats,tempoMap};
+ return {bpm:Math.round(bpm*100)/100,beatOffset:phase,...rhythmEvidence({peaks,matched,period,phase:fitPhase,duration:s.audio.length/s.rate,jitter,periodic,drift,tempoWindowCount:tempoMap.length}),beatJitterMs:Math.round(jitter*1000),beats,tempoMap};
 }
 function keyEstimate(chroma){
  const major=[6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88],minor=[6.33,2.68,3.52,5.38,2.6,3.53,2.54,4.75,3.98,2.69,3.34,3.17],names=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];

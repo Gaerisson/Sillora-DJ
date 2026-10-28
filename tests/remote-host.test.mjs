@@ -3,6 +3,11 @@ const {RemoteHost,sanitizeState,sanitizeCommand,privateIPv4}=createRequire(impor
 const publicDir=fileURLToPath(new URL('../public',import.meta.url));
 const snapshot=()=>({decks:[{loaded:true,title:'Titre A',artist:'Artiste A',playing:true,duration:180,position:30},{loaded:true,title:'Titre B',duration:200}],master:.7,crossfader:.2,automix:{enabled:true,mode:'compatible',scopeName:'Musique',remaining:2},library:[{id:'track-1',title:'Titre A',bpm:120,key:'Am · 8A',duration:180},{id:'track-2',title:'Titre B',bpm:122,key:'C · 8B',duration:200}],recommendations:[{id:'track-2',title:'Titre B',reason:'Tonalité relative'}]});
 
+test('Remote preserves bounded grid evidence and serves its shared interpretation',async t=>{
+ const raw=snapshot();raw.decks[0].grid={mode:'auto',confidence:.81,coverage:.35,observations:161,jitterMs:12,path:'private'};const state=sanitizeState(raw);assert.deepEqual(state.decks[0].grid,{mode:'auto',confidence:.81,coverage:.35,observations:161,jitterMs:12});
+ raw.decks[0].grid={mode:'wrong',confidence:Infinity,coverage:NaN,observations:-2,jitterMs:NaN};assert.equal(sanitizeState(raw).decks[0].grid,null);const f=await fixture(t);assert.equal((await fetch(f.origin+'/grid-status.mjs')).status,200);
+});
+
 test('remote arrangement landmarks are bounded, sorted and stripped of private fields',()=>{
  const raw=snapshot();raw.decks[0].arrangement={version:1,landmarks:[{time:40,confidence:.9,kind:'lift',path:'private'},{time:-1,confidence:1,kind:'release'},{time:180,confidence:1,kind:'release'},{time:NaN,confidence:1,kind:'change'},{time:20,confidence:.3,kind:'change'},{time:24,confidence:.8,kind:'change'},...Array.from({length:300},()=>({time:40,confidence:.9,kind:'lift'}))]};
  const r=sanitizeState(raw).decks[0].arrangement;assert.equal(r.version,1);assert.deepEqual(r.landmarks,[{time:24,confidence:.8,kind:'change'},{time:40,confidence:.9,kind:'lift'}]);assert.equal(JSON.stringify(r).includes('private'),false);

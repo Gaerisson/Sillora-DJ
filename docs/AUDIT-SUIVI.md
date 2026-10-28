@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.22.0
+# Suivi de l’audit — Sillora DJ 0.23.0
 
 Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -11,6 +11,7 @@ Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | C · 0.20.0 | Partition commune des transitions, relais des graves, variation de tempo et repères cohérents | 254 tests ; neuf rendus avec maintien de hauteur, six scénarios bibliothèque et quatre audio/Remote. [Déroulement et limites](TRANSITIONS-0.20.md) |
 | D · 0.21.0 | Mesure acoustique après Key Lock, profil Rythme optionnel et réglage partagé PC/Remote | 261 tests ; 48 scénarios depuis le paquet : 16 cas acoustiques, quatre UI/IPC, 18 rendus musicaux, six bibliothèque, quatre audio/Remote. [Mesures et architecture](KEYLOCK-0.21.md) |
 | E · 0.22.0 | Repères d’arrangement, préparation et relais avec phase conservée ; migration des préparations par digest | 282 tests ; 60 cas natifs depuis le paquet, dont huit de préparation et quatre rendus de régions. [Architecture et limites](ARRANGEMENT-0.22.md) |
+| F · 0.23.0 | Précision de grille séparée de la couverture, contrôles de contraste/support, mesures partagées PC/Remote | 296 tests ; 68 cas natifs depuis le paquet, dont quatre grille PC/Remote/cache et quatre rendus sans correction manuelle. [Diagnostic et portée](GRID-0.23.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -132,9 +133,24 @@ Les grilles automatiques des deux MP3 restent un écart prioritaire. Le suivi ne
 
 Le paquet est contrôlé : 140 sources comparées, 60 cas natifs réussis, ressources vérifiées et archive identique dans les deux exécutables, avec intégrité validée. Un délai initial du banc bibliothèque n’a pas été reproduit pendant trois recettes instrumentées ; les reprises et la cause non confirmée restent consignées, sans déclarer un défaut corrigé.
 
+## Sections 3 et 4 — points revus dans le lot F
+
+Le défaut reproduit abaissait la stabilité des deux fichiers de référence en fonction du nombre de temps sans attaque forte détectée. Le calcul sépare maintenant précision et couverture ; la recherche de BPM et de phase est conservée. Les seuils de grille ne sont pas abaissés.
+
+| Référence | État actuel | Résultat et limite |
+| :--- | :---: | :--- |
+| R3.1-01, R3.1-02, R3.1-04 | P | Contraste de phase, quantité et étendue des observations contrôlés ; la dérive pénalise toujours la grille constante. Sur les deux MP3 : 110/98 BPM, stabilité 81/90 %, cinq/quatre repères sans correction manuelle. Aucun jeu annoté large ni reconstruction à tempo variable ; les scores ne sont pas des probabilités certifiées. |
+| R3.1-12, R3.1-13, R3.2-04 | P | Quatre rendus Whoosh/automatique avec régions et grilles calculées, dans les deux sens. Deux suivent un repère, deux le repli énergétique ; relais exécuté conforme au plan. Pertinence musicale à l’écoute et reconnaissance des phrases encore ouvertes. |
+| R4.3-04, R4.3-11 | P / V | Analyse version 3 et persistance des mesures distinctes. Rechargement natif sans lecture automatique ; préparations rattachées au digest entre versions. Grille variable toujours absente, donc R4.3-04 reste partiel ; versionnement couvert dans ce périmètre. |
+| R3.7-03, R3.7-08, R3.7-09 | V | Affichage existant conservé ; le panneau d’analyse ajoute observations/couverture et Remote reçoit les mêmes indices de grille. Ce complément ne constitue pas le branchement de toute la maquette. |
+
+Les tests adverses couvrent pauses, accents rares, subdivisions ambiguës, événements aléatoires, silence et dérive. La relecture par l’auteur a ajouté un cas où 40 attaques régulières sont concentrées dans les 19,5 premières secondes d’un fichier de 120 s : leur précision locale ne suffit pas à valider la grille globale. Les 296 tests passent après cette correction.
+
+La recette complète du paquet passe : 68 cas natifs, 142 sources comparées, ressources vérifiées et contenu identique dans les deux exécutables avec intégrité des 7 215 fichiers validée. L’installation sur le profil personnel n’est pas exécutée. Les limites, mesures et empreintes sont rassemblées dans les [notes 0.23.0](CHANGELOG-0.23.0.md). La remarque historique du lot E sur les grilles reste conservée ; les mesures du lot F la remplacent pour ces deux fichiers seulement.
+
 ## Prochain travail prioritaire
 
-1. Automix musical : approfondir la fiabilité de grille sur les fichiers réels, les phrases et les points de passage, puis valider les rendus à l’écoute. Les changements d’arrangement du lot E complètent les régions ; les nouveaux modes et la reconnaissance sémantique restent ouverts.
+1. Automix musical : élargir le jeu de grilles annotées, travailler les phrases et les points de passage, puis valider les rendus à l’écoute. Les grilles des deux références sont désormais exploitables sans correction manuelle ; cela ne clôt pas la fiabilité générale ni les nouveaux modes et la reconnaissance sémantique.
 2. Préparation audio : stems hors du thread interface, budgets de calcul et tests de ressources manquantes/longues sessions.
 3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
 4. Poursuivre les sections restantes du registre, notamment scratch waveform, playlists, mises à jour et validation acoustique micro.

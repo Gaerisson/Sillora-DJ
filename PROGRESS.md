@@ -164,3 +164,13 @@ Les grilles automatiques des deux MP3 restent peu fiables : les essais de struct
 Distribution 0.22.0 construite : 140 sources comparées et 60 cas natifs réussis depuis le paquet, dont 22 rendus musicaux. Les deux exécutables ont le même contenu et l’archive commune de 7 215 fichiers passe le contrôle d’intégrité. Ressources embarquées et versions vérifiées ; installation sur le profil personnel non exécutée.
 
 Le premier passage du banc bibliothèque a expiré sur un chargement prioritaire. Trois recettes complètes instrumentées passent ensuite sans changement du code ; cause non confirmée, observation conservée avec les reprises dans les preuves. Les essais prolongés/sous charge restent ouverts. [Notes et empreintes](docs/CHANGELOG-0.22.0.md).
+
+## Lot F — fiabilité de grille — 0.23.0
+
+[Diagnostic et résultats](docs/GRID-0.23.md). La couverture des attaques diminuait directement le score de stabilité. Le lot sépare précision et densité, avec contrôles de contraste de phase, nombre et étendue des observations ; la variation de tempo reste pénalisée et les seuils ne sont pas abaissés.
+
+Sur les deux MP3 de référence, les mêmes BPM 110/98 produisent maintenant des grilles automatiques de stabilité 81/90 %, avec cinq/quatre repères. Les quatre rendus Whoosh/automatique passent dans les deux sens sans grille ni régions manuelles. Deux passages suivent un repère, deux le repli énergétique ; le relais réel suit le plan. Les scores internes ne certifient ni la justesse universelle des grilles ni une préférence d’écoute.
+
+Observations et couverture sont visibles dans ANALYSE et sur Remote, avec restauration par le cache natif version 3. Les corrections restent associées au digest du contenu. Les 296 tests passent, y compris une intro dense trop courte ajoutée lors de la relecture par l’auteur. Les deux références sont complétées par un contrôle exploratoire sur trois fichiers sans grille certifiée.
+
+Distribution 0.23 contrôlée : 142 sources comparées, 68 cas natifs réussis dont 26 rendus musicaux, ressources et versions vérifiées. Les deux exécutables ont le même contenu, avec intégrité des 7 215 fichiers validée. L’installation sur le profil personnel n’est pas exécutée. Les phrases/voix/drops, la grille variable, les longues sessions et le branchement complet de la refonte UI restent ouverts. [Notes 0.23](docs/CHANGELOG-0.23.0.md).

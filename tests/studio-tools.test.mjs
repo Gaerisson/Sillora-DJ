@@ -64,8 +64,8 @@ test('CSV export quotes metadata and neutralizes spreadsheet formulas',()=>{
 import * as regionTools from '../public/studio-tools.mjs';
 
 test('saved corrections identify the audio independently of cache versions and reject changed bytes',()=>{
- const key='sha256:'+'a'.repeat(64),old={buffer:{duration:100},contentKey:key+':2:wave2:region1',manualGrid:true,confidence:'manual',bpm:127,manualRegions:true,mixIn:3.41,mixOut:80.23,hotCues:[2,10],favorite:true},saved=trackPreparation(old);
- assert.equal(saved.contentKey,old.contentKey);const fresh={buffer:{duration:100},contentKey:key+':2:wave2:region2',mixIn:0,mixOut:90,bpm:120};restorePreparation(fresh,saved);assert.equal(fresh.bpm,127);assert.equal(fresh.mixIn,3.41);assert.equal(fresh.mixOut,80.23);assert.equal(fresh.favorite,true);
+ const key='sha256:'+'a'.repeat(64),old={buffer:{duration:100},contentKey:key+':2:wave2:region1',analysisVersion:2,regionAnalysisVersion:1,manualGrid:true,confidence:'manual',bpm:127,manualRegions:true,mixIn:3.41,mixOut:80.23,hotCues:[2,10],favorite:true},saved=trackPreparation(old);
+ assert.equal(saved.contentKey,old.contentKey);const fresh={buffer:{duration:100},contentKey:key+':3:wave2:region2',analysisVersion:3,regionAnalysisVersion:2,mixIn:0,mixOut:90,bpm:120};restorePreparation(fresh,saved);assert.equal(fresh.bpm,127);assert.equal(fresh.mixIn,3.41);assert.equal(fresh.mixOut,80.23);assert.equal(fresh.favorite,true);
  const changed={buffer:{duration:100},contentKey:'sha256:'+'b'.repeat(64)+':2:wave2:region2',mixIn:0,mixOut:90,bpm:120};restorePreparation(changed,saved);assert.equal(changed.mixIn,0);assert.equal(changed.bpm,120);assert.equal(changed.manualRegions,undefined);
 });
 

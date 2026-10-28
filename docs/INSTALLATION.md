@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.20.0.exe` et `Sillora-DJ-0.20.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.23.0.exe` et `Sillora-DJ-0.23.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -54,8 +54,12 @@ npm run test:keylock:windows
 npm run test:keylock-ui:windows -- "piste-A.mp3"
 npm run test:arrangement:windows -- "piste-A.mp3" "piste-B.mp3"
 npm run test:transitions:windows -- --rhythm --arrangement "piste-A.mp3" "piste-B.mp3"
+npm run test:grid:windows -- "piste-A.mp3" "piste-B.mp3"
+npm run test:transitions:windows -- --rhythm --automatic-grid "piste-A.mp3" "piste-B.mp3"
 ```
 
 Rapports, rendus et profils de test sont générés dans `.runtime/transition-proof`, `.runtime/library-proof`, `.runtime/audio-proof`, `.runtime/keylock-proof`, `.runtime/keylock-ui-proof` et `.runtime/arrangement-proof`. Les recettes ne touchent pas au profil installé. Le banc bibliothèque simule 1 000 références à partir des deux fichiers ; il ne mesure pas 1 000 décodages de musiques distinctes. Le banc Key Lock utilise des pulsations synthétiques sans fichier musical ; son complément UI vérifie un vrai MP3 et la commande Remote par IPC.
 
 Le banc de préparation utilise les commandes réelles de correction de grille et simule une migration du catalogue. La matrice `--arrangement` accepte explicitement les grilles mesurées pour vérifier les régions et leur relais ; elle ne certifie pas leur estimation automatique. Choisir des titres avec changement durable près de la sortie. [Périmètre et limites](CHANGELOG-0.22.0.md).
+
+La recette `test:grid:windows` importe au contraire les fichiers sans correction de grille, contrôle les mesures PC/Remote et leur restauration depuis le cache natif. Ses résultats sont dans `.runtime/grid-proof/results`. La matrice `--automatic-grid` utilise également les seules grilles automatiques pour quatre rendus Whoosh/automatique, dans les deux directions ; elle exige un rythme stable et au moins un repère de sortie exploité. Ces contraintes définissent le banc, pas la prise en charge de toute une collection. [Diagnostic et limites 0.23](GRID-0.23.md).
