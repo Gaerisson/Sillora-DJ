@@ -1,9 +1,9 @@
 const {app,BrowserWindow}=require('electron'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto'),{pathToFileURL}=require('node:url');
-const root=path.resolve(__dirname,'..'),base=path.join(root,'.runtime','transition-proof'),out=path.join(base,'results'),audioFiles=process.argv.slice(2);
+const root=path.resolve(__dirname,'..'),base=path.join(root,'.runtime','transition-proof'),out=path.join(base,'results'),args=process.argv.slice(2),keyLockProfile=args.includes('--rhythm')?'rhythm':'standard',audioFiles=args.filter(a=>a!=='--rhythm');
 app.on('window-all-closed',()=>{});
-if(audioFiles.length!==2){console.error('Usage : npm run test:transitions:windows -- "piste-A.mp3" "piste-B.mp3"');app.exit(2);}
+if(audioFiles.length!==2){console.error('Usage : npm run test:transitions:windows -- [--rhythm] "piste-A.mp3" "piste-B.mp3"');app.exit(2);}
 require('node:fs').mkdirSync(out,{recursive:true});app.setPath('userData',base+'/profile-'+Date.now());app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');app.commandLine.appendSwitch('disable-background-timer-throttling');
-const report={passed:false,scope:'Real MP3 files, production engine and native OfflineAudioContext, key lock enabled. Measured constant BPM; no semantic phrase or perceptual equivalence claim.',renders:[],errors:[]};let win,server;
+const report={passed:false,keyLockProfile,scope:'Real MP3 files, production engine and native OfflineAudioContext, key lock enabled. Measured constant BPM; no semantic phrase or perceptual equivalence claim.',renders:[],errors:[]};let win,server;
 app.whenReady().then(async()=>{try{
  const {createStudioServer}=await import(pathToFileURL(root+'/server.mjs'));server=await createStudioServer({port:0});
  win=new BrowserWindow({show:false,webPreferences:{sandbox:true,contextIsolation:true,offscreen:true,backgroundThrottling:false}});win.webContents.setAudioMuted(true);win.webContents.on('console-message',e=>{if(e.level===3||e.level==='error')report.errors.push(e.message);});await win.loadURL(server.origin);
@@ -19,7 +19,7 @@ app.whenReady().then(async()=>{try{
    const {StudioEngine}=await import('/engine.js'),{makeTransitionPlan}=await import('/analysis.mjs');
    const style=${JSON.stringify(style)},reverse=${reverse},sr=44100,seconds=26,tracks=(reverse?[...window.qaTracks].reverse():window.qaTracks).map((t,i)=>({...t,id:'render-'+i,manualRegions:true,mixOut:Math.min(t.buffer.duration-20,200),mixIn:t.mixIn}));
    const Original=window.AudioContext;window.AudioContext=class extends OfflineAudioContext{constructor(){super(2,sr*seconds,sr);}async resume(){}};
-   const engine=new StudioEngine();await engine.init();engine.load(0,tracks[0]);engine.load(1,tracks[1]);
+   const engine=new StudioEngine({keyLockProfile:${JSON.stringify(keyLockProfile)}});await engine.init();engine.load(0,tracks[0]);engine.load(1,tracks[1]);
    const options={style,profile:'musical',beats:16,sync:true,quantize:true,tempoBlend:true,intensity:.55,automix:true},plan=makeTransitionPlan(engine.decks[0],engine.decks[1],options);
    engine.decks[0].offset=Math.max(0,tracks[0].mixOut-6);await engine.play(0);let transition,finish;const checks=[];
    const launch=engine.context.suspend(4).then(async()=>{

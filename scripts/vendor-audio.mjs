@@ -1,4 +1,4 @@
-import { mkdir, copyFile } from 'node:fs/promises';
+import { mkdir, copyFile,readFile,writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -8,4 +8,8 @@ await mkdir(output,{recursive:true});
 for(const file of ['SoundTouchNode.js','constants.js','soundtouch-processor.js']) await copyFile(path.join(input,'.dist',file),path.join(output,file));
 await copyFile(path.join(input,'LICENSE'),path.join(output,'LICENSE.txt'));
 await copyFile(path.join(input,'README.md'),path.join(output,'README.md'));
+const original=await readFile(path.join(input,'.dist/soundtouch-processor.js'),'utf8');
+if(!original.includes('var SoundTouchProcessor = class extends SoundTouchProcessorBase'))throw new Error('Version du processeur SoundTouch incompatible avec l’adaptateur.');
+const extension=await readFile(path.join(root,'public/keylock-processor-extension.js'),'utf8');
+await writeFile(path.join(output,'sillora-processor.js'),'// SoundTouchJS 2.1.1, MPL-2.0: see LICENSE.txt.\n// Original bundle followed by the Gaerisson constructor adapter.\n'+original+'\n'+extension);
 console.log('SoundTouchJS 2.1.1 copié avec sa licence MPL-2.0.');

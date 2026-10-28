@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.20.0
+# Suivi de l’audit — Sillora DJ 0.21.0
 
 Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -9,6 +9,7 @@ Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | A · 0.18.0 | Mesures stéréo réelles, continuité pendant une préparation tardive, déconnexion Remote | 225 tests ; quatre scénarios Electron/audio. [Détail et limites](CHANGELOG-0.18.0.md) |
 | B · 0.19.0 | Catalogue immédiat, import prioritaire et reprenable, cache natif, réanalyse, pagination | 246 tests ; six scénarios bibliothèque et quatre scénarios audio/Remote sous Electron. [Détail et recette](CHANGELOG-0.19.0.md) |
 | C · 0.20.0 | Partition commune des transitions, relais des graves, variation de tempo et repères cohérents | 254 tests ; neuf rendus avec maintien de hauteur, six scénarios bibliothèque et quatre audio/Remote. [Déroulement et limites](TRANSITIONS-0.20.md) |
+| D · 0.21.0 | Mesure acoustique après Key Lock, profil Rythme optionnel et réglage partagé PC/Remote | 261 tests ; 48 scénarios depuis le paquet : 16 cas acoustiques, quatre UI/IPC, 18 rendus musicaux, six bibliothèque, quatre audio/Remote. [Mesures et architecture](KEYLOCK-0.21.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -91,9 +92,27 @@ Le banc bibliothèque attend désormais que le bouton de pause soit visible avan
 
 La recette finale du lot C passe aussi depuis `app.asar` : six scénarios bibliothèque, neuf rendus de transitions et quatre audio/Remote. Les 130 fichiers applicatifs correspondent aux sources testées ; installateur et portable ont le même contenu et leur archive passe le contrôle d’intégrité. [Empreintes et périmètre](CHANGELOG-0.20.0.md).
 
+## Sections 2 et 3 — points revus dans le lot D
+
+Le calage acoustique est mesuré en sortie du maintien de hauteur, en complément des horloges du lot C. Le profil Standard reste le défaut ; Rythme est un choix au repos dans Régie → Master, mémorisé et disponible sur Remote.
+
+| Référence | État actuel | Résultat et limite |
+| :--- | :---: | :--- |
+| R2.1-02, R3.2-09, R3.constats-05 | P | 16 cas à 44,1/48 kHz : tempo égal, beatmatch fixe et rampes dans les deux directions, avec référence sans traitement. Écart par corrélation au plus 13 ms Standard et 5 ms Rythme sur ces pulsations ; résolution 1 ms. Pas de validation d’alignement universel, de dérive longue ou de pertes de blocs. |
+| R2.1-05 | P | La latence calibrée du profil est utilisée par les voix et les positions du moteur ; les repères utilisent toujours le temps natif. Pas de campagne vidéo/audio sur tous les gestes et appareils. |
+| R2.1-06, R3.3.D-02 | P | Deux profils réels, appliqués au constructeur avant traitement et mesurés par la même calibration. Environ 131–133 ms Standard et 59 ms Rythme. Le compromis de timbre et la qualité d’écoute restent à valider selon les morceaux. |
+| R2.1-03, R2.1-07 | P | Réglage interdit pendant lecture, scratch, freinage, transition ou démarrage. Un lancement pendant la calibration attend sa fin et reste annulable. Échec de calibration : ancien profil conservé. Cela ne mesure pas la latence complète d’une commande ni du matériel audio. |
+| R3.2-08 | V | La partition conserve le contrôle des opérations internes ; ses changements de vitesse et de boucle ne s’annulent pas eux-mêmes. Les gestes manuels gardent leur annulation. Tests de régression de transport et transitions. |
+
+Le réglage est contrôlé par les éléments réellement accessibles de Régie → Master. Les tests PC/Remote passent par le preload et le chemin IPC de production, avec lecture d’un MP3 et redémarrage du renderer. Une course d’annulation pendant calibration/démarrage a été reproduite et corrigée sans interrompre une source manuelle plus récente. La revue ciblée ne relève plus de problème important. Le contraste du nouveau composant a été vérifié dans les deux thèmes après correction de Porcelaine.
+
+Les relevés synthétiques sont publiés dans [KEYLOCK-MEASURES-0.21.json](KEYLOCK-MEASURES-0.21.json). Ils ne contiennent aucun fichier musical ni donnée personnelle. La recette du paquet et ses empreintes sont consignées dans les [notes 0.21.0](CHANGELOG-0.21.0.md).
+
+Les 48 scénarios passent depuis le code embarqué. Les 136 fichiers applicatifs correspondent aux sources testées et les deux exécutables ont le même contenu, contrôlé par intégrité. L’installation sur le profil personnel reste distincte de cette recette. Ce lot ferme son plan technique ; il ne clôt pas les autres exigences partielles du registre.
+
 ## Prochain travail prioritaire
 
-1. Automix musical : approfondir les phrases et les points de passage, mesurer le décalage acoustique du time-stretch, puis valider les rendus à l’écoute. Le plan commun est intégré aux familles du lot C ; les nouveaux modes et la reconnaissance sémantique restent ouverts.
+1. Automix musical : approfondir les phrases et les points de passage, puis valider les rendus à l’écoute. Le plan commun est intégré aux familles du lot C et le lot D mesure le calage acoustique sur pulsations ; les nouveaux modes et la reconnaissance sémantique restent ouverts.
 2. Préparation audio : stems hors du thread interface, budgets de calcul et tests de ressources manquantes/longues sessions.
 3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
 4. Poursuivre les sections restantes du registre, notamment scratch waveform, playlists, mises à jour et validation acoustique micro.

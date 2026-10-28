@@ -1,11 +1,11 @@
 # Dépendances et attributions
 
-© 2026 Gaerisson pour le code et les éléments originaux de Gaerisson DJ Studio. La publication du dépôt n’accorde pas à elle seule une licence générale de réutilisation du projet.
+© 2026 Gaerisson pour le code et les éléments originaux de Sillora DJ. La publication du dépôt n’accorde pas à elle seule une licence générale de réutilisation du projet.
 
 Les dépendances conservent leurs licences et notices dans la distribution :
 
 - Electron / Node.js : licences MIT et notices Chromium / dépendances incluses.
-- SoundTouchJS Audio Worklet : MPL-2.0, source et notices sous public/vendor/soundtouch.
+- SoundTouchJS Audio Worklet 2.1.1 : MPL-2.0, sources originales, licence et notices conservées sous `public/vendor/soundtouch`. Le module généré `sillora-processor.js` ajoute un adaptateur de constructeur Gaerisson aux sources originales ; il est reconstruit par `scripts/vendor-audio.mjs` à partir du paquet épinglé et de `public/keylock-processor-extension.js`. Les profils sont définis dans `public/keylock-profiles.mjs`.
 - QR Code Generator : MIT, source et notices sous public/vendor/qrcode.
 - music-metadata : MIT, licence dans ses dépendances de production.
 - Python : PSF, notices dans le runtime.

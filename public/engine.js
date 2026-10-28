@@ -1,3 +1,4 @@
+import {keyLockProfile as resolveKeyLockProfile} from './keylock-profiles.mjs';
 import {ProgramBus,programOptions} from './program-bus.js';
 import {PumpingBus} from './pumping-bus.mjs';
 import {scheduleReferenceFx,stopReferenceFx} from './reference-fx.mjs';
@@ -17,10 +18,10 @@ import { clamp, crossfadeGains, waveformPeaks, estimateTempo, transitionSeconds,
 import { analyzeAudio, prepareAnalysisRegions, nextMusicalTime, makeTransitionPlan } from './analysis.mjs';
 
 export class StudioEngine extends EventTarget {
-  constructor() {
+  constructor(options={}) {
     super();let program={};try{program=JSON.parse(globalThis.localStorage?.getItem('sillage:program-v13')||'{}');}catch{}this.programOptions=programOptions({...program,muted:false,dim:false}); this.context = null; this.crossfade = 0; this.masterVolume = 0.7;
     this.decks = [0, 1].map(id => ({ id, track: null, source: null, playing: false, offset: 0, started: 0, rate: 1, volume: 0.85, cue: 0, loop: null, eq: [0, 0, 0], filter: 0 }));
-    this.transitionHistory=[]; this.performanceLog=[]; this.transition = null; this.keyLock = true; this.keyLockAvailable = false; this.starting = false;
+    this.transitionHistory=[]; this.performanceLog=[]; this.transition = null; this.keyLock = true; this.keyLockAvailable = false; this.starting = false;this.keyLockProfile=resolveKeyLockProfile(options?.keyLockProfile).id;this.keyLockProfileChanging=null;
     this.analysisQueue=new AnalysisQueue();this.addEventListener('change',()=>this.analysisQueue.setPerformanceBusy(Boolean(this.transition||this.decks.some(d=>d.scratching))));this.audioMetrics=emptyMeterFrame();this.emptyMetrics=emptyMeterFrame();
     this.clockTimer = setInterval(() => this.tick(), 25); this.clockTimer.unref?.();
   }
@@ -105,18 +106,27 @@ export class StudioEngine extends EventTarget {
   async prepareKeyLock() {
     if (!this.context.audioWorklet || typeof AudioWorkletNode === 'undefined') return;
     try {
-      const {SoundTouchNode}=await import('./vendor/soundtouch/SoundTouchNode.js');
-      await SoundTouchNode.register(this.context,'/vendor/soundtouch/soundtouch-processor.js');
-      this.SoundTouchNode=SoundTouchNode; this.keyLockAvailable=true;
-      this.keyLockLatency=0;
-      if(typeof OfflineAudioContext!=='undefined'){
-        const sr=this.context.sampleRate,probe=new OfflineAudioContext(2,sr,sr);await SoundTouchNode.register(probe,'/vendor/soundtouch/soundtouch-processor.js');
-        const buffer=probe.createBuffer(2,sr*.6,sr);for(let ch=0;ch<2;ch++){const data=buffer.getChannelData(ch);for(let i=Math.round(sr*.15);i<data.length;i++)data[i]=.2*Math.sin((i-Math.round(sr*.15))*2*Math.PI*440/sr);}
-        const source=probe.createBufferSource(),node=new SoundTouchNode({context:probe});source.buffer=buffer;source.connect(node).connect(probe.destination);source.start();
-        const result=(await probe.startRendering()).getChannelData(0),first=result.findIndex(x=>Math.abs(x)>.01),original=buffer.getChannelData(0).findIndex(x=>Math.abs(x)>.01);
-        if(first>=original)this.keyLockLatency=clamp((first-original)/sr,0,.3);node.disconnect();node.port.close();
-      }
-    } catch(error) { this.keyLockAvailable=false; this.dispatchEvent(new CustomEvent('warning',{detail:'Le maintien de tonalité est indisponible dans ce navigateur. La vitesse modifiera aussi la hauteur.'})); }
+      const {KeyLockNode}=await import('./keylock-node.mjs');
+      await KeyLockNode.register(this.context);this.SoundTouchNode=KeyLockNode;
+      this.keyLockLatency=await this.calibrateKeyLock(this.keyLockProfile);this.keyLockAvailable=true;
+    }catch(error){this.keyLockAvailable=false;this.dispatchEvent(new CustomEvent('warning',{detail:'Le maintien de tonalité est indisponible dans ce navigateur. La vitesse modifiera aussi la hauteur.'}));}
+  }
+  async calibrateKeyLock(profile) {
+    if(!this.SoundTouchNode||typeof OfflineAudioContext==='undefined')return 0;
+    const sr=this.context.sampleRate,probe=new OfflineAudioContext(2,sr,sr);await this.SoundTouchNode.register(probe);
+    const buffer=probe.createBuffer(2,sr*.6,sr);for(let ch=0;ch<2;ch++){const data=buffer.getChannelData(ch);for(let i=Math.round(sr*.15);i<data.length;i++)data[i]=.2*Math.sin((i-Math.round(sr*.15))*2*Math.PI*440/sr);}
+    const source=probe.createBufferSource(),node=new this.SoundTouchNode({context:probe,profile});source.buffer=buffer;source.connect(node).connect(probe.destination);source.start();
+    try{const result=(await probe.startRendering()).getChannelData(0),first=result.findIndex(x=>Math.abs(x)>.01),original=buffer.getChannelData(0).findIndex(x=>Math.abs(x)>.01),latency=(first-original)/sr;if(first<original||!Number.isFinite(latency)||latency>.3)throw Error('Calibration du maintien de hauteur indisponible.');return latency;}finally{node.disconnect();node.port.close();}
+  }
+  canChangeKeyLockProfile(){return !this.keyLockProfileChanging&&!this.starting&&!this.transition&&!this.decks.some(d=>d.playing||d.playRequest||d.scratching||d.braking);}
+  async setKeyLockProfile(profile){
+    if(!['standard','rhythm'].includes(profile))throw Error('Profil de maintien de hauteur invalide.');
+    if(profile===this.keyLockProfile&&!this.keyLockProfileChanging)return profile;
+    if(!this.canChangeKeyLockProfile())throw Error('Mettez les platines en pause avant de changer ce profil.');
+    if(!this.context){this.keyLockProfile=profile;this.dispatchEvent(new Event('change'));return profile;}
+    const change=(async()=>{await this.dspReady;const latency=await this.calibrateKeyLock(profile);if(!Number.isFinite(latency)||latency<0||latency>.3)throw Error('Calibration invalide.');this.keyLockProfile=profile;this.keyLockLatency=latency;return profile;})();
+    this.keyLockProfileChanging=change;this.dispatchEvent(new Event('change'));
+    try{return await change;}finally{if(this.keyLockProfileChanging===change)this.keyLockProfileChanging=null;this.dispatchEvent(new Event('change'));}
   }
   position(id) {
     const d = this.decks[id];
@@ -209,14 +219,14 @@ export class StudioEngine extends EventTarget {
   async play(id, when) {
     const d=this.decks[id];if(!d.track||d.playing)return;if(d.playRequest)return d.playRequest.promise;
     const track=d.track,request={};d.playRequest=request;this.dispatchEvent(new Event('change'));
-    request.promise=(async()=>{try{await this.init();
+    request.promise=(async()=>{try{try{await this.keyLockProfileChanging;}catch{}await this.init();
     if(track.ensureAudio&&!track.buffer?.getChannelData)await track.ensureAudio({priority:0});
     if(d.playRequest!==request||d.track!==track)return;
     if(d.scratching)await this.endScratch(id,{resume:false});
     if (!d.track || d.playing) return;
     if (d.offset >= d.track.buffer.duration - 0.02) d.offset = 0;
     this.stopSource(d);
-    const source = this.context.createBufferSource(); source.buffer = d.track.stemBuffer||d.track.buffer; source.playbackRate.value = d.rate;
+    const source = this.context.createBufferSource();request.source=source; source.buffer = d.track.stemBuffer||d.track.buffer; source.playbackRate.value = d.rate;
     if (d.loop) { source.loop = true; source.loopStart = d.loop.start; source.loopEnd = d.loop.end; }
     d.voiceGain=this.context.createGain();d.voiceGain.gain.value=0;d.voiceGain.connect(d.input);
     let signal=source;
@@ -232,7 +242,7 @@ export class StudioEngine extends EventTarget {
       signal=sum;
     }
     if(this.keyLock && this.keyLockAvailable && !d.brakeBypass) {
-      d.pitchNode=new this.SoundTouchNode({context:this.context}); d.pitchNode.playbackRate.value=d.rate; d.pitchNode.pitch.value=1;
+      d.pitchNode=new this.SoundTouchNode({context:this.context,profile:this.keyLockProfile}); d.pitchNode.playbackRate.value=d.rate; d.pitchNode.pitch.value=1;
       signal.connect(d.pitchNode).connect(d.voiceGain);
     } else signal.connect(d.voiceGain);
     d.source=source;d.endedNaturally=false;d.latency=d.pitchNode?(this.keyLockLatency||0):0;const sourceStart=Math.max(this.context.currentTime,(when??this.context.currentTime+d.latency)-d.latency);d.started=sourceStart+d.latency;d.playing=true;
@@ -355,8 +365,8 @@ export class StudioEngine extends EventTarget {
     brake.timer=setTimeout(finish,seconds*1000+10);brake.timer.unref?.();this.dispatchEvent(new Event('change'));return promise;
   }
   async toggle(id) { this.cancelTransition(); return this.decks[id].playing ? this.pause(id) : this.play(id); }
-  async seek(id, position) {
-    this.cancelTransition(); const d = this.decks[id], playing = d.playing;
+  async seek(id, position,{cancel=true}={}) {
+    if(cancel)this.cancelTransition(); const d = this.decks[id], playing = d.playing;
     this.pause(id); d.loop = null; d.offset = clamp(position, 0, Math.max(0, (d.track?.buffer.duration || 0) - 0.001));
     if (playing) await this.play(id); this.dispatchEvent(new Event('change'));
   }
@@ -385,8 +395,8 @@ export class StudioEngine extends EventTarget {
     this.cancelTransition(); d.track.downbeat = d.track.beatOffset = this.position(id); d.track.confidence = 'manual';d.track.manualGrid=true;
     this.dispatchEvent(new Event('change'));
   }
-  async setRate(id, rate) {
-    this.cancelTransition(); const d = this.decks[id], pos=this.position(id);
+  async setRate(id, rate,{cancel=true}={}) {
+    if(cancel)this.cancelTransition(); const d = this.decks[id], pos=this.position(id);
     if(d.braking){this.pause(id);d.offset=pos;d.rate=clamp(rate,.5,2);await this.play(id);this.dispatchEvent(new Event('change'));return;}
     d.offset=pos; if(this.context)d.started=this.context.currentTime; d.rateRamp=null; d.rate=clamp(rate,0.5,2);
     if(d.source) { d.source.playbackRate.cancelScheduledValues(this.context.currentTime); d.source.playbackRate.setValueAtTime(d.rate,this.context.currentTime); }
@@ -434,10 +444,10 @@ export class StudioEngine extends EventTarget {
     d.wet.gain.cancelScheduledValues(now);d.wet.gain.setTargetAtTime(enabled?.55:0,now,.08);
     if(d.delay&&!d.echoTailUntil)d.delay.delayTime.setTargetAtTime(30/(d.track?.bpm||120)/d.rate,now,.05);
   }
-  loop(id, beats,{quantize=false}={}) {
+  loop(id, beats,{quantize=false,cancel=true}={}) {
     const d = this.decks[id]; if (!d.track) return;
     this.releaseContinuity(id);
-    this.cancelTransition();
+    if(cancel)this.cancelTransition();
     if (d.loop) {
       // Native BufferSource continues from its audible loop position on release.
       // Rebase the UI clock there too; a slip roll has its own continuing clock.
@@ -484,7 +494,7 @@ export class StudioEngine extends EventTarget {
     if(!d.playing)await this.play(id);if(d.loop)this.loop(id,1);const position=this.position(id),now=this.context.currentTime;
     this.loop(id,beats);d.roll={position,started:now,rate:d.rate,beats};this.dispatchEvent(new Event('change'));
   }
-  async endRoll(id){const d=this.decks[id],r=d.roll;if(!r)return;const position=r.position+Math.max(0,this.context.currentTime-r.started)*r.rate;d.roll=null;await this.seek(id,position);}
+  async endRoll(id,{cancel=true}={}){const d=this.decks[id],r=d.roll;if(!r)return;const position=r.position+Math.max(0,this.context.currentTime-r.started)*r.rate;d.roll=null;await this.seek(id,position,{cancel});}
   async playTexture(kind,options={}){await this.init();return this.textures.play(kind,options);}
   silence(){
     this.cancelTransition();this.pause(0);this.pause(1);this.stopTextures();this.pumping?.reset();if(!this.context)return;const now=this.context.currentTime;
@@ -520,26 +530,28 @@ export class StudioEngine extends EventTarget {
     this.starting=true;const preparation=this.startPreparation=(this.startPreparation||0)+1;
     try {
     const {quantize=true,tempoBlend=false}=options;
-    await this.init();
+    try{await this.keyLockProfileChanging;}catch{}
+    await this.init();if(preparation!==this.startPreparation)return;
     const source = this.crossfade < 0.5 ? 0 : 1, target = 1 - source;
     const a = this.decks[source], b = this.decks[target];
     if (!a.track || !b.track) throw new Error('Charge un morceau sur chaque platine.');
-    const originalA=a.track,originalB=b.track;
+    const originalA=a.track,originalB=b.track,obsolete=()=>preparation!==this.startPreparation||a.track!==originalA||b.track!==originalB;
     await Promise.all([a,b].map(d=>d.track.ensureAudio&&!d.track.buffer?.getChannelData?d.track.ensureAudio({priority:5}):null));
     if(preparation!==this.startPreparation||a.track!==originalA||b.track!==originalB)return;
     if(a.braking)this.pause(source);if(b.braking)this.pause(target);
     const recovering=Boolean(options.automix&&a.endedNaturally);
-    if (!a.playing&&!recovering) await this.play(source);
+    if (!a.playing&&!recovering){const pending=this.play(source),ticket=a.playRequest;await pending;if(obsolete()||!a.playing){if(ticket?.source&&a.source===ticket.source)this.pause(source);return;}}
     // A scheduled transition leaves the loop before calculating its start.
-    if(a.roll)await this.endRoll(source);if(b.roll)await this.endRoll(target);
+    if(a.roll)await this.endRoll(source,{cancel:false});if(b.roll)await this.endRoll(target,{cancel:false});if(obsolete())return;
     this.releaseContinuity(source);this.releaseContinuity(target);
-    if (a.loop) this.loop(source, 4);
-    if (b.loop) this.loop(target, 4);
+    if (a.loop) this.loop(source, 4,{cancel:false});
+    if (b.loop) this.loop(target, 4,{cancel:false});
     const plan=makeTransitionPlan(a,b,{...options,tempoBlend,history:this.transitionHistory,position:this.position(source),stemsAvailable:Boolean(a.stemGains&&b.track.stemBuffer)});
     if(recovering)Object.assign(plan,{style:'linear',sync:false,tempoBlend:false,seconds:.2,beats:0,reason:'Titre sortant terminé : reprise du prochain titre sans relancer le précédent.'});
     const style=plan.style,bridge=['bridge','landing'].includes(style),clean=style==='clean';
-    if(plan.sync) await this.setRate(target,plan.rate);
-    else await this.setRate(target,1);
+    if(plan.sync) await this.setRate(target,plan.rate,{cancel:false});
+    else await this.setRate(target,1,{cancel:false});
+    if(obsolete())return;
     const now = this.context.currentTime;
     const pos=this.position(source), lookahead=Math.max(.12,(this.keyLockLatency||0)+.04);
     const requestedPoint=options.automix&&!options.startNow&&!recovering?(options.plannedPoint??plan.outPoint??a.track.mixOut??0):0;
@@ -566,7 +578,8 @@ export class StudioEngine extends EventTarget {
     const bounded=Math.max(.05,Math.min(requested,Math.max(.05,availableA)/sourcePart,availableB/incomingPart)),barSeconds=4*60/(plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA);
     const duration=plan.automatic&&plan.sync&&bounded>=barSeconds?Math.max(barSeconds,Math.floor((bounded+1e-6)/barSeconds)*barSeconds):bounded;
     if(b.playing)this.pause(target);
-    b.offset=incomingCue;const timing=clean?cleanTiming(duration):null,incomingStart=start+duration*(clean?timing.incomingStartFraction:bridge?.5:0);await this.play(target,incomingStart);
+    b.offset=incomingCue;const timing=clean?cleanTiming(duration):null,incomingStart=start+duration*(clean?timing.incomingStartFraction:bridge?.5:0);const incoming=this.play(target,incomingStart),incomingTicket=b.playRequest;await incoming;
+    if(obsolete()||!b.playing){if(incomingTicket?.source&&b.source===incomingTicket.source)this.pause(target);return;}
     const from = this.crossfade, to = target;
     this.transition = { source, target, from, to, start, duration, style, fallback:plan.fallback,tempoBlend:plan.tempoBlend };
     if(plan.tempoBlend) {this.scheduleRate(source,plan.bpmB/(a.track.bpm||120),start,duration);this.scheduleRate(target,1,start,duration);}
@@ -678,7 +691,7 @@ export class StudioEngine extends EventTarget {
       t.reason+=' Souffle filtré dosé autour du relais.';
     }
     this.dispatchEvent(new Event('change'));
-    } finally {this.starting=false;}
+    } finally {this.starting=false;this.dispatchEvent(new Event('change'));}
   }
   tick() {
     if (!this.transition) return null;

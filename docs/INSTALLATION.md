@@ -47,8 +47,11 @@ Avec deux morceaux distincts de plus de 52 s :
 
 ```powershell
 npm run test:transitions:windows -- "piste-A.mp3" "piste-B.mp3"
+npm run test:transitions:windows -- --rhythm "piste-A.mp3" "piste-B.mp3"
 npm run test:library:windows -- "piste-A.mp3" "piste-B.mp3"
 npm run test:audio:windows -- "piste-A.mp3" "piste-B.mp3"
+npm run test:keylock:windows
+npm run test:keylock-ui:windows -- "piste-A.mp3"
 ```
 
-Rapports, rendus et profils de test sont générés dans `.runtime/transition-proof`, `.runtime/library-proof` et `.runtime/audio-proof`. Les recettes ne touchent pas au profil installé. Le banc bibliothèque simule 1 000 références à partir des deux fichiers ; il ne mesure pas 1 000 décodages de musiques distinctes. [Périmètre et limites](CHANGELOG-0.20.0.md).
+Rapports, rendus et profils de test sont générés dans `.runtime/transition-proof`, `.runtime/library-proof`, `.runtime/audio-proof`, `.runtime/keylock-proof` et `.runtime/keylock-ui-proof`. Les recettes ne touchent pas au profil installé. Le banc bibliothèque simule 1 000 références à partir des deux fichiers ; il ne mesure pas 1 000 décodages de musiques distinctes. Le banc Key Lock utilise des pulsations synthétiques sans fichier musical ; son complément UI vérifie un vrai MP3 et la commande Remote par IPC. [Périmètre et limites](CHANGELOG-0.21.0.md).

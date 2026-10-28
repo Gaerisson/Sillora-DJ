@@ -13,6 +13,7 @@ export const transitionPresets = {
 export function sanitizePreferences(value = {}) {
   value = value && typeof value === 'object' ? value : {};
   return {
+    keyLockProfile:value.keyLockProfile==='rhythm'?'rhythm':'standard',
     view: value.view === 'waves' ? 'waves' : 'decks',
     zoom: ['full', '16', '8'].includes(value.zoom) ? value.zoom : 'full',
     master: Number.isFinite(value.master) ? clamp(value.master, 0, 1) : 0.7,

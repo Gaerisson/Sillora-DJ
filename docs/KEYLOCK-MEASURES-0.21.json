@@ -1,0 +1,169 @@
+{
+  "version": "0.21.0",
+  "passed": true,
+  "scope": "Stereo-isolated synthetic pulses, post-key-lock pre-EQ audio tap. Signal measurements, not transport position differences.",
+  "envelopeResolutionMs": 1,
+  "physicalRoundTripMeasured": false,
+  "cases": [
+    {
+      "profile": "standard",
+      "morph": false,
+      "keyLock": false,
+      "maxLagMs": 0,
+      "meanLagMs": 0,
+      "maxOnsetDeltaMs": 0,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": false,
+      "keyLock": true,
+      "maxLagMs": 0,
+      "meanLagMs": 0,
+      "maxOnsetDeltaMs": 1,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": false,
+      "keyLock": false,
+      "maxLagMs": 0,
+      "meanLagMs": 0,
+      "maxOnsetDeltaMs": 0,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": false,
+      "keyLock": true,
+      "maxLagMs": 3,
+      "meanLagMs": -1.3846153846153846,
+      "maxOnsetDeltaMs": 3,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": true,
+      "keyLock": false,
+      "maxLagMs": 0,
+      "meanLagMs": 0,
+      "maxOnsetDeltaMs": 1,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 13,
+      "meanLagMs": 4.6923076923076925,
+      "maxOnsetDeltaMs": 13,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": true,
+      "keyLock": false,
+      "maxLagMs": 0,
+      "meanLagMs": 0,
+      "maxOnsetDeltaMs": 0,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 9,
+      "meanLagMs": -2.1538461538461537,
+      "maxOnsetDeltaMs": 9,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 9,
+      "meanLagMs": 4.230769230769231,
+      "maxOnsetDeltaMs": 9,
+      "peak": 0.2824127972126007,
+      "nonFinite": 0
+    },
+    {
+      "profile": "standard",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 9,
+      "meanLagMs": -2.1538461538461537,
+      "maxOnsetDeltaMs": 8,
+      "peak": 0.2824127972126007,
+      "nonFinite": 0
+    },
+    {
+      "profile": "rhythm",
+      "morph": false,
+      "keyLock": true,
+      "maxLagMs": 0,
+      "meanLagMs": 0,
+      "maxOnsetDeltaMs": 0,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "rhythm",
+      "morph": false,
+      "keyLock": true,
+      "maxLagMs": 2,
+      "meanLagMs": -1.0769230769230769,
+      "maxOnsetDeltaMs": 2,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "rhythm",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 5,
+      "meanLagMs": 2.3846153846153846,
+      "maxOnsetDeltaMs": 6,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "rhythm",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 4,
+      "meanLagMs": -0.15384615384615385,
+      "maxOnsetDeltaMs": 4,
+      "peak": 0.28238728642463684,
+      "nonFinite": 0
+    },
+    {
+      "profile": "rhythm",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 5,
+      "meanLagMs": 1.6923076923076923,
+      "maxOnsetDeltaMs": 5,
+      "peak": 0.2824127972126007,
+      "nonFinite": 0
+    },
+    {
+      "profile": "rhythm",
+      "morph": true,
+      "keyLock": true,
+      "maxLagMs": 4,
+      "meanLagMs": 0.6153846153846154,
+      "maxOnsetDeltaMs": 4,
+      "peak": 0.2824127972126007,
+      "nonFinite": 0
+    }
+  ]
+}

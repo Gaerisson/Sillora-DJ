@@ -13,9 +13,17 @@ test('shared stereo meter modules are available to the paired remote interface',
 });
 
 test('the remote waveform serves its entire static module dependency graph',async t=>{
- const f=await fixture(t),pending=['/dj-waveform.mjs'],seen=new Set();
+ const f=await fixture(t),pending=['/dj-waveform.mjs','/keylock-settings.js'],seen=new Set();
  while(pending.length){const asset=pending.shift();if(seen.has(asset))continue;seen.add(asset);const response=await fetch(f.origin+asset);assert.equal(response.status,200,asset);const source=await response.text();for(const match of source.matchAll(/(?:from\s*|import\s*)['"](\.\.?\/[^'"]+)['"]/g)){const dependency=new URL(match[1],f.origin+asset).pathname;if(!seen.has(dependency))pending.push(dependency);}}
  assert.ok(seen.has('/transition-score.mjs'));assert.ok(seen.has('/tempo-automation.mjs'));assert.ok(seen.has('/audio-math.mjs'));
+});
+
+test('remote key-lock profile settings retain measured latency and reject invalid or busy commands',()=>{
+ const state=sanitizeState({...snapshot(),keyLockProfile:'rhythm',keyLockLatencyMs:59.4,keyLockProfileBusy:false});assert.equal(state.keyLockProfile,'rhythm');assert.equal(state.keyLockLatencyMs,59.4);
+ assert.deepEqual(sanitizeCommand({type:'mixer:keyLockProfile',value:'standard'},state),{type:'mixer:keyLockProfile',value:'standard'});
+ assert.throws(()=>sanitizeCommand({type:'mixer:keyLockProfile',value:'__proto__'},state));
+ assert.throws(()=>sanitizeCommand({type:'mixer:keyLockProfile',value:'rhythm'},{...state,keyLockProfileBusy:true}));
+ assert.equal(sanitizeState({...snapshot(),keyLockLatencyMs:NaN}).keyLockLatencyMs,null);
 });
 
 test('state is explicitly filtered, bounded and excludes audio, local paths and credentials',()=>{

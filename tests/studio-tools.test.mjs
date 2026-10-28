@@ -9,6 +9,11 @@ test('stored preferences accept silence and reject invalid or obsolete values',(
   assert.equal(sanitizePreferences(null).beats,16);
   const dj=sanitizePreferences({style:'riser',intensity:0,profile:'peak'});assert.equal(dj.style,'riser');assert.equal(dj.intensity,0);assert.equal(dj.profile,'peak');
 });
+
+test('key-lock profile persistence only restores supported processing modes',()=>{
+ assert.equal(sanitizePreferences({keyLockProfile:'rhythm'}).keyLockProfile,'rhythm');
+ assert.equal(sanitizePreferences({keyLockProfile:'__proto__'}).keyLockProfile,'standard');
+});
 test('track preparation round-trips without audio and bounds all cue and region positions',()=>{
   const track={id:'a',fileKey:fileKey({name:'track.wav',size:100,lastModified:42}),bpm:120,buffer:{duration:10},mixIn:0,mixOut:8};
   restorePreparation(track,{bpm:128,mixIn:3,mixOut:1,downbeat:2,hotCues:[0,500,-2,null],favorite:true,confidence:'manual'});

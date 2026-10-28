@@ -30,6 +30,27 @@ class Context {
 globalThis.AudioContext = Context;
 const track = (id, bpm = 120, duration = 60) => ({ id, bpm, beatOffset: 0, buffer: { duration }, peaks: [] });
 
+test('key-lock profile changes reject active playback without changing the running voice',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('active'));await e.play(0);const source=e.decks[0].source;
+ await assert.rejects(e.setKeyLockProfile('rhythm'),/arrêt|pause/);assert.equal(e.keyLockProfile,'standard');assert.equal(e.decks[0].source,source);assert.equal(e.decks[0].playing,true);
+});
+
+test('playback waits for profile calibration and a pause still cancels the queued launch',async()=>{
+ for(const cancel of [false,true]){const e=new StudioEngine();await e.init();e.load(0,track('pending'));let release;e.calibrateKeyLock=()=>new Promise(resolve=>release=resolve);const change=e.setKeyLockProfile('rhythm');await new Promise(r=>setImmediate(r));const play=e.play(0);await new Promise(r=>setImmediate(r));assert.equal(e.decks[0].source,null);if(cancel)e.pause(0);release(.06);await change;await play;assert.equal(e.keyLockProfile,'rhythm');assert.equal(e.keyLockLatency,.06);assert.equal(e.decks[0].playing,!cancel);assert.equal(e.keyLockProfileChanging,null);}
+});
+
+test('failed profile calibration preserves the old profile and does not strand a queued play',async()=>{
+ const e=new StudioEngine();await e.init();e.keyLockLatency=.13;e.load(0,track('recovery'));let reject;e.calibrateKeyLock=()=>new Promise((_resolve,no)=>reject=no);const change=e.setKeyLockProfile('rhythm');await new Promise(r=>setImmediate(r));const play=e.play(0);reject(Error('calibration failed'));await assert.rejects(change,/calibration failed/);await play;assert.equal(e.keyLockProfile,'standard');assert.equal(e.keyLockLatency,.13);assert.equal(e.decks[0].playing,true);
+});
+
+test('cancelling a transition during profile calibration never starts either deck afterwards',async()=>{
+ const e=new StudioEngine();await e.init();e.load(0,track('a'));e.load(1,track('b'));let release;e.calibrateKeyLock=()=>new Promise(resolve=>release=resolve);const change=e.setKeyLockProfile('rhythm');await new Promise(r=>setImmediate(r));const start=e.startTransition({style:'bass',quantize:false});await new Promise(r=>setImmediate(r));e.cancelTransition();e.pause(0);e.pause(1);release(.06);await change;await start;assert.equal(e.transition,null);assert.deepEqual(e.decks.map(d=>d.playing),[false,false]);assert.deepEqual(e.decks.map(d=>d.source),[null,null]);
+});
+
+test('cancellation after an incoming play only stops the source owned by that preparation',async()=>{
+ for(const replace of [false,true]){const e=new StudioEngine();await e.init();e.load(0,track('a'));e.load(1,track('b'));await e.play(0);const play=e.play.bind(e);let release,held=false;e.play=(id,when)=>{const p=play(id,when);if(id===1&&!held){held=true;return p.then(()=>new Promise(resolve=>release=resolve));}return p;};const pending=e.startTransition({style:'bass',quantize:false});while(!release)await new Promise(r=>setImmediate(r));e.cancelTransition();let newer;if(replace){e.load(1,track('new'));await e.play(1);newer=e.decks[1].source;}release();await pending;assert.equal(e.transition,null);assert.equal(e.decks[0].playing,true);assert.equal(e.decks[1].playing,replace);if(replace)assert.equal(e.decks[1].source,newer);}
+});
+
 test('pausing or replacing a deck during buffer reacquisition cannot start obsolete playback',async()=>{
  for(const change of ['pause','load']){const e=new StudioEngine();await e.init();let release;const t=track('evicted');t.ensureAudio=()=>new Promise(resolve=>release=()=>{t.buffer={duration:60,getChannelData:()=>new Float32Array(1)};resolve(t);});e.load(0,t);const pending=e.play(0);await new Promise(r=>setImmediate(r));if(change==='pause')e.pause(0);else e.load(0,track('replacement'));release();await pending;assert.equal(e.decks[0].playing,false);assert.equal(e.decks[0].source,null);assert.equal(e.decks[0].playRequest,null);}
 });
