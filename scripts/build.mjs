@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {createRequire} from 'node:module';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+if(process.argv.includes('--fast')&&process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL===undefined)process.env.ELECTRON_BUILDER_COMPRESSION_LEVEL='1';
 process.env.ELECTRON_BUILDER_CACHE=path.join(root,'.runtime','builder-cache');
 const require=createRequire(import.meta.url);
 if(process.platform==='win32'){

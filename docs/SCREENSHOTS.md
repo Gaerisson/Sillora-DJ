@@ -2,6 +2,16 @@
 
 Les vues générales proviennent de la 0.16.1 exécutée ; les vues de préparation et de gestes sont datées ci-dessous. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
 
+## Espaces du studio · 0.28.0
+
+![Studio](images/workspace-studio-028.png)
+![Studio Porcelaine](images/workspace-porcelain-028.png)
+![Automix](images/workspace-automix-028.png)
+![Préparation](images/workspace-preparation-028.png)
+![Régie](images/workspace-regie-028.png)
+
+Captures du paquet, avec deux fichiers réels. Le scénario de Régie n’ouvre pas de microphone. [Commandes et portée](WORKSPACES-0.28.md).
+
 ## Préparation des stems · 0.27.0
 
 ![Budgets CPU, mémoire et temps](images/stems-027.png)

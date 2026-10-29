@@ -1,3 +1,4 @@
+import {Workspace} from './workspace.js';
 import {mountGridEditor} from './grid-editor-view.js';
 import {gridStatus,gridDetail} from './grid-status.mjs';
 import {audioContentId} from './audio-identity.mjs';
@@ -838,3 +839,5 @@ engine.addEventListener('change',()=>{library.drainSoon();scheduleLibraryBudget(
 loadLibrary().then(snapshot=>{if(snapshot)library.restore(snapshot);renderLibrary();}).catch(()=>{});
 
 window.addEventListener('pagehide',()=>{clearTimeout(librarySaveTimer);saveLibrary(library.snapshot()).catch(()=>{});},{once:true});
+
+const workspace=new Workspace({layout:consoleLayout,getState:()=>({decks:engine.decks,live:liveMixer.state,recording:recorder.state}),analyse:id=>showAnalysis(id),onError:error=>toast(error.message)});

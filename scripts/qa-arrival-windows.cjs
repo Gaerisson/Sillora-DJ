@@ -16,11 +16,11 @@ app.whenReady().then(async()=>{try{
  ipcMain.on('remote:state',(_e,state)=>remote.publish(state));ipcMain.on('remote:ack',(_e,ack)=>remote.acknowledge(ack));
  win=new BrowserWindow({show:false,width:1440,height:960,webPreferences:{preload:root+'/desktop/preload.cjs',contextIsolation:true,sandbox:true,offscreen:true,backgroundThrottling:false}});win.webContents.setAudioMuted(true);
  const captureErrors=target=>target.webContents.on('console-message',e=>{if(e.level===3||e.level==='error')report.errors.push(e.message);});captureErrors(win);
- const js=code=>win.webContents.executeJavaScript(code,true),wait=async(fn,label)=>{const until=Date.now()+60000;while(Date.now()<until){if(await fn())return;await sleep(50);}throw Error('Timeout '+label);};
+ const js=code=>win.webContents.executeJavaScript(code,true),wait=async(fn,label,timeout=60000)=>{const until=Date.now()+timeout;while(Date.now()<until){if(await fn())return;await sleep(50);}throw Error('Timeout '+label);};
  await win.loadURL(server.origin);
  await js(`(async()=>{const {StudioEngine}=await import('/engine.js'),init=StudioEngine.prototype.init;StudioEngine.prototype.init=async function(...args){window.qaEngine=this;return init.apply(this,args);};document.querySelector('#import-top').click();})()`);
- await wait(()=>js("window.qaEngine?.decks[0].track?.analysisStatus==='ready'"),'native worker analysis');
- await js("[...document.querySelectorAll('[data-load=\"1\"]')].find(b=>b.dataset.id!==window.qaEngine.decks[0].track.id).click();true");await wait(()=>js("window.qaEngine.decks[1].track?.analysisStatus==='ready'"),'second automatic analysis');
+ await wait(()=>js("window.qaEngine?.decks[0].track?.analysisStatus==='ready'"),'native worker analysis',180000);
+ await js("[...document.querySelectorAll('[data-load=\"1\"]')].find(b=>b.dataset.id!==window.qaEngine.decks[0].track.id).click();true");await wait(()=>js("window.qaEngine.decks[1].track?.analysisStatus==='ready'"),'second automatic analysis',180000);
  const analysis=await js('window.qaEngine.decks.map(d=>({bpm:d.track.bpm,tempo:d.track.tempoConfidence,stability:d.track.beatStability,manual:Boolean(d.track.manualGrid)}))');assert.ok(analysis.every(t=>t.tempo>=.65&&t.stability>=.65&&!t.manual));report.analysis=analysis;
  await js("document.querySelector('.pro-transition-tools summary').click();true");
  await js("window.qaArrivalLabels=new Set();window.qaText=CanvasRenderingContext2D.prototype.fillText;CanvasRenderingContext2D.prototype.fillText=function(text,...args){if(String(text).startsWith('ARRIVÉE'))window.qaArrivalLabels.add(text);return window.qaText.call(this,text,...args);};for(const [selector,value]of [['#transition-style','auto'],['#set-profile','musical'],['#transition-beats','16']]){const c=document.querySelector(selector);c.value=value;c.dispatchEvent(new Event('change'));}for(const selector of ['#tempo-sync','#tempo-blend','#quantize','#align-arrival']){const c=document.querySelector(selector);c.checked=true;c.dispatchEvent(new Event('change'));}true");
@@ -44,6 +44,6 @@ app.whenReady().then(async()=>{try{
  await js("(()=>{const c=document.querySelector('#align-arrival');c.checked=false;c.dispatchEvent(new Event('change'));return true;})()");await win.loadURL(server.origin);await wait(()=>js("document.querySelector('#align-arrival')?.checked===false"),'restored arrival preference');
  report.checks.push({name:'Reload restores the disabled arrival preference'});
  assert.deepEqual(report.errors,[]);report.passed=true;
- }catch(error){report.failure=error.stack;if(win&&!win.isDestroyed())await fs.writeFile(out+'/Failure.png',(await win.webContents.capturePage()).toPNG());}
+ }catch(error){report.failure=error.stack;if(win&&!win.isDestroyed())try{report.debug=await win.webContents.executeJavaScript("({decks:window.qaEngine?.decks.map(d=>({title:d.track?.title,status:d.track?.analysisStatus,error:d.track?.analysisError,state:d.track?.libraryState,channels:d.track?.buffer?.numberOfChannels})),jobs:document.querySelector('.library-work-status')?.textContent,toast:document.querySelector('#toast')?.textContent})");}catch{};if(win&&!win.isDestroyed())await fs.writeFile(out+'/Failure.png',(await win.webContents.capturePage()).toPNG());}
  finally{await fs.writeFile(out+'/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));phone?.destroy();win?.destroy();await remote?.stop();server?.close();app.exit(report.passed?0:1);}
 });

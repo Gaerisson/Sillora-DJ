@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.27.0. Les premiers lots ci-dessous conservent leurs constats historiques.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.28.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
@@ -200,3 +200,9 @@ Le titre entrant peut commencer avant un changement durable d’énergie/graves 
 WAV et enveloppes RMS en Worker, transferts/assemblage par blocs, budgets CPU/mémoire décodée/temps mémorisés et partagés PC/Remote. Une seule séparation native ; annulation accessible après remplacement ou rechargement et libération du verrou après fin du processus. Cache v2 vérifié par SHA-256 et formats/horloges, publication atomique et conservation des niveaux. Les stems comptent dans l’éviction PCM des titres inactifs ; les imports de fond attendent. Le modèle et sa qualité d’isolation ne changent pas.
 
 345 tests et 51 cas natifs depuis le paquet passent, dont douze stems avec le modèle embarqué sur huit secondes réelles et un encodage Worker de 180 secondes synthétiques. Les 155 sources, ressources, versions et contenu identique des exécutables sont vérifiés, avec intégrité de l’archive contrôlée. Installation personnelle non exécutée ; relecture par l’auteur. Le calcul reste lent, le modèle et les copies dépassent le budget des stems décodés ; quota disque, morceaux complets et longues sessions restent ouverts. [Réglages](docs/STEMS-0.27.md) · [Mesures](docs/STEMS-MEASURES-0.27.json) · [Recette](docs/CHANGELOG-0.27.0.md).
+
+## Lot K — espaces et travail regroupé — 0.28.0
+
+Navigation réelle entre quatre espaces, bibliothèque redimensionnable, densité et modules mémorisés. Même moteur et source en lecture ; grille/stems et quatre entrées de régie existantes réutilisés. Le lanceur groupe les recettes, réserve la ressource UI, parallélise les tests Node et reprend seulement les résultats aux empreintes intactes. Le build rapide compresse au niveau 1 en conservant les ressources.
+
+353 tests unitaires et 51 cas natifs depuis le paquet passent ; 24 combinaisons vues/tailles/thèmes et 158 sources comparées. Les deux exécutables ont le même contenu, ressources/versions et intégrité vérifiées. Les échecs du parallélisme initial restent documentés. Aucun nouveau DSP ni validation acoustique/longue session revendiqués. La refonte générale reste partielle. [Espaces](docs/WORKSPACES-0.28.md) · [Recettes](docs/QA-BATCH.md) · [Distribution](docs/CHANGELOG-0.28.0.md).

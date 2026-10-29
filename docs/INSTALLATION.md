@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.27.0.exe` et `Sillora-DJ-0.27.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.28.0.exe` et `Sillora-DJ-0.28.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -35,6 +35,8 @@ $env:GAERISSON_STEMS_MODEL = 'D:\models\955717e8-8726e21a.th'
 npm run vendor:stems
 
 npm run pack:installer
+# Compression plus rapide, exécutable plus volumineux
+npm run pack:installer:fast
 ```
 
 Le modèle officiel htdemucs est vérifié avec le préfixe SHA256 `8726e21a`. Le build refuse les ressources absentes. Les modèles, runtimes et sorties générées ne sont pas versionnés ; les distributions préparées les embarquent pour éviter un téléchargement au premier usage.
@@ -71,3 +73,5 @@ La recette `test:grid:windows` importe au contraire les fichiers sans correction
 Les gestes utilisent `.runtime/wave-gesture-proof`, avec profils isolés. Le corpus écrit ses analyses dans `.runtime/corpus-proof/results` ; ses rapports locaux contiennent les noms/chemins des fichiers testés et restent hors du dépôt. `--survey` accepte des grilles incertaines et contrôle le repli sans imposer une synchronisation. Deux rendus automatiques de 42 s sont produits, dans les deux sens, sans corrections manuelles des régions/grilles. [Périmètre 0.24](CORPUS-0.24.md).
 
 La recette stems utilise le moteur embarqué sur un extrait réel de huit secondes et un encodage de 180 secondes en Worker. Elle vérifie budgets, annulation, cache, rechargement, lecture et réglages Remote dans un profil isolé. Résultats dans `.runtime/stems-proof/results`. Le calcul CPU peut prendre plusieurs minutes ; il ne faut pas assimiler l’encodage de 180 secondes à une séparation de cette durée. [Réglages](STEMS-0.27.md).
+
+Le [lanceur regroupé](QA-BATCH.md) organise les recettes et leur reprise, avec une ressource UI commune. Les nouveaux espaces se contrôlent par `test:workspace:windows`. Voir les [réglages d’affichage](WORKSPACES-0.28.md).

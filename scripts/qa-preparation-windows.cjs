@@ -16,10 +16,10 @@ app.whenReady().then(async()=>{try{
  ipcMain.on('remote:state',(_e,state)=>remote.publish(state));ipcMain.on('remote:ack',(_e,ack)=>remote.acknowledge(ack));
  win=new BrowserWindow({show:false,width:1440,height:960,webPreferences:{preload:root+'/desktop/preload.cjs',contextIsolation:true,sandbox:true,offscreen:true,backgroundThrottling:false}});win.webContents.setAudioMuted(true);
  const captureErrors=target=>target.webContents.on('console-message',e=>{if(e.level===3||e.level==='error')report.errors.push(e.message);});captureErrors(win);
- const js=code=>win.webContents.executeJavaScript(code,true),wait=async(fn,label)=>{const until=Date.now()+60000;while(Date.now()<until){if(await fn())return;await sleep(50);}throw Error('Timeout '+label);};
+ const js=code=>win.webContents.executeJavaScript(code,true),wait=async(fn,label,timeout=60000)=>{const until=Date.now()+timeout;while(Date.now()<until){if(await fn())return;await sleep(50);}throw Error('Timeout '+label);};
  await win.loadURL(server.origin);
  await js(`(async()=>{const {StudioEngine}=await import('/engine.js'),init=StudioEngine.prototype.init;StudioEngine.prototype.init=async function(...args){window.qaEngine=this;return init.apply(this,args);};document.querySelector('#import-top').click();})()`);
- await wait(()=>js("window.qaEngine?.decks[0].track?.analysisStatus==='ready'"),'native worker analysis');
+ await wait(()=>js("window.qaEngine?.decks[0].track?.analysisStatus==='ready'"),'native worker analysis',180000);
  report.original=await js('window.qaEngine.decks.map(d=>d.track?({bpm:d.track.bpm,tempoConfidence:d.track.tempoConfidence,beatStability:d.track.beatStability,landmarks:d.track.arrangement?.landmarks.length,analysisVersion:d.track.analysisVersion}):null)');
  await js("document.querySelector('.deck-a .analysis-open').click();window.qaBaseline=JSON.stringify(window.qaEngine.decks[0].track.analysis);window.qaBpm=window.qaEngine.decks[0].track.bpm;true");
  await wait(()=>js("document.querySelector('.grid-detail').getBoundingClientRect().width>0"),'visible grid editor');

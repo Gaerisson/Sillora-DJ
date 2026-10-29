@@ -2,6 +2,8 @@
 
 État examiné : 0.17.0. Proposition du 28 octobre 2026.
 
+**Intégration 0.28 :** une première navigation Studio/Automix/Préparation/Régie, la hauteur/densité de liste et les modules mémorisés pilotent maintenant les composants réels. [Fonctionnement et limites](WORKSPACES-0.28.md). Le reste de cette page décrit la proposition historique ; la maquette illustrative ne devient pas une application audio.
+
 La refonte ne consiste pas à changer les couleurs des commandes existantes. Elle organise le transport, le plan de transition, la préparation des titres et la régie autour d’un état commun. Le moteur audio reste prioritaire sur la présentation.
 
 Cette livraison contient un **audit du projet et une maquette navigable**. La maquette fonctionne avec des données illustratives, ne produit aucun son, n’ouvre aucun micro et ne pilote pas la version installée. Ses commandes nouvelles sont une proposition, pas une déclaration de fonctionnalités terminées.

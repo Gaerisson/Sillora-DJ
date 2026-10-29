@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.27.0
+# Suivi de l’audit — Sillora DJ 0.28.0
 
 Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -16,6 +16,7 @@ Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | H · 0.25.0 | Préparation visuelle de grille, calibration, brouillon et restauration automatique | 322 tests ; 54 cas natifs, dont 18 de préparation MP3/Opus. [Fonctionnement](PREPARATION-0.25.md) · [Recette](CHANGELOG-0.25.0.md) |
 | I · 0.26.0 | Repère entrant au relais, Next recalculé, option et marqueurs PC/Remote | 332 tests ; 53 cas natifs, dont douze comparatifs Opus et deux rendus de repli. [Fonctionnement](ARRIVAL-0.26.md) · [Mesures](ARRIVAL-MEASURES-0.26.json) |
 | J · 0.27.0 | Stems en Worker, budgets CPU/mémoire/temps, annulation globale et cache validé | 345 tests ; 51 cas natifs, dont douze stems et quatre rendus Automix. [Réglages](STEMS-0.27.md) · [Mesures](STEMS-MEASURES-0.27.json) |
+| K · 0.28.0 | Espaces réels, bibliothèque redimensionnable, densité/modules ; recettes regroupées et build rapide | 353 tests ; 51 cas natifs. [Espaces](WORKSPACES-0.28.md) · [Recettes](QA-BATCH.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -203,11 +204,24 @@ Les boucles d’encodage WAV et d’enveloppes passent dans un Worker dédié. T
 
 345 tests et 51 cas natifs passent depuis le paquet final : douze stems avec le vrai modèle, six arrivée/interface, neuf préparation, dix gestes, six bibliothèque, quatre continuité et quatre rendus automatiques. Les 155 sources, ressources, métadonnées et contenu identique des exécutables sont vérifiés, avec intégrité contrôlée. L’extrait de huit secondes prend environ 276 s sur le PC de test pendant la compression ; ce n’est pas une certification de temps réel ni de morceaux complets. Une commande figée après annulation a été reproduite puis corrigée. Installation personnelle non exécutée et revue par l’auteur. [Réglages et limites](STEMS-0.27.md) · [Recette](CHANGELOG-0.27.0.md).
 
+## Lot K — interface et vérifications regroupées — 0.28.0
+
+Quatre chantiers sont reliés aux états réels : espaces Studio/Automix/Préparation/Régie, hauteur de liste, densité des lignes et modules mémorisés. Les contrôles réutilisent le même moteur et les mêmes nœuds. Une navigation ne recharge pas les sources ; la Régie complète rétablit le choix du panneau latéral au retour au Studio.
+
+| Références | État | Évolution et limite |
+| :--- | :---: | :--- |
+| R11.ergonomie-01 à 04, 06 à 09 | P | Espaces, indicateurs micro/REC/programme, commandes de préparation réelles, deux thèmes et 24 combinaisons de tailles/vues contrôlées. La refonte totale et les couches CSS historiques restent ouvertes. |
+| R11.ergonomie-05 | P | Tableau redimensionnable à la souris/toucher et au clavier, bornes de viewport, Échap et restauration. Tous les modules ne sont pas redimensionnables. |
+| R10-01 à 06 | V dans le périmètre livré | Modules vinyles/sampler/file, densité et choix d’espace mémorisés, sans démontage audio. La disposition Remote reste distincte et locale au client. |
+| X11-01 | P | Focus visible, raccourcis non actifs dans les champs/dialogues et poignée accessible. L’audit pointeur/sélection de tous les anciens modules reste ouvert. |
+
+353 tests et 51 cas natifs passent, dont douze espaces, six arrivée, neuf préparation, dix gestes, quatre continuité, quatre rendus et six bibliothèque. Les 158 sources et exécutables sont contrôlés. Les premiers essais à deux consoles ont révélé une contention et une erreur de capture ; le lanceur protège désormais la ressource UI et parallélise Node avec une console. Les mesures sensibles restent exclusives. La compilation rapide change la compression, pas les ressources. Pas de nouvelle qualité sonore revendiquée ; ni installation personnelle, ni essai acoustique de salle. [Recette complète](CHANGELOG-0.28.0.md).
+
 ## Prochain travail prioritaire
 
 1. Automix musical : élargir le jeu de grilles annotées, travailler les phrases et les points de passage, puis valider les rendus à l’écoute. Les grilles des deux références sont désormais exploitables sans correction manuelle ; cela ne clôt pas la fiabilité générale ni les nouveaux modes et la reconnaissance sémantique.
 2. Préparation audio : mesurer les morceaux complets et les longues sessions, profiler la mémoire totale et prévoir le quota/purge du cache disque. La séparation d’un extrait ne clôt pas ces validations.
-3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
+3. Poursuivre la [refonte UI](REFONTE-UI.md) : les quatre espaces et réglages de bibliothèque sont branchés en 0.28, mais les contrôles et couches CSS historiques ne sont pas tous remplacés. La maquette reste une proposition illustrative distincte.
 4. Poursuivre les sections restantes du registre, notamment réglages avancés du scratch, playlists, mises à jour et validation acoustique micro.
 
 Le numéro figé à 0.24 dans le bandeau Remote a été retiré en 0.27 ; les captures utilisent le code du paquet vérifié.
