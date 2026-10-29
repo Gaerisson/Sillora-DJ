@@ -1,10 +1,11 @@
+import {transitionTempo} from './tempo-policy.mjs';
 import {selectIncomingLanding} from './incoming-landing.mjs';
 import {clamp} from './audio-math.mjs';
 import {selectAutomaticFx,selectMusicalFx} from './automatic-fx.mjs';
 import {makeTransitionScore,scoreProgress} from './transition-score.mjs';
 import {tempoFraction,tempoMean,tempoShape} from './tempo-automation.mjs';
 import {composedPlan,cleanTiming,musicalEntry,musicalExit,gridReliable} from './musical-plan.mjs';
-import {harmonicCompatibility,tempoCompatibility} from './dj-library.mjs';
+import {harmonicCompatibility} from './dj-library.mjs';
 
 export const transitionCatalog = [
   {id:'auto',label:'DJ dynamique',group:'Intelligent',description:'Rythme mesuré, régions musicales et niveau sonore.'},
@@ -43,15 +44,12 @@ function energy(track,tail=false){
   if(values?.length){const n=Math.min(values.length,80), slice=tail?values.slice(-n):values.slice(0,n);return clamp(slice.reduce((a,b)=>a+b,0)/n/0.25,0,1);}
   return Number.isFinite(track.rms)?clamp(track.rms/0.25,0,1):null;
 }
-function reliable(t){return t.confidence==='manual'||t.confidence==='generated'||(t.tempoConfidence>=.65&&t.beatStability>=.65);}
 function regionEnergy(t,tail,point,span=4){const values=t.envelope;if(!values?.length)return t.rms||null;const begin=point??(tail?(t.mixOut??Math.max(0,values.length/10-8)):(t.mixIn||0)),end=Math.min(values.length/10,begin+Math.max(.1,span)),slice=values.slice(Math.max(0,Math.floor(begin*10)),Math.ceil(end*10));return slice.length?Math.sqrt(slice.reduce((s,x)=>s+x*x,0)/slice.length):null;}
 export function resolveTransition(a,b,options={}){
- const A=a.track,B=b.track,bpmA=(A.bpm||120)*(a.rate||1),automatic=options.style==='auto',pulse=tempoCompatibility({...A,bpm:bpmA},B),octave=automatic&&options.profile==='musical'&&pulse.compatible?pulse.octave:1,bpmB=(B.bpm||120)*octave,ratio=bpmA/bpmB;
- // A deliberate tempo morph accepts up to 20%, while ordinary Sync keeps its
- // conservative range. Estimated grids remain explicitly identified in Auto.
- const shape=tempoShape(options.tempoShape),morph=options.tempoBlend===true,trustworthy=reliable(A)&&reliable(B),within=Math.abs(Math.log2(ratio))<=Math.log2(morph?1.20:automatic?1.055:1.085);
- const measuredTempo=[A,B].every(t=>reliable(t)||t.tempoConfidence>=.65);
- const sync=Boolean(options.sync!==false&&A.bpm&&B.bpm&&within&&(!automatic||trustworthy||morph&&measuredTempo));
+ const A=a.track,B=b.track,bpmA=(A.bpm||120)*(a.rate||1),automatic=options.style==='auto',tempo=transitionTempo({...A,bpm:A.bpm?bpmA:A.bpm},B,options),octave=tempo.octave,bpmB=tempo.bpmB,ratio=bpmA/bpmB;
+ // The same user limit and grid gates guide both planning and suggestions.
+ const shape=tempoShape(options.tempoShape),morph=options.tempoBlend===true,trustworthy=tempo.trustworthy,within=tempo.compatible;
+ const sync=tempo.sync;
  let style=transitionIds.includes(options.style)?options.style:'blend',beats=Number(options.beats)||16,profile=profiles[options.profile]?options.profile:'flow',reason='';
  const dense=(A.structure?.at(-2)?.density||0)+(B.structure?.[0]?.density||0),keyKnown=A.keyConfidence>.35&&B.keyConfidence>.35;
  const harmony=harmonicCompatibility(A,B),harmonic=harmony.known?harmony.compatible:!keyKnown,regionA=(A.audibleEnd??A.buffer?.duration??Infinity)-(A.mixOut??0),regionB=(B.introEnd??Infinity)-(B.mixIn||0);
@@ -89,6 +87,8 @@ export function resolveTransition(a,b,options={}){
  const timedStages=tempoBlend&&stages?stages.map(stage=>({...stage,at:tempoFraction(stage.at,bpmA,bpmB,seconds,shape)/seconds})):stages;
  const result={...(composition||{}),score,sourceSpanSeconds,sync:separated?false:sync,rate:sync&&!separated?ratio:1,beats,seconds,style,tempoBlend,tempoShape:shape,fallback:(!sync||separated)&&options.sync!==false,bpmA,bpmB,reason,energyA:ea,energyB:eb,profile,trustworthy,harmonic,keyKnown:harmony.known,keyRelation:harmony.relation,incomingQuantizeBeats:octave===1?undefined:4/octave,trimDb,automatic,effectSelection,inPoint,outPoint,preserveInPoint:Boolean(B.manualRegions||!sync&&(B.regionAnalysisVersion||gridReliable(B))),...timing,...(score?{handoffFraction:score.handoffFraction,handoffPosition:outPoint+sourceSpanSeconds*score.handoffFraction,incomingStartFraction:0,sourceStopFraction:1,quantizeHandoff:false,fadeSeconds:undefined}:{}),...(score?{stages:score.stages.map(stage=>({...stage,at:tempoBlend?tempoFraction(stage.at,bpmA,bpmB,seconds,shape)/seconds:stage.at}))}:timedStages?{stages:timedStages}:{})};
  result.baseInPoint=inPoint;
+ if(!sync)result.reason=tempo.reason+' '+result.reason;
+ result.tempoPolicy={status:tempo.status,gapPercent:tempo.gapPercent,limitPercent:tempo.effectiveLimitPercent};
  result.baseReason=result.reason;
  result.incomingLanding=selectIncomingLanding(B,result,{enabled:options.alignArrival!==false&&!A.manualRegions});
  if(result.incomingLanding){result.inPoint=result.incomingLanding.cue;result.preserveInPoint=true;result.reason+=' Arrivée sur le repère '+result.incomingLanding.label+' au relais.';}

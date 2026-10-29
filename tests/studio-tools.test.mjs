@@ -78,3 +78,7 @@ test('arrangement preparation validates an IN or OUT patch without mutating the 
 test('tempo profile preference restores only supported curves and defaults to a soft path',()=>{
  assert.equal(sanitizePreferences().tempoShape,'smooth');for(const tempoShape of ['linear','smooth','early','late'])assert.equal(sanitizePreferences({tempoShape}).tempoShape,tempoShape);assert.equal(sanitizePreferences({tempoShape:'unknown'}).tempoShape,'linear');
 });
+
+test('tempo ceiling persistence accepts supported numbers and does not restore arbitrary stretching',()=>{
+ assert.equal(sanitizePreferences().maxTempoPercent,20);for(const maxTempoPercent of [3,5,8,12,16,20])assert.equal(sanitizePreferences({maxTempoPercent}).maxTempoPercent,maxTempoPercent);for(const maxTempoPercent of [0,'5',50,{},NaN])assert.equal(sanitizePreferences({maxTempoPercent}).maxTempoPercent,20);
+});

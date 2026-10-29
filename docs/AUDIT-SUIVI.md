@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.30.0
+# Suivi de l’audit — Sillora DJ 0.31.0
 
 Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -19,6 +19,7 @@ Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | K · 0.28.0 | Espaces réels, bibliothèque redimensionnable, densité/modules ; recettes regroupées et build rapide | 353 tests ; 51 cas natifs. [Espaces](WORKSPACES-0.28.md) · [Recettes](QA-BATCH.md) |
 | L · 0.29.0 | Mute/Solo PC/Remote, presets atomiques, quota/nettoyage du cache ; identité des données de test | 369 tests ; 52 cas natifs source, 42 depuis le paquet. [Mixage](STEM-MIX-0.29.md) · [Cache](STEM-CACHE-0.29.md) |
 | M · 0.30.0 | Quatre courbes de tempo, partition/horloges/repères communs et contrôle PC/Remote | 375 tests ; 61 cas natifs source, 27 depuis le paquet. [Courbes](TEMPO-CURVES-0.30.md) · [Mesures](CHANGELOG-0.30.0.md) |
+| N · 0.31.0 | Plafond partagé moteur/propositions, BPM réel et phase des courbes mesurée | 383 tests ; 32 cas natifs source, 20 depuis le paquet. [Politique](TEMPO-POLICY-0.31.md) · [Mesures](CHANGELOG-0.31.0.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -90,7 +91,7 @@ Cette mise à jour vise les familles EQ, relais harmonique, filtre, Whoosh et Ec
 | R3.3.C-04, R3.3.C-05 | P | Le groove sortant reste présent avant la montée filtrée ; le titre entrant atteint son niveau au relais. Aucun détecteur de buildup/drop. |
 | R3.3.C-01, R3.3.C-07 | A | Pas de reconnaissance sémantique ni de calage garanti sur un drop détecté. |
 | R3.3.D-02 | T | Maintien de hauteur activé dans les rendus ; la qualité perceptive doit être jugée sur les extraits. |
-| R3.3.D-03 | P | Quatre courbes sélectionnables PC/Remote ; audio et intégrale commune, impulsions PCM et rendus musicaux contrôlés en 0.30. Limite de stretch encore fixe à 20 % ; limites utilisateur et jugement perceptif restent ouverts. [Portée](TEMPO-CURVES-0.30.md). |
+| R3.3.D-03 | P | Quatre courbes sélectionnables PC/Remote ; audio et intégrale commune, impulsions PCM et rendus musicaux contrôlés en 0.30. Plafond utilisateur 3/5/8/12/16/20 % livré en 0.31, partagé avec les suggestions. Phase des trois courbes mesurée après maintien de hauteur ; jugement perceptif général encore ouvert. [Portée](TEMPO-CURVES-0.30.md). |
 | R3.3.D-04 | P | Intégrale commune et divisions d’écho cohérentes ; fiabilité limitée par l’estimation des beats des morceaux. |
 | R3.3.E-01, R3.3.E-02, R3.3.E-03, R3.3.E-04 | V | Capture des dernières pulsations, feedback borné, filtre et queue d’écho programmés. L’écho discret du relais harmonique est conservé et testé. |
 | R3.3.E-05 | T | Aucun silence de 50 ms ni saturation sur les rendus mesurés ; cela ne certifie pas une impression de niveau homogène sur toute une collection. |
@@ -246,3 +247,7 @@ Chaque prochain lot devra apporter son code exécuté, sa recette et ses limites
 ## Lot M — courbes de tempo — 0.30.0
 
 Quatre profils appliqués à l’audio, aux horloges, au score, aux échos et aux repères, avec commande persistante PC/Remote. 375 tests, 61 cas natifs source et 27 depuis le paquet final passent ; quatre titres réels et quatre bancs PCM. R3.3.D-03 progresse sur les courbes et reste partiel : limite de stretch utilisateur et validation perceptive encore ouvertes. Le jugement musical, les phrases, les longues sessions, la fin de la refonte et les autres points restent ouverts. [Recette et limites](CHANGELOG-0.30.0.md).
+
+## Lot N — plafond et propositions — 0.31.0
+
+Les suggestions et le moteur partagent la mesure réciproque de l’écart, la limite et les contrôles de grille. Le classement suit le BPM actuel de la platine, préserve les choix Ordre/Aléatoire et ne réécrit pas la file préparée. Le pourcentage de classement cède sa place à Beatmatch/Tempo naturel. 383 tests, 32 scénarios natifs ciblés source et 20 depuis le paquet passent, avec contrôle de phase sur trois courbes et deux profils. Une correction CSS est rejouée séparément ; les empreintes DSP restent identiques. R3.3.D-03 reste partiel pour la validation perceptive générale. Phrases, longues sessions et refonte complète restent ouverts. [Recette et limites](CHANGELOG-0.31.0.md).

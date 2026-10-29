@@ -1,0 +1,262 @@
+{
+  "version": "0.31.0",
+  "scope": "Digital rendering, PC/Remote and controlled ranking metadata. Two real MP3 songs; no new corpus, listening-quality or room-acoustic certification.",
+  "phaseSummary": [
+    {
+      "profile": "standard",
+      "cases": 6,
+      "maxCorrelationLagMs": 13,
+      "maxOnsetDeltaMs": 14
+    },
+    {
+      "profile": "rhythm",
+      "cases": 6,
+      "maxCorrelationLagMs": 7,
+      "maxOnsetDeltaMs": 7
+    }
+  ],
+  "phase": [
+    {
+      "profile": "standard",
+      "shape": "smooth",
+      "bpmA": 110,
+      "bpmB": 98,
+      "sampleRate": 44100,
+      "latencyMs": 131.36054421768708,
+      "maxCorrelationLagMs": 13,
+      "maxOnsetDeltaMs": 13
+    },
+    {
+      "profile": "standard",
+      "shape": "smooth",
+      "bpmA": 98,
+      "bpmB": 110,
+      "sampleRate": 44100,
+      "latencyMs": 131.36054421768708,
+      "maxCorrelationLagMs": 13,
+      "maxOnsetDeltaMs": 14
+    },
+    {
+      "profile": "standard",
+      "shape": "early",
+      "bpmA": 110,
+      "bpmB": 98,
+      "sampleRate": 44100,
+      "latencyMs": 131.36054421768708,
+      "maxCorrelationLagMs": 10,
+      "maxOnsetDeltaMs": 11
+    },
+    {
+      "profile": "standard",
+      "shape": "early",
+      "bpmA": 98,
+      "bpmB": 110,
+      "sampleRate": 44100,
+      "latencyMs": 131.36054421768708,
+      "maxCorrelationLagMs": 7,
+      "maxOnsetDeltaMs": 7
+    },
+    {
+      "profile": "standard",
+      "shape": "late",
+      "bpmA": 110,
+      "bpmB": 98,
+      "sampleRate": 44100,
+      "latencyMs": 131.36054421768708,
+      "maxCorrelationLagMs": 9,
+      "maxOnsetDeltaMs": 9
+    },
+    {
+      "profile": "standard",
+      "shape": "late",
+      "bpmA": 98,
+      "bpmB": 110,
+      "sampleRate": 44100,
+      "latencyMs": 131.36054421768708,
+      "maxCorrelationLagMs": 7,
+      "maxOnsetDeltaMs": 7
+    },
+    {
+      "profile": "rhythm",
+      "shape": "smooth",
+      "bpmA": 110,
+      "bpmB": 98,
+      "sampleRate": 44100,
+      "latencyMs": 59.43310657596372,
+      "maxCorrelationLagMs": 6,
+      "maxOnsetDeltaMs": 6
+    },
+    {
+      "profile": "rhythm",
+      "shape": "smooth",
+      "bpmA": 98,
+      "bpmB": 110,
+      "sampleRate": 44100,
+      "latencyMs": 59.43310657596372,
+      "maxCorrelationLagMs": 3,
+      "maxOnsetDeltaMs": 4
+    },
+    {
+      "profile": "rhythm",
+      "shape": "early",
+      "bpmA": 110,
+      "bpmB": 98,
+      "sampleRate": 44100,
+      "latencyMs": 59.43310657596372,
+      "maxCorrelationLagMs": 7,
+      "maxOnsetDeltaMs": 7
+    },
+    {
+      "profile": "rhythm",
+      "shape": "early",
+      "bpmA": 98,
+      "bpmB": 110,
+      "sampleRate": 44100,
+      "latencyMs": 59.43310657596372,
+      "maxCorrelationLagMs": 3,
+      "maxOnsetDeltaMs": 4
+    },
+    {
+      "profile": "rhythm",
+      "shape": "late",
+      "bpmA": 110,
+      "bpmB": 98,
+      "sampleRate": 44100,
+      "latencyMs": 59.43310657596372,
+      "maxCorrelationLagMs": 4,
+      "maxOnsetDeltaMs": 4
+    },
+    {
+      "profile": "rhythm",
+      "shape": "late",
+      "bpmA": 98,
+      "bpmB": 110,
+      "sampleRate": 44100,
+      "latencyMs": 59.43310657596372,
+      "maxCorrelationLagMs": 4,
+      "maxOnsetDeltaMs": 3
+    }
+  ],
+  "renders": [
+    {
+      "limitPercent": 5,
+      "shape": "smooth",
+      "reverse": false,
+      "next": false,
+      "style": "clean",
+      "sync": false,
+      "morph": false,
+      "bpmA": 110,
+      "bpmB": 98,
+      "seconds": 8.727272727272727,
+      "peak": 0.44717729091644287,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "limitPercent": 5,
+      "shape": "smooth",
+      "reverse": true,
+      "next": false,
+      "style": "clean",
+      "sync": false,
+      "morph": false,
+      "bpmA": 98,
+      "bpmB": 110,
+      "seconds": 9.795918367346939,
+      "peak": 0.44506946206092834,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "limitPercent": 20,
+      "shape": "smooth",
+      "reverse": false,
+      "next": false,
+      "style": "riser",
+      "sync": true,
+      "morph": true,
+      "bpmA": 110,
+      "bpmB": 98,
+      "seconds": 9.23076923076923,
+      "peak": 0.45055291056632996,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "limitPercent": 20,
+      "shape": "smooth",
+      "reverse": true,
+      "next": false,
+      "style": "bass",
+      "sync": true,
+      "morph": true,
+      "bpmA": 98,
+      "bpmB": 110,
+      "seconds": 4.615384615384615,
+      "peak": 0.40191665291786194,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "limitPercent": 20,
+      "shape": "smooth",
+      "reverse": false,
+      "next": true,
+      "style": "riser",
+      "sync": true,
+      "morph": true,
+      "bpmA": 110,
+      "bpmB": 98,
+      "seconds": 2.3076923076923075,
+      "peak": 0.4259644150733948,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "limitPercent": 20,
+      "shape": "smooth",
+      "reverse": true,
+      "next": true,
+      "style": "bass",
+      "sync": true,
+      "morph": true,
+      "bpmA": 98,
+      "bpmB": 110,
+      "seconds": 2.3076923076923075,
+      "peak": 0.3793814778327942,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "manualGrids": [
+        false,
+        false
+      ]
+    }
+  ]
+}

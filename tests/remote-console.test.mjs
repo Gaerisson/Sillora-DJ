@@ -2,6 +2,11 @@ import test from 'node:test';import assert from 'node:assert/strict';import {cre
 const require=createRequire(import.meta.url),{RemoteHost,sanitizeState,sanitizeCommand}=require('../desktop/remote-host.cjs'),{sanitizeResult}=require('../desktop/remote-protocol.cjs');
 const state=()=>sanitizeState({decks:[{loaded:true,duration:200},{loaded:true,duration:180}],catalog:[{id:'auto',label:'Automatique'},{id:'clean',label:'Relais'}],library:[{id:'known',title:'Titre'}]});
 
+test('tempo ceiling commands reject unknown values and snapshots preserve only supported numeric ceilings',()=>{
+ for(const maxTempoPercent of [3,5,8,12,16,20]){assert.equal(sanitizeCommand({type:'transition:configure',value:{maxTempoPercent}},state()).value.maxTempoPercent,maxTempoPercent);assert.equal(sanitizeState({transitionSettings:{maxTempoPercent}}).transitionSettings.maxTempoPercent,maxTempoPercent);}
+ for(const maxTempoPercent of [0,-5,50,'5',NaN,null,{}])assert.throws(()=>sanitizeCommand({type:'transition:configure',value:{maxTempoPercent}},state()));assert.equal(sanitizeState({transitionSettings:{maxTempoPercent:90}}).transitionSettings.maxTempoPercent,20);
+});
+
 test('tempo profiles cross the validated protocol without dropping the automation phase',()=>{
  for(const tempoShape of ['linear','smooth','early','late']){assert.equal(sanitizeCommand({type:'transition:configure',value:{tempoShape}},state()).value.tempoShape,tempoShape);const clean=sanitizeState({transitionSettings:{tempoShape},transition:{tempoShape},decks:[{rateRamp:{version:2,shape:tempoShape,from:1.1,to:1,duration:8,elapsed:3,remaining:5,wait:0}}]});assert.equal(clean.transitionSettings.tempoShape,tempoShape);assert.equal(clean.transition.tempoShape,tempoShape);assert.equal(clean.decks[0].rateRamp.elapsed,3);assert.equal(clean.decks[0].rateRamp.shape,tempoShape);}
  for(const tempoShape of ['',null,{},'unknown'])assert.throws(()=>sanitizeCommand({type:'transition:configure',value:{tempoShape}},state()));

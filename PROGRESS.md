@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.30.0. Les premiers lots ci-dessous conservent leurs constats historiques.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.31.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
@@ -216,3 +216,7 @@ Mute/Solo préparés PC/Remote, faders séparés et presets en une commande. Cac
 ## Lot M — courbes de tempo — 0.30.0
 
 Souple, Linéaire, Anticipée et Tardive pilotent le tempo réel, les deux têtes, le score, les échos et la position Remote. Préférence persistante, aperçu et isolation du passage déjà engagé. 375 tests, 61 cas natifs source et 27 depuis le paquet, avec 24 rendus source sur quatre musiques et 12 rendus rejoués dans le paquet. 164 sources embarquées et exécutables contrôlés. La qualité d’écoute et les phrases restent à valider. [Courbes](docs/TEMPO-CURVES-0.30.md) · [Recette](docs/CHANGELOG-0.30.0.md).
+
+## Lot N — plafond et classement — 0.31.0
+
+Écart maximal de tempo 3 à 20 %, sauvegarde PC/Remote et même politique dans les propositions, le tri compatible et les transitions. Le classement utilise le BPM réel sans modifier le catalogue ; les choix explicites et le passage actif sont conservés. 383 tests, 32 cas natifs source et 20 depuis le paquet. Douze rendus de pulsations contrôlent la phase après maintien de hauteur sur les trois nouvelles courbes ; six rendus MP3 vérifient le repli et le morphing selon la limite. Correction de largeur CSS puis reprise des contrôles d’interface, avec DSP identique. [Utilisation](docs/TEMPO-POLICY-0.31.md) · [Recette](docs/CHANGELOG-0.31.0.md).

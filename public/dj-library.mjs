@@ -1,3 +1,4 @@
+import {matchPulse,reliableTempo,transitionTempo} from './tempo-policy.mjs';
 // Harmonic notation describes an estimate, never a guarantee of a compatible arrangement.
 const majorWheel=[8,3,10,5,12,7,2,9,4,11,6,1];
 const minorWheel=[5,12,7,2,9,4,11,6,1,8,3,10];
@@ -29,16 +30,11 @@ export function harmonicCompatibility(a,b){
  return {known:true,compatible:same||relative||neighbor,score:same?1:relative?.94:neighbor?.86:Math.max(.04,.3-distance*.045-(sameMode?0:.06)),relation:same?'Même tonalité':relative?'Tonalité relative':neighbor?'Voisine harmonique':'Tonalités éloignées',distance,source,target};
 }
 
-function gridReliable(track){return track?.confidence==='manual'||track?.confidence==='generated'||(track?.tempoConfidence>=.65&&track?.beatStability>=.65);}
 
 export function tempoCompatibility(a,b,{maxStretch=.055}={}){
  const source=a?.bpm,target=b?.bpm;
  if(!finite(source)||!finite(target)||source<=0||target<=0)return {known:false,compatible:false,score:.25,ratio:1,octave:1,difference:null,reliable:false,relation:'Tempo inconnu'};
- // An 80 BPM grid and a 160 BPM grid may describe the same pulse. Report it explicitly.
- const candidates=[1,.5,2].map(octave=>({octave,ratio:source/(target*octave)}));
- candidates.sort((x,y)=>Math.abs(Math.log2(x.ratio))-Math.abs(Math.log2(y.ratio)));
- const best=candidates[0],difference=Math.abs(best.ratio-1),compatible=difference<=maxStretch;
- const reliable=gridReliable(a)&&gridReliable(b);
+ const best=matchPulse(source,target,{maxStretch}),{difference,compatible}=best,reliable=reliableTempo(a)&&reliableTempo(b);
  return {known:true,compatible,score:Math.exp(-Math.abs(Math.log2(best.ratio))*6),ratio:best.ratio,octave:best.octave,difference,reliable,relation:(best.octave===1?'Tempo ':'Pulsation ×'+best.octave+' · ')+(difference*100).toFixed(1)+' %'+(reliable?'':' · grille estimée')};
 }
 
@@ -59,13 +55,14 @@ function eligibleTracks(current,tracks,{played=[],exclude=[],allowRepeat=false}=
 export function rankCandidates(current,tracks,options={}){
  const recent=ids(options.recent),energy=trackEnergy(current),desired=options.energyDirection==='lift'?.12:options.energyDirection==='chill'?-.12:0;
  return eligibleTracks(current,tracks,options).map((track,index)=>{
-  const tempo=tempoCompatibility(current,track),harmonic=harmonicCompatibility(current,track),candidateEnergy=trackEnergy(track);
+  const policy=options.transition?transitionTempo(current,track,options.transition):null,tempo=policy?{...tempoCompatibility(current,track),...policy,reliable:policy.trustworthy,relation:policy.reason}:tempoCompatibility(current,track),harmonic=harmonicCompatibility(current,track),candidateEnergy=trackEnergy(track);
   const energyDelta=energy===null||candidateEnergy===null?null:candidateEnergy-energy;
   const energyScore=energyDelta===null?.5:Math.max(0,1-Math.abs(energyDelta-desired)*2.5);
   const score=tempo.score*.5+harmonic.score*.35+energyScore*.15-(recent.has(identity(track))?.5:0);
   const reason=[tempo.relation,harmonic.relation,energyDelta===null?'Énergie non mesurée':Math.abs(energyDelta)<.12?'Énergie proche':energyDelta>0?'Énergie en hausse':'Énergie plus douce'].join(' · ');
-  return {track,score,reason,tempo,harmonic,energyDelta,index};
- }).sort((a,b)=>b.score-a.score||a.index-b.index);
+  const beatmatchPriority=options.transition?.sync!==false&&policy?.sync?(policy.trustworthy?2:1):0;
+  return {track,score,reason,tempo,harmonic,energyDelta,index,beatmatchPriority};
+ }).sort((a,b)=>b.beatmatchPriority-a.beatmatchPriority||b.score-a.score||a.index-b.index);
 }
 
 export function selectNextTrack(current,tracks,options={}){

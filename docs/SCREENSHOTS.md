@@ -101,4 +101,8 @@ Deux titres chargés, pochettes sur les vinyles, onde globale, détail rythmique
 
 ![Réglages du passage avec une courbe tardive](images/tempo-controls-030.png)
 
+## Plafond de tempo — 0.31
+
+![Plafond partagé avec les propositions](images/tempo-policy-031.png)
+
 [Retour au projet](../README.md)

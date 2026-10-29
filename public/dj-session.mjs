@@ -15,12 +15,12 @@ export class DJSession{
   if(!this.enabled||track?.id===undefined||track?.id===null)return;
   this.played.add(track.id);this.recent=this.recent.filter(id=>id!==track.id);this.recent.push(track.id);this.recent=this.recent.slice(-4);
  }
- next(current,{exclude=[],random}={}){
+ next(current,{exclude=[],random,transition}={}){
   if(!this.enabled)return null;
-  return selectNextTrack(current,this.tracks,{mode:this.mode,played:[...this.played],recent:this.recent,exclude,random});
+  return selectNextTrack(current,this.tracks,{mode:this.mode,played:[...this.played],recent:this.recent,exclude,random,transition});
  }
- recommendations(current,{exclude=[]}={}){
-  return this.enabled?rankCandidates(current,this.tracks,{played:[...this.played],recent:this.recent,exclude}):[];
+ recommendations(current,{exclude=[],transition}={}){
+  return this.enabled?rankCandidates(current,this.tracks,{played:[...this.played],recent:this.recent,exclude,transition}):[];
  }
  remaining(current){
   if(!this.enabled)return 0;
