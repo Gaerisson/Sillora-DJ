@@ -13,6 +13,7 @@ import {DeckEffects,TextureBus,impulse} from './performance-fx.js';
 import {faderCurves,transitionProgress,textureNames} from './transition-design.mjs';
 import {makeTransitionScore,scheduleTransitionScore} from './transition-score.mjs';
 import {eqCurves} from './transition-envelopes.mjs';
+import {protectOverlapScore} from './mix-density.mjs';
 import {editPhraseCues,phraseRevision} from './phrase-cues.mjs';
 import {tempoAt,tempoMean,rampDistance,scheduleTempo,tempoBeats,tempoFraction,tempoDelay,warpTempoCurve} from './tempo-automation.mjs';
 import {cleanTiming,gridReliable} from './musical-plan.mjs';
@@ -573,7 +574,7 @@ export class StudioEngine extends EventTarget {
     this.releaseContinuity(source);this.releaseContinuity(target);
     if (a.loop) this.loop(source, 4,{cancel:false});
     if (b.loop) this.loop(target, 4,{cancel:false});
-    const plan=makeTransitionPlan(a,b,{...options,tempoBlend,history:this.transitionHistory,position:this.position(source),stemsAvailable:Boolean(a.stemGains&&b.track.stemBuffer)});
+    const plan=makeTransitionPlan(a,b,{...options,_runtimeDensity:true,tempoBlend,history:this.transitionHistory,position:this.position(source),stemsAvailable:Boolean(a.stemGains&&b.track.stemBuffer)});
     if(recovering)Object.assign(plan,{style:'linear',sync:false,tempoBlend:false,seconds:.2,beats:0,inPoint:plan.baseInPoint??plan.inPoint,incomingLanding:null,reason:'Titre sortant terminé : reprise du prochain titre sans relancer le précédent.'});
     const style=plan.style,bridge=['bridge','landing'].includes(style),clean=style==='clean';
     if(plan.sync) await this.setRate(target,plan.rate,{cancel:false});
@@ -610,11 +611,12 @@ export class StudioEngine extends EventTarget {
     const sourcePart=clean?cleanTiming(requested).sourceStopFraction:bridge?.48:1,incomingPart=clean?.25:bridge?.5:1;
     const bounded=Math.max(.05,Math.min(requested,Math.max(.05,availableA)/sourcePart,availableB/incomingPart)),barSeconds=4*60/(plan.tempoBlend?tempoMean(plan.bpmA,plan.bpmB,plan.tempoShape):plan.bpmA);
     const duration=plan.automatic&&plan.sync&&bounded>=barSeconds?Math.max(barSeconds,Math.floor((bounded+1e-6)/barSeconds)*barSeconds):bounded;
-    const runtimeScore=makeTransitionScore(plan,{seconds:duration,intensity:options.intensity});
+    let runtimeScore=makeTransitionScore(plan,{seconds:duration,intensity:options.intensity});
     const sourceHandoff=pos+Math.max(0,start-now-transportWait)*a.rate+duration*sourceMeanRate*(runtimeScore?.handoffFraction||0),sourcePhase=(sourceHandoff-(a.track.downbeat??a.track.beatOffset??0))*(a.track.bpm||120)/240;
     const safeArrival=!quantize||alignArrival&&Math.abs(sourcePhase-Math.round(sourcePhase))<1e-5;
     const incomingLanding=safeArrival?runtimeIncomingLanding(b.track,plan,runtimeScore,duration):null;
     incomingCue=incomingLanding?.cue??fallbackCue;
+    const runtimeGuard=protectOverlapScore(a.track,b.track,{...plan,seconds:duration,score:runtimeScore,outPoint:pos+Math.max(0,start-now-transportWait)*a.rate,inPoint:incomingCue,sourceSpanSeconds:duration*sourceMeanRate},{enabled:options.protectOverlap!==false,intensity:options.intensity??.45});runtimeScore=runtimeGuard.score;
     if(b.playing)this.pause(target);
     b.offset=incomingCue;const timing=clean?cleanTiming(duration):null,incomingStart=start+duration*(clean?timing.incomingStartFraction:bridge?.5:0);const incoming=this.play(target,incomingStart),incomingTicket=b.playRequest;await incoming;
     if(obsolete()||!b.playing){if(incomingTicket?.source&&b.source===incomingTicket.source)this.pause(target);return;}
@@ -624,7 +626,7 @@ export class StudioEngine extends EventTarget {
     const t=this.transition;t.reason=plan.reason;t.stages=plan.stages;t.incomingStart=incomingStart;t.inPoint=incomingCue;t.outPoint=pos+Math.max(0,start-now-transportWait)*a.rate;t.beats=plan.beats;t.profile=plan.profile;t.effectSelection=plan.effectSelection;t.titleA=a.track.title;t.titleB=b.track.title;t.intensity=clamp(Number(options.intensity??0.45),0,1);t.previousEcho=Boolean(a.echo);t.previousDelay=a.delay.delayTime.value;t.previousFeedback=a.feedback.gain.value;t.voices=[];t.trimDb=plan.trimDb;t.sync=plan.sync;t.bpmA=plan.bpmA;t.bpmB=plan.bpmB;
     const at=fraction=>start+(plan.tempoBlend?tempoFraction(fraction,plan.bpmA,plan.bpmB,duration,plan.tempoShape):duration*fraction);
     t.sourceSpanSeconds=duration*sourceMeanRate;
-    t.score=runtimeScore;t.incomingLanding=incomingLanding;
+    t.score=runtimeScore;t.incomingLanding=incomingLanding;t.overlap=runtimeGuard.info;if(t.overlap.applied)t.reason+=' Chevauchement raccourci après mesure des deux zones armées.';
     if(plan.incomingLanding&&!incomingLanding)t.reason=plan.baseReason+' Repère entrant écarté : passage raccourci ou calage indisponible.';
     if(incomingLanding)t.incomingLandingAt=at(incomingLanding.handoffFraction);
     if(t.score){t.beats=t.score.beats;t.stages=t.score.stages.map(stage=>({...stage,at:(at(stage.at)-start)/duration}));t.handoffAt=at(t.score.handoffFraction);t.handoffPosition=t.outPoint+t.sourceSpanSeconds*t.score.handoffFraction;}

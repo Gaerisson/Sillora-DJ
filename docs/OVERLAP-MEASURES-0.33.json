@@ -1,0 +1,688 @@
+{
+  "version": "0.33.0",
+  "scope": "Four actual music files, computed grids and regions. Time-weighted spectral occupancy on the native regions actually armed. A/B changes the dry overlap score while preserving the same cues, duration and handoff. No semantic voice detector or perceptual certification.",
+  "comparisons": [
+    {
+      "pair": "overlap-mp3",
+      "reverse": false,
+      "sameTiming": true,
+      "applied": false,
+      "dryBeatsOff": 4,
+      "dryBeatsOn": 4,
+      "nativePcm": {
+        "differenceRms": 0.000005839332473626261,
+        "referenceRms": 0.07393750744262788,
+        "relativeDifference": 0.0000789765935531072,
+        "samples": 814154
+      }
+    },
+    {
+      "pair": "overlap-mp3",
+      "reverse": true,
+      "sameTiming": true,
+      "applied": true,
+      "dryBeatsOff": 16,
+      "dryBeatsOn": 2,
+      "nativePcm": {
+        "differenceRms": 0.030630874852114083,
+        "referenceRms": 0.08870873935758954,
+        "relativeDifference": 0.34529714968261965,
+        "samples": 814154
+      }
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": false,
+      "sameTiming": true,
+      "applied": false,
+      "dryBeatsOff": 2,
+      "dryBeatsOn": 2,
+      "nativePcm": {
+        "differenceRms": 0,
+        "referenceRms": 0.10002287681834462,
+        "relativeDifference": 0,
+        "samples": 708552
+      }
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": true,
+      "sameTiming": true,
+      "applied": false,
+      "dryBeatsOff": 2,
+      "dryBeatsOn": 2,
+      "nativePcm": {
+        "differenceRms": 0.000004161874236136637,
+        "referenceRms": 0.07977081597216061,
+        "relativeDifference": 0.000052172892873367345,
+        "samples": 708552
+      }
+    }
+  ],
+  "renders": [
+    {
+      "pair": "overlap-mp3",
+      "reverse": false,
+      "next": false,
+      "enabled": true,
+      "style": "riser",
+      "seconds": 9.23076923076923,
+      "fromBpm": 110,
+      "toBpm": 98,
+      "sourceStart": 221.79793313258352,
+      "targetStart": 2.9422168473488908,
+      "actualSourceHandoff": 228.34338767803806,
+      "incomingArrival": null,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": false,
+        "source": {
+          "start": 221.79793313258352,
+          "end": 230.52520585985624,
+          "coverage": 0.9999999999999992,
+          "known": true,
+          "value": 0.5175544491006497
+        },
+        "target": {
+          "start": 2.9422168473488908,
+          "end": 12.738135214695827,
+          "coverage": 0.9999999999999998,
+          "known": true,
+          "value": 0.5347922992252249
+        },
+        "applied": false,
+        "alreadyShort": false,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 4,
+        "dryBeats": 4
+      },
+      "peak": 0.45055291056632996,
+      "min50msRms": 0.023486612096761058,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7763568394002505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-mp3",
+      "reverse": true,
+      "next": false,
+      "enabled": true,
+      "style": "bass",
+      "seconds": 9.23076923076923,
+      "fromBpm": 98,
+      "toBpm": 110,
+      "sourceStart": 225.79935970449176,
+      "targetStart": 34.16156949621992,
+      "actualSourceHandoff": 230.69731888816523,
+      "incomingArrival": null,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": true,
+        "source": {
+          "start": 225.79935970449176,
+          "end": 235.5952780718387,
+          "coverage": 0.9999999999999991,
+          "known": true,
+          "value": 0.6027821699077579
+        },
+        "target": {
+          "start": 34.16156949621992,
+          "end": 42.888842223492645,
+          "coverage": 1,
+          "known": true,
+          "value": 0.7263414884868423
+        },
+        "applied": true,
+        "alreadyShort": false,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 16,
+        "dryBeats": 2
+      },
+      "peak": 0.4350701868534088,
+      "min50msRms": 0.020926484646435862,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 3.552713678800501e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-mp3",
+      "reverse": false,
+      "next": false,
+      "enabled": false,
+      "style": "riser",
+      "seconds": 9.23076923076923,
+      "fromBpm": 110,
+      "toBpm": 98,
+      "sourceStart": 221.79793313258352,
+      "targetStart": 2.9422168473488908,
+      "actualSourceHandoff": 228.34338767803806,
+      "incomingArrival": null,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": false,
+        "source": {
+          "start": 221.79793313258352,
+          "end": 230.52520585985624,
+          "coverage": 0.9999999999999992,
+          "known": true,
+          "value": 0.5175544491006497
+        },
+        "target": {
+          "start": 2.9422168473488908,
+          "end": 12.738135214695827,
+          "coverage": 0.9999999999999998,
+          "known": true,
+          "value": 0.5347922992252249
+        },
+        "applied": false,
+        "alreadyShort": false,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 4,
+        "dryBeats": 4
+      },
+      "peak": 0.450552374124527,
+      "min50msRms": 0.02348661663199591,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7763568394002505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-mp3",
+      "reverse": true,
+      "next": false,
+      "enabled": false,
+      "style": "bass",
+      "seconds": 9.23076923076923,
+      "fromBpm": 98,
+      "toBpm": 110,
+      "sourceStart": 225.79935970449176,
+      "targetStart": 34.16156949621992,
+      "actualSourceHandoff": 230.69731888816523,
+      "incomingArrival": null,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": true,
+        "source": {
+          "start": 225.79935970449176,
+          "end": 235.5952780718387,
+          "coverage": 0.9999999999999991,
+          "known": true,
+          "value": 0.6027821699077579
+        },
+        "target": {
+          "start": 34.16156949621992,
+          "end": 42.888842223492645,
+          "coverage": 1,
+          "known": true,
+          "value": 0.7263414884868423
+        },
+        "applied": false,
+        "alreadyShort": false,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 16,
+        "dryBeats": 16
+      },
+      "peak": 0.38170018792152405,
+      "min50msRms": 0.0247939387182538,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 3.552713678800501e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-mp3",
+      "reverse": false,
+      "next": true,
+      "enabled": true,
+      "style": "riser",
+      "seconds": 2.3076923076923075,
+      "fromBpm": 110,
+      "toBpm": 98,
+      "sourceStart": 220.1615694962199,
+      "targetStart": 3.5544617453080742,
+      "actualSourceHandoff": 221.79793313258352,
+      "incomingArrival": null,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": false,
+        "source": {
+          "start": 220.1615694962199,
+          "end": 222.34338767803808,
+          "coverage": 1,
+          "known": true,
+          "value": 0.5672645970394719
+        },
+        "target": {
+          "start": 3.5544617453080742,
+          "end": 6.0034413371448085,
+          "coverage": 1,
+          "known": true,
+          "value": 0.4981643604109725
+        },
+        "applied": false,
+        "alreadyShort": true,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 1.5,
+        "dryBeats": 1.5
+      },
+      "peak": 0.42595988512039185,
+      "min50msRms": 0.03351996849315261,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.353672812205332e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-mp3",
+      "reverse": true,
+      "next": true,
+      "enabled": true,
+      "style": "bass",
+      "seconds": 2.3076923076923075,
+      "fromBpm": 98,
+      "toBpm": 110,
+      "sourceStart": 223.9626250106142,
+      "targetStart": 34.70702404167446,
+      "actualSourceHandoff": 225.18711480653258,
+      "incomingArrival": null,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": true,
+        "source": {
+          "start": 223.9626250106142,
+          "end": 226.41160460245095,
+          "coverage": 1,
+          "known": true,
+          "value": 0.6393372238554695
+        },
+        "target": {
+          "start": 34.70702404167446,
+          "end": 36.88884222349264,
+          "coverage": 0.9999999999999992,
+          "known": true,
+          "value": 0.656193462171054
+        },
+        "applied": true,
+        "alreadyShort": false,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 4,
+        "dryBeats": 1
+      },
+      "peak": 0.40574806928634644,
+      "min50msRms": 0.023002879081056065,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.55351295663786e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": false,
+      "next": false,
+      "enabled": true,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "fromBpm": 123,
+      "toBpm": 116,
+      "sourceStart": 267.0398241179314,
+      "targetStart": 5.1553981472721215,
+      "actualSourceHandoff": 272.8934826545168,
+      "incomingArrival": 11.362294698996259,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": true,
+        "source": {
+          "start": 267.0398241179314,
+          "end": 274.8447021667119,
+          "coverage": 1,
+          "known": true,
+          "value": 0.7103170955881993
+        },
+        "target": {
+          "start": 5.1553981472721215,
+          "end": 13.431260216237638,
+          "coverage": 1,
+          "known": true,
+          "value": 0.5477105034722222
+        },
+        "applied": false,
+        "alreadyShort": true,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 2,
+        "dryBeats": 2
+      },
+      "peak": 0.5452338457107544,
+      "min50msRms": 0.030521116754037667,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 5.684341886080802e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": true,
+      "next": false,
+      "enabled": true,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "fromBpm": 116,
+      "toBpm": 123,
+      "sourceStart": 183.08643263003074,
+      "targetStart": 34.844702166711954,
+      "actualSourceHandoff": 189.29332918175487,
+      "incomingArrival": 40.69836070329732,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": false,
+        "source": {
+          "start": 183.08643263003074,
+          "end": 191.36229469899627,
+          "coverage": 1,
+          "known": true,
+          "value": 0.6573016826922917
+        },
+        "target": {
+          "start": 34.844702166711954,
+          "end": 42.64958021549244,
+          "coverage": 1,
+          "known": true,
+          "value": 0.1915326286764706
+        },
+        "applied": false,
+        "alreadyShort": true,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 2,
+        "dryBeats": 2
+      },
+      "peak": 0.41543057560920715,
+      "min50msRms": 0.017557664559861276,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": false,
+      "next": false,
+      "enabled": false,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "fromBpm": 123,
+      "toBpm": 116,
+      "sourceStart": 267.0398241179314,
+      "targetStart": 5.1553981472721215,
+      "actualSourceHandoff": 272.8934826545168,
+      "incomingArrival": 11.362294698996259,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": true,
+        "source": {
+          "start": 267.0398241179314,
+          "end": 274.8447021667119,
+          "coverage": 1,
+          "known": true,
+          "value": 0.7103170955881993
+        },
+        "target": {
+          "start": 5.1553981472721215,
+          "end": 13.431260216237638,
+          "coverage": 1,
+          "known": true,
+          "value": 0.5477105034722222
+        },
+        "applied": false,
+        "alreadyShort": true,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 2,
+        "dryBeats": 2
+      },
+      "peak": 0.5452338457107544,
+      "min50msRms": 0.030521116754037667,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 5.684341886080802e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": true,
+      "next": false,
+      "enabled": false,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "fromBpm": 116,
+      "toBpm": 123,
+      "sourceStart": 183.08643263003074,
+      "targetStart": 34.844702166711954,
+      "actualSourceHandoff": 189.29332918175487,
+      "incomingArrival": 40.69836070329732,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": false,
+        "source": {
+          "start": 183.08643263003074,
+          "end": 191.36229469899627,
+          "coverage": 1,
+          "known": true,
+          "value": 0.6573016826922917
+        },
+        "target": {
+          "start": 34.844702166711954,
+          "end": 42.64958021549244,
+          "coverage": 1,
+          "known": true,
+          "value": 0.1915326286764706
+        },
+        "applied": false,
+        "alreadyShort": true,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 2,
+        "dryBeats": 2
+      },
+      "peak": 0.4154304563999176,
+      "min50msRms": 0.017557646862841905,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": false,
+      "next": true,
+      "enabled": true,
+      "style": "filter",
+      "seconds": 2.00836820083682,
+      "fromBpm": 123,
+      "toBpm": 116,
+      "sourceStart": 265.57640948378514,
+      "targetStart": 9.810570561065225,
+      "actualSourceHandoff": 267.03982411793146,
+      "incomingArrival": 11.362294698996259,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": true,
+        "source": {
+          "start": 265.57640948378514,
+          "end": 267.52762899598025,
+          "coverage": 0.9999999999999937,
+          "known": true,
+          "value": 0.7929859834558686
+        },
+        "target": {
+          "start": 9.810570561065225,
+          "end": 11.879536078306604,
+          "coverage": 1,
+          "known": true,
+          "value": 0.5638454861111112
+        },
+        "applied": false,
+        "alreadyShort": true,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 1,
+        "dryBeats": 1
+      },
+      "peak": 0.49512237310409546,
+      "min50msRms": 0.03515442488925775,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 3.1530333899354446e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "overlap-pop",
+      "reverse": true,
+      "next": true,
+      "enabled": true,
+      "style": "filter",
+      "seconds": 2.00836820083682,
+      "fromBpm": 116,
+      "toBpm": 123,
+      "sourceStart": 181.53470849209972,
+      "targetStart": 39.23494606915098,
+      "actualSourceHandoff": 183.08643263003077,
+      "incomingArrival": 40.69836070329732,
+      "overlap": {
+        "version": 1,
+        "known": true,
+        "busy": false,
+        "source": {
+          "start": 181.53470849209972,
+          "end": 183.6036740093411,
+          "coverage": 0.999999999999994,
+          "known": true,
+          "value": 0.7522732204861089
+        },
+        "target": {
+          "start": 39.23494606915098,
+          "end": 41.1861655813461,
+          "coverage": 1,
+          "known": true,
+          "value": 0.19182559742647087
+        },
+        "applied": false,
+        "alreadyShort": true,
+        "eligible": true,
+        "uncertain": false,
+        "natural": false,
+        "separated": false,
+        "previousDryBeats": 1,
+        "dryBeats": 1
+      },
+      "peak": 0.4086277186870575,
+      "min50msRms": 0.02171285316514592,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 2.842170943040401e-14,
+      "maxClockPhaseErrorBeats": 2.7977620220553945e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    }
+  ]
+}

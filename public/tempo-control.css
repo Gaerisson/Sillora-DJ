@@ -1,9 +1,11 @@
 .tempo-limit-field{min-width:100px;max-width:140px}.tempo-limit-field select{width:100%}
 .pro-console .tempo-limit-field{flex:0 1 140px;min-width:100px;max-width:140px}.pro-console .tempo-limit-field select{min-width:0;width:100%;max-width:100%}
 .checks .tempo-limit-field{display:flex;flex-direction:column;align-items:stretch;gap:5px}
+.overlap-info{font-size:10px;line-height:1.4;color:var(--muted,#b7c3d2);padding:5px 8px;border:1px solid var(--line,#3c4c60);border-radius:5px;max-width:100%;box-sizing:border-box}.overlap-info[data-active=true]{color:var(--text,#e5edf6);border-color:var(--accent,#cdb793)}
 .tempo-profile{display:grid;grid-template-columns:minmax(100px,1fr) 76px;gap:5px 10px;align-items:center;min-width:190px;max-width:260px}
 .tempo-profile>span{grid-column:1/-1;font-size:10px;letter-spacing:.09em;opacity:.75}
 .tempo-profile select{width:100%;min-width:0}.tempo-profile svg{width:76px;height:28px;overflow:visible;color:var(--accent,#69dcca)}
 .tempo-profile path{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.tempo-profile.inactive svg{opacity:.25}.tempo-profile.running svg{filter:drop-shadow(0 0 4px currentColor)}
 @media(max-width:600px){.tempo-limit-field{min-width:100px;max-width:140px}.tempo-limit-field select{width:100%}
+.overlap-info{font-size:10px;line-height:1.4;color:var(--muted,#b7c3d2);padding:5px 8px;border:1px solid var(--line,#3c4c60);border-radius:5px;max-width:100%;box-sizing:border-box}.overlap-info[data-active=true]{color:var(--text,#e5edf6);border-color:var(--accent,#cdb793)}
 .tempo-profile{max-width:none;min-width:0;width:100%}}

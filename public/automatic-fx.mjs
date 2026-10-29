@@ -62,7 +62,7 @@ export function selectMusicalFx({source, target, sync, trustworthy = true, harmo
  } else if (dense) {
   scores={bass:10,echo:8,filter:7};
   if(stemsAvailable){scores.stemfade=11;scores.stemecho=9;}
-  maximum=Math.min(8,requested);context='Arrangement dense : passage court pour limiter les voix et les graves simultanés.';
+  maximum=Math.min(8,requested);context='Zones chargées : passage court et relais des graves.';
  } else if (amount<.2) {
   scores=keyKnown?{phrase:10,blend:8,bass:7}:{bass:9,blend:8};
   maximum=Math.min(keyKnown?32:16,requested);context='Intensité faible : traitement discret et échange de niveaux ou de graves.';

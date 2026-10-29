@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.32.0. Les premiers lots ci-dessous conservent leurs constats historiques.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.33.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
@@ -224,3 +224,7 @@ Souple, Linéaire, Anticipée et Tardive pilotent le tempo réel, les deux tête
 ## Lot O — phrases préparées — 0.32.0
 
 Annotation jusqu’à 32 points, rôles Entrée/Sortie, édition PC/Remote et marqueurs d’onde. Auto musical calcule l’avance pour atteindre le point cible et respecte une sortie préparée utilisable ; Next, IN/OUT manuels et passage actif gardent leurs priorités. 393 tests, 25 cas natifs source et 19 depuis le paquet passent, dont douze rendus sur quatre titres. Les points de test sont placés sur la grille ; reconnaissance sémantique et validation humaine restent ouvertes. [Préparation](docs/PHRASE-CUES-0.32.md) · [Recette](docs/CHANGELOG-0.32.0.md).
+
+## Lot P — occupation spectrale et chevauchement — 0.33.0
+
+Mesure pondérée sur les zones réellement armées, option PC/Remote et score de relais plus court quand les deux zones sont chargées. Les repères et la durée sont conservés ; le filtre, le souffle et l’écho suivent l’intensité FX. 404 tests, 25 cas natifs source et 19 depuis le paquet passent, avec douze rendus sur quatre titres. La mesure ne détecte pas les voix. Validation musicale, phrases automatiques, longues sessions et autres chantiers restent ouverts. [Utilisation](docs/OVERLAP-0.33.md) · [Recette](docs/CHANGELOG-0.33.0.md).

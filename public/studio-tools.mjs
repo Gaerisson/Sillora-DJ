@@ -25,7 +25,7 @@ export const transitionPresets = {
 export function sanitizePreferences(value = {}) {
   value = value && typeof value === 'object' ? value : {};
   return {
-    tempoShape:tempoShape(value.tempoShape??'smooth'),maxTempoPercent:tempoLimit(value.maxTempoPercent),
+    protectOverlap:value.protectOverlap!==false,tempoShape:tempoShape(value.tempoShape??'smooth'),maxTempoPercent:tempoLimit(value.maxTempoPercent),
     keyLockProfile:value.keyLockProfile==='rhythm'?'rhythm':'standard',
     view: value.view === 'waves' ? 'waves' : 'decks',
     zoom: ['full', '16', '8'].includes(value.zoom) ? value.zoom : 'full',

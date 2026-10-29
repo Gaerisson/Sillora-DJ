@@ -8,7 +8,8 @@ test('dynamic mixing relies on reliable measured rhythm and avoids arbitrary cre
  assert.equal(resolveTransition(a,deck(85),{style:'auto'}).sync,false);
  a.track.beatStability=.3;const low=resolveTransition(a,b,{style:'auto'});assert.equal(low.sync,false);assert.equal(low.style,'linear');assert.ok(low.seconds<=3);
  a.track.beatStability=.9;const distant=deck(132);distant.track.confidence='manual';assert.equal(resolveTransition(a,distant,{style:'auto'}).sync,false);
- a.track.structure=[{density:.5},{density:.5}];b.track.structure=[{density:.4}];assert.equal(resolveTransition(a,b,{style:'auto'}).style,'bass');
+ a.track.structure=[{density:.5},{density:.5}];b.track.structure=[{density:.4}];assert.equal(resolveTransition(a,b,{style:'auto'}).style,'blend','Unlocated density values cannot describe the selected audio windows');
+ for(const d of [a,b])d.track.structure=Array.from({length:Math.floor(180*d.track.bpm/240)},(_,i)=>({time:i*240/d.track.bpm,rms:.2,density:.7}));assert.equal(resolveTransition(a,b,{style:'auto'}).style,'bass');
  a.track.introEnd=1;b.track.introEnd=1;assert.ok(resolveTransition(a,b,{style:'auto'}).beats<=2);
 });
 

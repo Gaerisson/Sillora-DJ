@@ -1,3 +1,4 @@
+import {assessOverlap,protectOverlapScore} from './mix-density.mjs';
 import {phraseAnchor} from './phrase-cues.mjs';
 import {transitionTempo} from './tempo-policy.mjs';
 import {selectIncomingLanding} from './incoming-landing.mjs';
@@ -46,21 +47,21 @@ function energy(track,tail=false){
   return Number.isFinite(track.rms)?clamp(track.rms/0.25,0,1):null;
 }
 function regionEnergy(t,tail,point,span=4){const values=t.envelope;if(!values?.length)return t.rms||null;const begin=point??(tail?(t.mixOut??Math.max(0,values.length/10-8)):(t.mixIn||0)),end=Math.min(values.length/10,begin+Math.max(.1,span)),slice=values.slice(Math.max(0,Math.floor(begin*10)),Math.ceil(end*10));return slice.length?Math.sqrt(slice.reduce((s,x)=>s+x*x,0)/slice.length):null;}
-export function resolveTransition(a,b,options={}){
+function resolveTransitionBase(a,b,options={}){
  const A=a.track,B=b.track,bpmA=(A.bpm||120)*(a.rate||1),automatic=options.style==='auto',tempo=transitionTempo({...A,bpm:A.bpm?bpmA:A.bpm},B,options),octave=tempo.octave,bpmB=tempo.bpmB,ratio=bpmA/bpmB;
  // The same user limit and grid gates guide both planning and suggestions.
  const shape=tempoShape(options.tempoShape),morph=options.tempoBlend===true,trustworthy=tempo.trustworthy,within=tempo.compatible;
  const sync=tempo.sync;
  let style=transitionIds.includes(options.style)?options.style:'blend',beats=Number(options.beats)||16,profile=profiles[options.profile]?options.profile:'flow',reason='';
- const dense=(A.structure?.at(-2)?.density||0)+(B.structure?.[0]?.density||0),keyKnown=A.keyConfidence>.35&&B.keyConfidence>.35;
+ const requested=Number(options.beats)||16,probeSeconds=requested*60/(sync&&morph?tempoMean(bpmA,bpmB,shape):bpmA),probeSpan=sync&&morph?requested*60/(A.bpm||120):probeSeconds*(a.rate||1),prepared=automatic&&profile==='musical'&&options.alignArrival!==false,entryPhrase=phraseAnchor(B,'entry',{enabled:prepared,quantize:options.quantize!==false}),probeIn=entryPhrase?Math.max(B.audibleStart||0,entryPhrase.time-probeSeconds*(sync?ratio:1)*.5):musicalEntry(B),probeOut=musicalExit(A,probeSpan,options.position||0,{handoffFraction:.5,preparedPhrases:prepared,quantize:options.quantize!==false}),densityProbe=assessOverlap(A,B,{seconds:probeSeconds,sourceSpanSeconds:probeSpan,outPoint:probeOut,inPoint:probeIn,rate:sync?ratio:1,tempoBlend:sync&&morph,tempoShape:shape}),dense=densityProbe.busy,keyKnown=A.keyConfidence>.35&&B.keyConfidence>.35;
  const harmony=harmonicCompatibility(A,B),harmonic=harmony.known?harmony.compatible:!keyKnown,regionA=(A.audibleEnd??A.buffer?.duration??Infinity)-(A.mixOut??0),regionB=(B.introEnd??Infinity)-(B.mixIn||0);
  let effectSelection=null,composition=null;
  if(automatic){
   if(!sync){style='linear';beats=trustworthy?4:4;reason=!within?'Tempos éloignés : relais court au tempo naturel.':'Rythme incertain ou Sync désactivée : relais court sans beatmatch.';}
-  else if(!harmonic||dense>.45){style='bass';beats=8;reason=!harmonic?'Tonalités estimées éloignées : chevauchement raccourci et relais des graves.':'Arrangement dense : deux mesures et relais des graves pour limiter la superposition.';}
+  else if(!harmonic||dense){style='bass';beats=8;reason=!harmonic?'Tonalités estimées éloignées : chevauchement raccourci et relais des graves.':'Arrangement dense : deux mesures et relais des graves pour limiter la superposition.';}
   else{style=profile==='peak'||profile==='lift'?'bass':'blend';beats=Math.min(beats,profile==='chill'?32:16);reason='Rythmes stables et tempos proches : alignement des mesures, niveaux adaptés et '+(style==='bass'?'relais des graves.':'fondu sobre.');}
   if(profile==='varied'){
-   effectSelection=selectAutomaticFx({source:A,target:B,sync,dense:dense>.45,harmonic,intensity:clamp(Number(options.intensity??.45),0,1),history:options.history||[],stemsAvailable:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer)});
+   effectSelection=selectAutomaticFx({source:A,target:B,sync,dense:dense,harmonic,intensity:clamp(Number(options.intensity??.45),0,1),history:options.history||[],stemsAvailable:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer)});
    style=effectSelection.style;
    if(['echo','stutter'].includes(style))beats=Math.min(beats,8);
    reason=(sync?'Mesures alignées. ':'Tempo naturel conservé. ')+transitionName(style)+' choisi dans les effets disponibles, avec mémoire des derniers passages.';
@@ -68,14 +69,15 @@ export function resolveTransition(a,b,options={}){
   const available=Math.min(regionA/(a.rate||1),regionB/(sync?ratio:1),(A.buffer?.duration||Infinity)*.4,(B.buffer?.duration||Infinity)*.4);
   while(beats>2&&beats*60/bpmA>available)beats/=2;
   if(profile==='musical'){
-   composition=composedPlan({source:A,target:B,sync,harmonic,keyKnown:harmony.known,dense:dense>.45,stems:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),beats:Number(options.beats)||32,position:options.position||0,bpmA});
+   composition=composedPlan({source:A,target:B,sync,harmonic,keyKnown:harmony.known,dense:dense,stems:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),beats:Number(options.beats)||32,position:options.position||0,bpmA});
    if(composition.style!=='clean'||sync){
-    effectSelection=selectMusicalFx({source:{...A,bpm:bpmA},target:{...B,bpm:bpmB},sync,trustworthy,harmonic,keyKnown:harmony.known,dense:dense>.45,intensity:clamp(Number(options.intensity??.45),0,1),history:options.history||[],stemsAvailable:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),tempoBlend:morph,beats:Number(options.beats)||32,preparedPhrases:automatic&&profile==='musical'&&options.alignArrival!==false&&!A.manualRegions&&Boolean(phraseAnchor(A,'exit',{quantize:options.quantize!==false})||phraseAnchor(B,'entry',{quantize:options.quantize!==false}))});
+    effectSelection=selectMusicalFx({source:{...A,bpm:bpmA},target:{...B,bpm:bpmB},sync,trustworthy,harmonic,keyKnown:harmony.known,dense:dense,intensity:clamp(Number(options.intensity??.45),0,1),history:options.history||[],stemsAvailable:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),tempoBlend:morph,beats:Number(options.beats)||32,preparedPhrases:automatic&&profile==='musical'&&options.alignArrival!==false&&!A.manualRegions&&Boolean(phraseAnchor(A,'exit',{quantize:options.quantize!==false})||phraseAnchor(B,'entry',{quantize:options.quantize!==false}))});
     composition={...composition,style:effectSelection.style,beats:effectSelection.beats,seconds:effectSelection.beats*60/bpmA,reason:effectSelection.reason,stages:effectSelection.stages,harmonicGuard:effectSelection.harmonicGuard};
    }
    style=composition.style;beats=composition.beats;reason=composition.reason;
   }
  }
+ if(automatic&&profile==='musical'&&sync&&morph&&Math.max(ratio,1/ratio)>1.08){const minimum=Math.min(Number(options.beats)||16,16);if(beats<minimum){beats=minimum;composition={...composition,beats,seconds:beats*60/bpmA};if(effectSelection)effectSelection={...effectSelection,beats};reason+=' Variation de tempo sur la durée demandée, jusqu’à quatre mesures.';}}
  if(['stemfade','stemecho','stemsustain'].includes(style)&&!(options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer))){style='bass';reason='Stems indisponibles sur une platine : relais EQ. Préparez les deux titres et activez leurs stems avant la lecture.';}
  const bridge=['bridge','landing'].includes(style),separated=bridge||style==='clean',tempoBlend=Boolean(!separated&&sync&&morph&&Math.abs(ratio-1)>.001),nominal=beats*60/(tempoBlend?tempoMean(bpmA,bpmB,shape):bpmA),seconds=composition&&!tempoBlend?composition.seconds:bridge?clamp(nominal,7,12):automatic&&!sync?clamp(nominal,1.2,3):nominal;
  if(!automatic&&!reason)reason=sync&&!separated?(tempoBlend?'Tempo commun '+bpmA.toFixed(1)+' → '+bpmB.toFixed(1)+' BPM pendant le passage. ':'Tempo entrant calé à '+bpmA.toFixed(1)+' BPM. ')+(!trustworthy?'Grille estimée : vérifiez le premier temps.':'Mesures alignées.'):(options.sync===false?'Sync désactivée : tempos naturels.':separated?'Reprise au tempo naturel du prochain titre.':'Écart supérieur à la plage de synchronisation : tempos naturels.');
@@ -94,6 +96,10 @@ export function resolveTransition(a,b,options={}){
  result.incomingLanding=selectIncomingLanding(B,result,{enabled:options.alignArrival!==false&&!A.manualRegions,quantize:options.quantize!==false});
  if(result.incomingLanding){result.inPoint=result.incomingLanding.cue;result.preserveInPoint=true;result.reason+=' Arrivée sur le repère '+result.incomingLanding.label+' au relais.';}
  return result;
+}
+export function resolveTransition(a,b,options={}){
+ const plan=resolveTransitionBase(a,b,options),guard=protectOverlapScore(a.track,b.track,plan,{enabled:options.protectOverlap!==false&&!options._runtimeDensity,intensity:options.intensity??.45});plan.score=guard.score;plan.overlap=guard.info;
+ if(guard.info.applied){plan.reason+=' Chevauchement raccourci après mesure des deux zones.';plan.stages=guard.score.stages.map(stage=>({...stage,at:plan.tempoBlend?tempoFraction(stage.at,plan.bpmA,plan.bpmB,plan.seconds,plan.tempoShape)/plan.seconds:stage.at}));}return plan;
 }
 export function transitionProgress(style,p,duration=8,score=null){
   if(score)return scoreProgress(score,p);

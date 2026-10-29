@@ -82,3 +82,5 @@ test('tempo profile preference restores only supported curves and defaults to a 
 test('tempo ceiling persistence accepts supported numbers and does not restore arbitrary stretching',()=>{
  assert.equal(sanitizePreferences().maxTempoPercent,20);for(const maxTempoPercent of [3,5,8,12,16,20])assert.equal(sanitizePreferences({maxTempoPercent}).maxTempoPercent,maxTempoPercent);for(const maxTempoPercent of [0,'5',50,{},NaN])assert.equal(sanitizePreferences({maxTempoPercent}).maxTempoPercent,20);
 });
+
+test('overlap protection defaults on and preserves an explicit saved opt-out',()=>{assert.equal(sanitizePreferences().protectOverlap,true);assert.equal(sanitizePreferences({protectOverlap:false}).protectOverlap,false);assert.equal(sanitizePreferences({protectOverlap:'invalid'}).protectOverlap,true);});

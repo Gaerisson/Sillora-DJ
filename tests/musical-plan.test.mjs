@@ -56,9 +56,9 @@ test('distant tempos keep the outgoing groove until a fast, level-preserving han
  assert.equal(transitionProgress('clean',.7,plan.seconds),0);assert.equal(transitionProgress('clean',.8,plan.seconds),1);
 });
 
-test('dense but aligned tracks exchange bass instead of repeatedly inserting an echo break',()=>{
- const a=track(120,0,'major'),b=track(122,0,'major');a.structure=[{density:.7}];b.structure=[{density:.6}];
- const plan=resolveTransition({track:a},{track:b},{style:'auto',profile:'musical',beats:32});
+test('dense aligned tracks can retain their bass exchange when the overlap protection is deliberately off',()=>{
+ const a=track(120,0,'major'),b=track(122,0,'major');for(const [t,density]of [[a,.7],[b,.6]])t.structure=Array.from({length:Math.floor(180*t.bpm/240)},(_,i)=>({time:i*240/t.bpm,density,rms:.2}));
+ const plan=resolveTransition({track:a},{track:b},{style:'auto',profile:'musical',beats:32,protectOverlap:false});
  assert.equal(plan.style,'bass');assert.equal(plan.sync,true);assert.equal(plan.beats,8);assert.equal(plan.incomingStartFraction,0);
 });
 

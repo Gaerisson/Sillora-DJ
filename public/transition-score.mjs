@@ -11,10 +11,10 @@ export function makeTransitionScore(plan,{seconds=plan.seconds,intensity=.45}={}
  const rawBeats=Math.max(.1,seconds*Math.max(30,bpm||120)/60),beats=Math.abs(rawBeats-Math.round(rawBeats))<1e-6?Math.round(rawBeats):rawBeats,bass=['bass','phrase'].includes(plan.style);
  const handoffBeat=bass?(beats>=8?Math.floor(beats/8)*4:beats*.5):(beats>=8?Math.max(4,Math.floor((beats-4)/4)*4):beats*.75);
  const edge=clamp(handoffBeat/beats,.1,.9),half=Math.min(.5/beats,edge*.45,(1-edge)*.45),amount=clamp(Number(intensity)||0,0,1);
- const guard=Boolean(plan.harmonicGuard),filter=plan.style==='filter'||plan.style==='riser';
+ const guard=Boolean(plan.harmonicGuard),densityGuard=plan.densityGuard===true,filter=plan.style==='filter'||plan.style==='riser';
  const overlapBeats=guard?Math.min(2,beats*.25):plan.style==='echo'?Math.min(2,beats*.25):Math.min(4,beats*.375);
  const begin=Math.max(0,edge-overlapBeats/beats),end=plan.style==='echo'?Math.min(1,edge+.5/beats):edge;
- const score={version:1,style:plan.style,beats,handoffBeat:edge*beats,handoffFraction:edge,harmonicGuard:guard,crossfade:bass?{begin:0,end:1}:{begin,end},parameters:{},stages:[]};
+ const score={version:1,style:plan.style,beats,handoffBeat:edge*beats,handoffFraction:edge,harmonicGuard:guard,...(densityGuard?{densityGuard:true}:{}),crossfade:bass&&!densityGuard?{begin:0,end:1}:{begin,end},parameters:{},stages:[]};
  const parameters=score.parameters;
  if(bass){
   const bassCurve=incoming=>Array.from({length:33},(_,i)=>{const p=i/32,amplitude=incoming?Math.sin(p*Math.PI/2):Math.cos(p*Math.PI/2);return[edge-half+2*half*p,Math.max(-24,20*Math.log10(Math.max(.00001,amplitude)))];});
@@ -36,6 +36,15 @@ export function makeTransitionScore(plan,{seconds=plan.seconds,intensity=.45}={}
  if(plan.style==='phrase')parameters.echoSend=[[0,0],[.67,0],[.75,.08+amount*.12],[1,0]];
  score.echo=filter?{division:.5,feedback:.27,wet:.48}:plan.style==='echo'?{division:1,feedback:.36+amount*.08,wet:.66}:plan.style==='phrase'?{division:1,feedback:.32,wet:.4}:null;
  score.texture=plan.style==='riser'?{begin:Math.max(0,begin-2/beats),end:edge,releaseEnd:Math.min(1,edge+Math.min(4,beats*.25)/beats),amount:amount*.58}:null;
+ if(densityGuard&&bass){
+  // The faders exchange the low band over the short relay. Keep the incoming
+  // bass available instead of combining its muted EQ with a closed fader.
+  parameters.outLow=[[0,0],[edge,0],[Math.min(1,edge+half),-24],[1,-24]];parameters.inLow=[[0,0],[1,0]];
+  parameters.outHighpass=[[0,18],[begin,18],[Math.max(begin,edge-half),18+amount*260],[edge,18+amount*2400],[1,18+amount*3000]];
+  parameters.echoSend=[[0,0],[begin,amount*.12],[Math.max(begin,edge-half),amount*.12],[edge,0],[1,0]];
+  score.echo=amount>0?{division:.5,feedback:.22,wet:.32}:null;
+  score.texture={begin:Math.max(0,begin-2/beats),end:edge,releaseEnd:Math.min(1,edge+1/beats),amount:amount*.25};
+ }
  score.stages=[{at:0,label:plan.tempoBlend?'Caler et faire évoluer le tempo':'Installer le groove'},{at:Math.max(0,begin),label:bass?'Ouvrir le titre entrant':filter?'Monter le filtre':'Capturer la dernière pulsation'},{at:edge,label:bass?'Relayer kick et basse':'Poser le nouveau groove'},{at:1,label:'Laisser jouer le titre entrant'}];
  return score;
 }

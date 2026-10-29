@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.32.0.exe` et `Sillora-DJ-0.32.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.33.0.exe` et `Sillora-DJ-0.33.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -77,3 +77,12 @@ La recette stems utilise le moteur embarqué sur un extrait réel de huit second
 Le [lanceur regroupé](QA-BATCH.md) organise les recettes et leur reprise, avec une ressource UI commune. Les nouveaux espaces se contrôlent par `test:workspace:windows`. Voir les [réglages d’affichage](WORKSPACES-0.28.md).
 
 La recette `test:stem-mix:windows` accepte les mêmes deux MP3 de plus de 52 s et utilise un extrait de huit secondes. Sans fixture, elle lance la séparation locale. Pour réutiliser un résultat déjà vérifié, `SILLORA_QA_STEM_FIXTURE` doit désigner un dossier contenant `input.wav`, les quatre WAV et `complete.json` avec les empreintes d’origine. Garder ces fichiers privés ; dans le lanceur regroupé, les déclarer comme `inputs` et fournir la variable par `env`. [Mixage](STEM-MIX-0.29.md) · [Cache](STEM-CACHE-0.29.md).
+
+Pour contrôler la protection des zones chargées :
+
+```powershell
+node_modules/.bin/electron scripts/qa-overlap-windows.cjs "piste-A.mp3" "piste-B.mp3"
+npm run test:transitions:windows -- --rhythm --overlap "piste-A.mp3" "piste-B.mp3"
+```
+
+La matrice compare les passages complets avec/sans protection dans les deux sens, puis Next avec protection. Les mesures spectrales ne constituent pas une détection vocale.

@@ -109,4 +109,8 @@ Deux titres chargés, pochettes sur les vinyles, onde globale, détail rythmique
 
 ![Annotation et rôle d’un repère de relais](images/phrase-editor-032.png)
 
+## Protection du chevauchement — 0.33
+
+![Option PC et densité des fenêtres source/cible](images/overlap-protection-033.png)
+
 [Retour au projet](../README.md)
