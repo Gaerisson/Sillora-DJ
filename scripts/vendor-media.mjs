@@ -25,7 +25,7 @@ await writeFile(path.join(output,'yt-dlp-SHA2-256SUMS.txt'),ytSums);
 for(const name of ['LICENSE','THIRD_PARTY_LICENSES.txt'])await writeFile(path.join(output,'yt-dlp-'+name.replace(/^LICENSE$/,'LICENSE.txt')),await download('https://raw.githubusercontent.com/yt-dlp/yt-dlp/'+YTDLP+'/'+name,2*1024*1024));
 const nodeBase='https://nodejs.org/dist/'+NODE,nodeSums=(await download(nodeBase+'/SHASUMS256.txt',128*1024)).toString('utf8'),nodeHash=checksum(nodeSums,'win-x64/node.exe');
 const nodeOutput=path.join(output,'node.exe');
-let reused=false;for(const candidate of [nodeOutput,'D:/Codex/tools/node/node.exe'])try{if(sha256(await readFile(candidate))===nodeHash){if(candidate!==nodeOutput)await copyFile(candidate,nodeOutput);reused=true;break;}}catch{}
+let reused=false;for(const candidate of [nodeOutput,process.execPath])try{if(sha256(await readFile(candidate))===nodeHash){if(candidate!==nodeOutput)await copyFile(candidate,nodeOutput);reused=true;break;}}catch{}
 if(!reused)await verified(nodeOutput,nodeHash,nodeBase+'/win-x64/node.exe',120*1024*1024);
 await writeFile(path.join(output,'node-SHASUMS256.txt'),nodeSums);
 await writeFile(path.join(output,'node-LICENSE.txt'),await download('https://raw.githubusercontent.com/nodejs/node/'+NODE+'/LICENSE',1024*1024));

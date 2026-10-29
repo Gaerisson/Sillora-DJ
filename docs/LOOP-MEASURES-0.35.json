@@ -1,0 +1,1107 @@
+{
+  "version": "0.35.0",
+  "scope": "Ten native source-seam fixtures, five native music/transport fixtures and seven PC/Remote scenarios. Two actual files in loop tests; one constructed eight-channel stem fixture. Baseline is the packaged 0.34.0 with the same first four music fixtures. Transport error and rendered energy are separate observations, not perceptual equivalence. Raw inputs and audio remain local.",
+  "maxRawStep": 0.8999999761581421,
+  "maxProtectedStep": 0.0002662304905243218,
+  "comparison": [
+    {
+      "profile": "standard",
+      "rate": 0.9,
+      "to": 1.2,
+      "shape": "late",
+      "beforeVersion": "0.34.0",
+      "afterVersion": "0.35.0",
+      "beforeClockErrorSeconds": 0.9872169878693668,
+      "afterClockErrorSeconds": 7.105427357601002e-15,
+      "beforeSilent50ms": [
+        13,
+        13
+      ],
+      "afterSilent50ms": [
+        0,
+        0
+      ],
+      "beforeMinRms": [
+        0,
+        0
+      ],
+      "afterMinRms": [
+        0.04271046671808352,
+        0.041225554719630846
+      ]
+    },
+    {
+      "profile": "rhythm",
+      "rate": 1.2,
+      "to": 0.9,
+      "shape": "early",
+      "beforeVersion": "0.34.0",
+      "afterVersion": "0.35.0",
+      "beforeClockErrorSeconds": 0.9760823318585281,
+      "afterClockErrorSeconds": 0,
+      "beforeSilent50ms": [
+        1,
+        1
+      ],
+      "afterSilent50ms": [
+        0,
+        0
+      ],
+      "beforeMinRms": [
+        0.00008924019709611455,
+        0.00008924019709611455
+      ],
+      "afterMinRms": [
+        0.09207151112626472,
+        0.09279235124279199
+      ]
+    }
+  ],
+  "seams": [
+    {
+      "sr": 44100,
+      "beats": 0.25,
+      "rate": 0.8,
+      "shape": null,
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.1371201814059,
+        "end": 300.2590702947846
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 126,
+      "firstEdges": [
+        {
+          "frame": 8927,
+          "rawJump": 0.2700025886297226,
+          "protectedJump": 0.00025558131164871156
+        },
+        {
+          "frame": 8928,
+          "rawJump": 0.629896953701973,
+          "protectedJump": 0.00017142980505013838
+        },
+        {
+          "frame": 15650,
+          "rawJump": 0.8099278211593628,
+          "protectedJump": 0.00021363019186537713
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 8927,
+          "rawJump": 0.2700025886297226,
+          "protectedJump": 0.00025558131164871156
+        },
+        {
+          "frame": 22372,
+          "rawJump": 0.2700747400522232,
+          "protectedJump": 0.00025556606124155223
+        },
+        {
+          "frame": 35817,
+          "rawJump": 0.2701468914747238,
+          "protectedJump": 0.00025555072352290154
+        },
+        {
+          "frame": 49262,
+          "rawJump": 0.2702190577983856,
+          "protectedJump": 0.00025553538580425084
+        },
+        {
+          "frame": 62707,
+          "rawJump": 0.27029120922088623,
+          "protectedJump": 0.0002555201353970915
+        },
+        {
+          "frame": 76152,
+          "rawJump": 0.27036336064338684,
+          "protectedJump": 0.0002555047976784408
+        }
+      ],
+      "maxRawJump": 0.8099278211593628,
+      "maxProtectedJump": 0.00025558131164871156,
+      "energyRatio": 0.9514084460532787
+    },
+    {
+      "sr": 44100,
+      "beats": 0.25,
+      "rate": 1,
+      "shape": null,
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.1371201814059,
+        "end": 300.2590702947846
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 106,
+      "firstEdges": [
+        {
+          "frame": 7583,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00021358543017413467
+        },
+        {
+          "frame": 12961,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00021358579397201538
+        },
+        {
+          "frame": 18339,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0002135861577698961
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 572273,
+          "rawJump": 0.8999998867511749,
+          "protectedJump": 0.00021362359984777868
+        },
+        {
+          "frame": 566895,
+          "rawJump": 0.8999998867511749,
+          "protectedJump": 0.00021362323604989797
+        },
+        {
+          "frame": 561517,
+          "rawJump": 0.8999998867511749,
+          "protectedJump": 0.00021362287225201726
+        },
+        {
+          "frame": 556139,
+          "rawJump": 0.8999998867511749,
+          "protectedJump": 0.00021362250845413655
+        },
+        {
+          "frame": 550761,
+          "rawJump": 0.8999998867511749,
+          "protectedJump": 0.00021362214465625584
+        },
+        {
+          "frame": 545383,
+          "rawJump": 0.8999998867511749,
+          "protectedJump": 0.0002136217663064599
+        }
+      ],
+      "maxRawJump": 0.8999999761581421,
+      "maxProtectedJump": 0.00021362359984777868,
+      "energyRatio": 0.9388621729820528
+    },
+    {
+      "sr": 44100,
+      "beats": 0.5,
+      "rate": 1.23,
+      "shape": null,
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.1371201814059,
+        "end": 300.38102040816324
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 110,
+      "firstEdges": [
+        {
+          "frame": 10950,
+          "rawJump": 0.8458956182003021,
+          "protectedJump": 0.0001896548201330006
+        },
+        {
+          "frame": 19694,
+          "rawJump": 0.21158653497695923,
+          "protectedJump": 0.00024981528986245394
+        },
+        {
+          "frame": 19695,
+          "rawJump": 0.6882912516593933,
+          "protectedJump": 0.0001772823161445558
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 474419,
+          "rawJump": 0.10296934843063354,
+          "protectedJump": 0.0002662304905243218
+        },
+        {
+          "frame": 413206,
+          "rawJump": 0.10694468021392822,
+          "protectedJump": 0.00026562970015220344
+        },
+        {
+          "frame": 351993,
+          "rawJump": 0.11092004179954529,
+          "protectedJump": 0.00026502888067625463
+        },
+        {
+          "frame": 290780,
+          "rawJump": 0.11489537358283997,
+          "protectedJump": 0.00026442797388881445
+        },
+        {
+          "frame": 229567,
+          "rawJump": 0.11887067556381226,
+          "protectedJump": 0.0002638270379975438
+        },
+        {
+          "frame": 168354,
+          "rawJump": 0.12284600734710693,
+          "protectedJump": 0.0002632260730024427
+        }
+      ],
+      "maxRawJump": 0.899980753660202,
+      "maxProtectedJump": 0.0002662304905243218,
+      "energyRatio": 0.9623642138989958
+    },
+    {
+      "sr": 44100,
+      "beats": 4,
+      "rate": 1,
+      "shape": null,
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.1371201814059,
+        "end": 302.0883446712018
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 6,
+      "firstEdges": [
+        {
+          "frame": 88254,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00021380007092375308
+        },
+        {
+          "frame": 174303,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0002138058771379292
+        },
+        {
+          "frame": 260352,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00021381169790402055
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 518499,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0002138291602022946
+        },
+        {
+          "frame": 432450,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00021382333943620324
+        },
+        {
+          "frame": 346401,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0002138175186701119
+        },
+        {
+          "frame": 260352,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00021381169790402055
+        },
+        {
+          "frame": 174303,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0002138058771379292
+        },
+        {
+          "frame": 88254,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00021380007092375308
+        }
+      ],
+      "maxRawJump": 0.8999999761581421,
+      "maxProtectedJump": 0.0002138291602022946,
+      "energyRatio": 0.9963633526931689
+    },
+    {
+      "sr": 48000,
+      "beats": 0.25,
+      "rate": 1,
+      "shape": null,
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.137125,
+        "end": 300.2590833333333
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 106,
+      "firstEdges": [
+        {
+          "frame": 8254,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00018051618826575577
+        },
+        {
+          "frame": 14108,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0001805161009542644
+        },
+        {
+          "frame": 19962,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00018051601364277303
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 8254,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00018051618826575577
+        },
+        {
+          "frame": 14108,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0001805161009542644
+        },
+        {
+          "frame": 19962,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00018051601364277303
+        },
+        {
+          "frame": 25816,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00018051592633128166
+        },
+        {
+          "frame": 31670,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.0001805158390197903
+        },
+        {
+          "frame": 37524,
+          "rawJump": 0.8999999761581421,
+          "protectedJump": 0.00018051578081212938
+        }
+      ],
+      "maxRawJump": 0.8999999761581421,
+      "maxProtectedJump": 0.00018051618826575577,
+      "energyRatio": 0.9388612788445841
+    },
+    {
+      "sr": 48000,
+      "beats": 16,
+      "rate": 0.9,
+      "shape": null,
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.137125,
+        "end": 307.942
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 2,
+      "firstEdges": [
+        {
+          "frame": 418660,
+          "rawJump": 0.404999983496964,
+          "protectedJump": 0.00018143719353247434
+        },
+        {
+          "frame": 418661,
+          "rawJump": 0.45446385722607374,
+          "protectedJump": 0.00017993604706134647
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 418660,
+          "rawJump": 0.404999983496964,
+          "protectedJump": 0.00018143719353247434
+        },
+        {
+          "frame": 418661,
+          "rawJump": 0.45446385722607374,
+          "protectedJump": 0.00017993604706134647
+        }
+      ],
+      "maxRawJump": 0.45446385722607374,
+      "maxProtectedJump": 0.00018143719353247434,
+      "energyRatio": 0.9994098468464314
+    },
+    {
+      "sr": 44100,
+      "beats": 0.25,
+      "rate": 1,
+      "shape": "smooth",
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.1371201814059,
+        "end": 300.2590702947846
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 217,
+      "firstEdges": [
+        {
+          "frame": 7583,
+          "rawJump": 0.8896270394325256,
+          "protectedJump": 0.00021026699687354267
+        },
+        {
+          "frame": 12961,
+          "rawJump": 0.8582123816013336,
+          "protectedJump": 0.00020325154764577746
+        },
+        {
+          "frame": 18339,
+          "rawJump": 0.8057628571987152,
+          "protectedJump": 0.00019252390484325588
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 50483,
+          "rawJump": 0.15483561158180237,
+          "protectedJump": 0.00026266739587299526
+        },
+        {
+          "frame": 23716,
+          "rawJump": 0.16755899786949158,
+          "protectedJump": 0.0002620865707285702
+        },
+        {
+          "frame": 39846,
+          "rawJump": 0.16756680607795715,
+          "protectedJump": 0.0002613578108139336
+        },
+        {
+          "frame": 65835,
+          "rawJump": 0.14758950471878052,
+          "protectedJump": 0.0002611988165881485
+        },
+        {
+          "frame": 60816,
+          "rawJump": 0.17136135697364807,
+          "protectedJump": 0.00025804046890698373
+        },
+        {
+          "frame": 84880,
+          "rawJump": 0.1435205638408661,
+          "protectedJump": 0.00025796686531975865
+        }
+      ],
+      "maxRawJump": 0.8999741077423096,
+      "maxProtectedJump": 0.00026266739587299526,
+      "energyRatio": 0.923539893620638
+    },
+    {
+      "sr": 48000,
+      "beats": 0.25,
+      "rate": 0.8,
+      "shape": "late",
+      "channels": 1,
+      "resize": false,
+      "loop": {
+        "start": 300.137125,
+        "end": 300.2590833333333
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 213,
+      "firstEdges": [
+        {
+          "frame": 9717,
+          "rawJump": 0.2800724059343338,
+          "protectedJump": 0.00021303007088135928
+        },
+        {
+          "frame": 9718,
+          "rawJump": 0.6198353320360184,
+          "protectedJump": 0.0001478740232414566
+        },
+        {
+          "frame": 17034,
+          "rawJump": 0.13008296489715576,
+          "protectedJump": 0.00024164843489415944
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 60690,
+          "rawJump": 0.10103559494018555,
+          "protectedJump": 0.00024413681239821017
+        },
+        {
+          "frame": 17034,
+          "rawJump": 0.13008296489715576,
+          "protectedJump": 0.00024164843489415944
+        },
+        {
+          "frame": 38986,
+          "rawJump": 0.1600094735622406,
+          "protectedJump": 0.0002347281842958182
+        },
+        {
+          "frame": 126176,
+          "rawJump": 0.12348821759223938,
+          "protectedJump": 0.000220782749238424
+        },
+        {
+          "frame": 581254,
+          "rawJump": 0.10406121611595154,
+          "protectedJump": 0.00022054988949093968
+        },
+        {
+          "frame": 522714,
+          "rawJump": 0.10531777143478394,
+          "protectedJump": 0.0002203962649218738
+        }
+      ],
+      "maxRawJump": 0.8999803960323334,
+      "maxProtectedJump": 0.00024413681239821017,
+      "energyRatio": 0.9259336261637899
+    },
+    {
+      "sr": 48000,
+      "beats": 0.5,
+      "rate": 1,
+      "shape": "linear",
+      "channels": 8,
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "error": 0
+    },
+    {
+      "sr": 44100,
+      "beats": 0.25,
+      "rate": 1,
+      "shape": "smooth",
+      "channels": 1,
+      "resize": true,
+      "loop": {
+        "start": 300.1371201814059,
+        "end": 300.2590702947846
+      },
+      "peak": 0.44999998807907104,
+      "nonFinite": 0,
+      "edges": 125,
+      "firstEdges": [
+        {
+          "frame": 7583,
+          "rawJump": 0.44995813816058217,
+          "protectedJump": 0.00013230997137725353
+        },
+        {
+          "frame": 12961,
+          "rawJump": 0.44995813660352724,
+          "protectedJump": 0.00013940370990894735
+        },
+        {
+          "frame": 18339,
+          "rawJump": 0.4499581411291729,
+          "protectedJump": 0.00015022334991954267
+        }
+      ],
+      "worstEdges": [
+        {
+          "frame": 189642,
+          "rawJump": 0.13420328497886658,
+          "protectedJump": 0.0002553288941271603
+        },
+        {
+          "frame": 247559,
+          "rawJump": 0.17796865105628967,
+          "protectedJump": 0.0002490716287866235
+        },
+        {
+          "frame": 139999,
+          "rawJump": 0.1802770495414734,
+          "protectedJump": 0.0002487362071406096
+        },
+        {
+          "frame": 106777,
+          "rawJump": 0.1939222812652588,
+          "protectedJump": 0.00024752377066761255
+        },
+        {
+          "frame": 197916,
+          "rawJump": 0.22404241561889648,
+          "protectedJump": 0.00024247282999567688
+        },
+        {
+          "frame": 98217,
+          "rawJump": 0.24239017069339752,
+          "protectedJump": 0.00024111584934871644
+        }
+      ],
+      "maxRawJump": 0.8999870717525482,
+      "maxProtectedJump": 0.0002553288941271603,
+      "energyRatio": 0.9612604862047303
+    }
+  ],
+  "music": [
+    {
+      "profile": "standard",
+      "keyLock": false,
+      "roll": false,
+      "stemFixture": false,
+      "maxDryDifference": 0,
+      "index": 0,
+      "beats": 0.25,
+      "rate": 1,
+      "to": 1.23,
+      "shape": "smooth",
+      "seamAvailable": true,
+      "keyLockAvailable": true,
+      "latency": 0.1313605442176871,
+      "capture": {
+        "time": 0.8010884353741496,
+        "position": 32.55108843537415,
+        "loops": [
+          {
+            "start": 32.55108843537415,
+            "end": 32.67609977324263,
+            "beats": 0.25,
+            "clockOffset": 0
+          },
+          {
+            "start": 32.55108843537415,
+            "end": 32.67609977324263,
+            "beats": 0.25,
+            "clockOffset": 0
+          }
+        ]
+      },
+      "ramp": {
+        "start": 1.4016326530612244,
+        "duration": 2
+      },
+      "release": {
+        "time": 5.500226757369615,
+        "expected": 32.58741587301565,
+        "before": [
+          32.58741587301565,
+          32.58741587301565
+        ],
+        "after": [
+          32.58741587301565,
+          32.58741587301565
+        ],
+        "loops": [
+          null,
+          null
+        ],
+        "rates": [
+          1.23,
+          1.23
+        ],
+        "retiring": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "time": 5.802086167800454,
+        "positions": [
+          32.95870294784558,
+          32.95870294784558
+        ]
+      },
+      "peak": 0.645033061504364,
+      "nonFinite": 0,
+      "probes": [
+        {
+          "silent50ms": 0,
+          "minRms": 0.04002750269558078
+        },
+        {
+          "silent50ms": 0,
+          "minRms": 0.0391032379071326
+        }
+      ],
+      "clockError": 0,
+      "retiringAfter": [
+        0,
+        0
+      ]
+    },
+    {
+      "profile": "standard",
+      "keyLock": true,
+      "roll": true,
+      "stemFixture": false,
+      "maxDryDifference": 0,
+      "index": 0,
+      "beats": 0.25,
+      "rate": 0.9,
+      "to": 1.2,
+      "shape": "late",
+      "seamAvailable": true,
+      "keyLockAvailable": true,
+      "latency": 0.1313605442176871,
+      "capture": {
+        "time": 0.8010884353741496,
+        "position": 32.495979591836736,
+        "loops": [
+          {
+            "start": 32.495986394557825,
+            "end": 32.62097505668934,
+            "beats": 0.25
+          },
+          {
+            "start": 32.495986394557825,
+            "end": 32.62097505668934,
+            "beats": 0.25
+          }
+        ]
+      },
+      "ramp": {
+        "start": 1.4016326530612244,
+        "duration": 2
+      },
+      "release": {
+        "time": 5.500226757369615,
+        "expected": 37.55478841644079,
+        "before": [
+          32.55524193118023,
+          32.55524193118023
+        ],
+        "after": [
+          37.5547884164408,
+          37.5547884164408
+        ],
+        "loops": [
+          null,
+          null
+        ],
+        "rates": [
+          1.2,
+          1.2
+        ],
+        "retiring": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "time": 5.802086167800454,
+        "positions": [
+          37.91701970895781,
+          37.91701970895781
+        ]
+      },
+      "peak": 0.6401412487030029,
+      "nonFinite": 0,
+      "probes": [
+        {
+          "silent50ms": 0,
+          "minRms": 0.04271046671808352
+        },
+        {
+          "silent50ms": 0,
+          "minRms": 0.041225554719630846
+        }
+      ],
+      "clockError": 7.105427357601002e-15,
+      "retiringAfter": [
+        0,
+        0
+      ]
+    },
+    {
+      "profile": "rhythm",
+      "keyLock": true,
+      "roll": true,
+      "stemFixture": false,
+      "maxDryDifference": 0,
+      "index": 1,
+      "beats": 0.5,
+      "rate": 1.2,
+      "to": 0.9,
+      "shape": "early",
+      "seamAvailable": true,
+      "keyLockAvailable": true,
+      "latency": 0.05943310657596372,
+      "capture": {
+        "time": 0.8010884353741496,
+        "position": 32.66130612244898,
+        "loops": [
+          {
+            "start": 32.661315192743764,
+            "end": 32.911315192743764,
+            "beats": 0.5
+          },
+          {
+            "start": 32.661315192743764,
+            "end": 32.911315192743764,
+            "beats": 0.5
+          }
+        ]
+      },
+      "ramp": {
+        "start": 1.4016326530612244,
+        "duration": 2
+      },
+      "release": {
+        "time": 5.500226757369615,
+        "expected": 37.27069998106664,
+        "before": [
+          32.77069998106664,
+          32.77069998106664
+        ],
+        "after": [
+          37.27069998106664,
+          37.27069998106664
+        ],
+        "loops": [
+          null,
+          null
+        ],
+        "rates": [
+          0.9,
+          0.9
+        ],
+        "retiring": [
+          1,
+          1
+        ]
+      },
+      "after": {
+        "time": 5.802086167800454,
+        "positions": [
+          37.5423734504544,
+          37.5423734504544
+        ]
+      },
+      "peak": 0.6520959734916687,
+      "nonFinite": 0,
+      "probes": [
+        {
+          "silent50ms": 0,
+          "minRms": 0.09207151112626472
+        },
+        {
+          "silent50ms": 0,
+          "minRms": 0.09279235124279199
+        }
+      ],
+      "clockError": 0,
+      "retiringAfter": [
+        0,
+        0
+      ]
+    },
+    {
+      "profile": "standard",
+      "keyLock": true,
+      "roll": false,
+      "stemFixture": false,
+      "maxDryDifference": 0,
+      "index": 1,
+      "beats": 4,
+      "rate": 1,
+      "to": 0.8,
+      "shape": "smooth",
+      "seamAvailable": true,
+      "keyLockAvailable": true,
+      "latency": 0.1313605442176871,
+      "capture": {
+        "time": 0.8010884353741496,
+        "position": 32.55108843537415,
+        "loops": [
+          {
+            "start": 32.55108843537415,
+            "end": 34.55108843537415,
+            "beats": 4,
+            "clockOffset": 0
+          },
+          {
+            "start": 32.55108843537415,
+            "end": 34.55108843537415,
+            "beats": 4,
+            "clockOffset": 0
+          }
+        ]
+      },
+      "ramp": {
+        "start": 1.4016326530612244,
+        "duration": 2
+      },
+      "release": {
+        "time": 5.500226757369615,
+        "expected": 32.63050793650794,
+        "before": [
+          32.63050793650794,
+          32.63050793650794
+        ],
+        "after": [
+          32.63050793650794,
+          32.63050793650794
+        ],
+        "loops": [
+          null,
+          null
+        ],
+        "rates": [
+          0.8,
+          0.8
+        ],
+        "retiring": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "time": 5.802086167800454,
+        "positions": [
+          32.87199546485261,
+          32.87199546485261
+        ]
+      },
+      "peak": 0.6516329050064087,
+      "nonFinite": 0,
+      "probes": [
+        {
+          "silent50ms": 0,
+          "minRms": 0.09054257330005346
+        },
+        {
+          "silent50ms": 0,
+          "minRms": 0.09054257330005346
+        }
+      ],
+      "clockError": 0,
+      "retiringAfter": [
+        0,
+        0
+      ]
+    },
+    {
+      "profile": "rhythm",
+      "keyLock": true,
+      "roll": false,
+      "stemFixture": true,
+      "maxDryDifference": 0,
+      "index": 0,
+      "beats": 1,
+      "rate": 1,
+      "to": 1.1,
+      "shape": "linear",
+      "seamAvailable": true,
+      "keyLockAvailable": true,
+      "latency": 0.05943310657596372,
+      "capture": {
+        "time": 0.8010884353741496,
+        "position": 32.55108843537415,
+        "loops": [
+          {
+            "start": 32.55108843537415,
+            "end": 33.05108843537415,
+            "beats": 1,
+            "clockOffset": 0
+          },
+          {
+            "start": 32.55108843537415,
+            "end": 33.05108843537415,
+            "beats": 1,
+            "clockOffset": 0
+          }
+        ]
+      },
+      "ramp": {
+        "start": 1.4016326530612244,
+        "duration": 2
+      },
+      "release": {
+        "time": 5.500226757369615,
+        "expected": 32.560086167800456,
+        "before": [
+          32.560086167800456,
+          32.560086167800456
+        ],
+        "after": [
+          32.560086167800456,
+          32.560086167800456
+        ],
+        "loops": [
+          null,
+          null
+        ],
+        "rates": [
+          1.1,
+          1.1
+        ],
+        "retiring": [
+          0,
+          0
+        ]
+      },
+      "after": {
+        "time": 5.802086167800454,
+        "positions": [
+          32.89213151927438,
+          32.89213151927438
+        ]
+      },
+      "peak": 0.6443381309509277,
+      "nonFinite": 0,
+      "probes": [
+        {
+          "silent50ms": 0,
+          "minRms": 0.039841639352686954
+        },
+        {
+          "silent50ms": 0,
+          "minRms": 0.039841639352686954
+        }
+      ],
+      "clockError": 0,
+      "retiringAfter": [
+        0,
+        0
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "name": "PC offers all eight loop sizes and the native seam processor is available"
+    },
+    {
+      "name": "The PC captures a short sample-aligned loop without restarting the playing voice",
+      "same": true,
+      "loop": {
+        "start": 0,
+        "end": 0.13635416666666667,
+        "beats": 0.25
+      },
+      "sr": 48000,
+      "enabled": 1
+    },
+    {
+      "name": "Remote releases a quarter loop and captures a half loop through validated commands without a voice restart"
+    },
+    {
+      "name": "Live resizing preserves the voice and loop origin while PC and Remote show the active size"
+    },
+    {
+      "name": "Remote Slip Roll survives a live speed edit and rejoins playback while releasing its retained voice"
+    },
+    {
+      "name": "Releasing an ordinary loop during a tempo ramp settles both audio rates and keeps the transport clock coherent",
+      "same": true,
+      "ramp": null,
+      "delta": 0
+    },
+    {
+      "name": "The expanded PC and Remote loop controls fit small and large layouts in two themes"
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.34.0.exe` et `Sillora-DJ-0.34.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.35.0.exe` et `Sillora-DJ-0.35.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -94,3 +94,13 @@ node_modules/.bin/electron scripts/qa-next-preparation-windows.cjs "piste-A.mp3"
 ```
 
 La recette crée des références de test à partir des deux fichiers fournis, injecte un refus de lecture natif et accélère sept passages avec des IN/OUT courts. Elle ne modifie pas les fichiers originaux ni le profil personnel.
+
+Raccords de boucle et Roll :
+
+```powershell
+node_modules/.bin/electron scripts/qa-loop-seams-windows.cjs
+node_modules/.bin/electron scripts/qa-loop-music-windows.cjs "piste-A.mp3" "piste-B.mp3"
+node_modules/.bin/electron scripts/qa-loop-controls-windows.cjs "piste-A.mp3" "piste-B.mp3"
+```
+
+Les bancs synthétiques et musicaux restent isolés. Le mode `--baseline` de la recette musicale sert à relever une version antérieure sans lui appliquer les assertions de la nouvelle protection. Les fichiers audio restent locaux.

@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.34.0. Les premiers lots ci-dessous conservent leurs constats historiques.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.35.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
@@ -232,3 +232,7 @@ Mesure pondérée sur les zones réellement armées, option PC/Remote et score d
 ## Lot Q — prochain titre et continuité du set — 0.34.0
 
 Repli sur un autre morceau après fichier illisible, exclusions temporaires PC/Remote, réservations PCM et propriété annulable des chargements. Un import séparé ne déclenche plus de maintien à la fin du set. 416 tests, 19 cas natifs source et 17 depuis le paquet passent. La chaîne de sept passages réemploie deux buffers avec huit identités ; six rendus distincts couvrent quatre fichiers réels. Les longues sessions et la préparation anticipée des stems restent ouvertes. [Utilisation](docs/NEXT-PREPARATION-0.34.md) · [Recette](docs/CHANGELOG-0.34.0.md).
+
+## Lot R — boucles et retour du Roll — 0.35.0
+
+Microfondus sur le fil audio, huit tailles synchronisées PC/Remote, redimensionnement gardant le point du transport, et retour du Roll suivant les vitesses réelles. Le flux précédent reste audible pendant l’amorçage. 431 tests, 32 cas natifs source et 30 depuis le paquet passent. Les comparatifs 0.34 sont conservés, avec mesures de position et d’énergie séparées. Validation perceptive générale et longues sessions restent ouvertes. [Utilisation](docs/LOOPS-0.35.md) · [Recette](docs/CHANGELOG-0.35.0.md).

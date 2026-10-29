@@ -1,3 +1,5 @@
+import {roundedLoop} from './loop-seam.mjs';
+import {slipPosition} from './slip-clock.mjs';
 import {effectiveStemGain,applyStemPreset} from './stem-mix.mjs';
 import {runtimeIncomingLanding} from './incoming-landing.mjs';
 import {checkedGrid,automaticGrid,gridRevision} from './grid-editor.mjs';
@@ -76,13 +78,19 @@ export class StudioEngine extends EventTarget {
         deck.gain.gain.value = deck.volume;
       }
       this.setCrossfade(this.crossfade);
-      this.dspReady = Promise.all([this.prepareKeyLock(),this.prepareLimiter(),this.prepareScratch().catch(()=>false),this.pumping.prepare()]).then(()=>this.prepareMeters());
+      this.dspReady = Promise.all([this.prepareKeyLock(),this.prepareLoopSeam(),this.prepareLimiter(),this.prepareScratch().catch(()=>false),this.pumping.prepare()]).then(()=>this.prepareMeters());
     }
     await this.dspReady;
     if(this.context.state!=='running')await this.context.resume();
     this.dispatchEvent(new Event('change'));
     return this.context;
   }
+  async prepareLoopSeam(){
+    if(!this.context.audioWorklet||typeof AudioWorkletNode==='undefined')return false;
+    try{const {LoopSeamNode}=await import('./loop-seam-node.mjs');await LoopSeamNode.register(this.context);this.LoopSeamNode=LoopSeamNode;return true;}catch{return false;}
+  }
+  updateLoopSeam(d){d.loopSeam?.configure(d.loop,this.context.currentTime);}
+  rebaseRoll(d){if(d.roll){d.roll.position=slipPosition(d.roll,this.context.currentTime);d.roll.started=this.context.currentTime;d.roll.rate=this.currentRate(d.id);d.roll.ramp=null;}}
   async prepareLimiter(){
     if(!this.context.audioWorklet||typeof AudioWorkletNode==='undefined')return;
     try{await this.context.audioWorklet.addModule('/limiter-worklet.js');const node=new AudioWorkletNode(this.context,'sillage-limiter',{outputChannelCount:[2]});this.limiter.disconnect();this.limiter.connect(node).connect(this.analyser);this.peakLimiter=node;this.output=node;node.port.postMessage({ceilingDb:this.programOptions.ceilingDb});}catch{this.output=this.limiter;}
@@ -134,18 +142,21 @@ export class StudioEngine extends EventTarget {
     this.keyLockProfileChanging=change;this.dispatchEvent(new Event('change'));
     try{return await change;}finally{if(this.keyLockProfileChanging===change)this.keyLockProfileChanging=null;this.dispatchEvent(new Event('change'));}
   }
-  position(id) {
-    const d = this.decks[id];
-    if(d.scratching)return clamp(d.scratchSession?.position??d.offset,0,d.track?.buffer.duration||0);
-    const now=this.context?.currentTime||0;
+  unwrappedPosition(id,now=this.context?.currentTime||0){
+    const d=this.decks[id];
     let pos = d.offset + (d.playing ? Math.max(0,now - d.started) * d.rate : 0);
     if(d.playing && d.rateRamp) {
       const r=d.rateRamp, before=Math.max(0,Math.min(now,r.start)-d.started), during=clamp(now-r.start,0,r.duration), after=Math.max(0,now-r.start-r.duration);
       pos=d.offset+before*r.from+rampDistance(during,r.from,r.to,r.duration,r.shape)+after*r.to;
     }
     if(d.braking){const r=d.braking,t=clamp(now-r.start,0,r.duration);pos=r.position+r.from*t+(r.to-r.from)*t*t/(2*r.duration);}
-    if (d.loop && pos >= d.loop.end) pos = d.loop.start + (pos - d.loop.start) % (d.loop.end - d.loop.start);
-    return clamp(pos, 0, d.track?.buffer.duration || 0);
+    return pos;
+  }
+  position(id){
+    const d=this.decks[id];if(d.scratching)return clamp(d.scratchSession?.position??d.offset,0,d.track?.buffer.duration||0);
+    let pos=this.unwrappedPosition(id);
+    if(d.loop){pos+=d.loop.clockOffset||0;if(pos>=d.loop.end)pos=d.loop.start+(pos-d.loop.start)%(d.loop.end-d.loop.start);}
+    return clamp(pos,0,d.track?.buffer.duration||0);
   }
   async decodeFile(file,{signal}={}) {
     signal?.throwIfAborted();await this.init();signal?.throwIfAborted();const began=performance.now(),bytes=await file.arrayBuffer();signal?.throwIfAborted();
@@ -200,11 +211,16 @@ export class StudioEngine extends EventTarget {
     if(signal){const cancel=()=>this.analysisQueue.cancel(track.id);signal.addEventListener('abort',cancel,{once:true});track.analysisTask.then(()=>signal.removeEventListener('abort',cancel),()=>signal.removeEventListener('abort',cancel));if(signal.aborted)cancel();}
     if(!deferAnalysis)await track.analysisTask;return track;
   }
-  stopSource(d){
+  fadeRetiring(d,v,at=this.context.currentTime,seconds=.01){
+    const now=this.context.currentTime,gain=v.voice?.gain;if(gain){const level=gain.value;gain.cancelScheduledValues(now);gain.setValueAtTime(level,now);gain.setValueAtTime(level,Math.max(now,at-seconds/2));gain.linearRampToValueAtTime(0,Math.max(now,at)+seconds/2);}
+    const cleanup=()=>{v.source.disconnect();v.voice?.disconnect();for(const n of v.stemNodes||[])n.disconnect();for(const n of [v.pitch,v.seam])if(n){n.disconnect();n.port.close();}d.retiringVoices?.delete(v);};v.source.onended=cleanup;try{v.source.stop(Math.max(now,at)+seconds+.005);}catch{cleanup();}
+  }
+  stopSource(d,{preserveRetiring=false}={}){
+    if(!preserveRetiring)for(const v of d.retiringVoices||[])this.fadeRetiring(d,v,this.context.currentTime,.006);
     this.clearBrake(d);
     this.disposeScratch(d);
-    const source=d.source,node=d.pitchNode,voice=d.voiceGain,stemNodes=d.stemNodes;d.source=null;d.pitchNode=null;d.voiceGain=null;d.stemNodes=null;d.stemGains=null;d.stemTransitionGains=null;if(!source)return;
-    const cleanup=()=>{source.disconnect();voice?.disconnect();for(const n of stemNodes||[])n.disconnect();if(node){node.disconnect();node.port.close();}};source.onended=cleanup;
+    const source=d.source,node=d.pitchNode,seam=d.loopSeam,voice=d.voiceGain,stemNodes=d.stemNodes;d.source=null;d.pitchNode=null;d.loopSeam=null;d.voiceGain=null;d.stemNodes=null;d.stemGains=null;d.stemTransitionGains=null;if(!source)return;
+    const cleanup=()=>{source.disconnect();if(seam){seam.disconnect();seam.port.close();}voice?.disconnect();for(const n of stemNodes||[])n.disconnect();if(node){node.disconnect();node.port.close();}};source.onended=cleanup;
     if(voice&&this.context){const now=this.context.currentTime;voice.gain.cancelScheduledValues(now);voice.gain.setTargetAtTime(0,now,.003);try{source.stop(now+.025);}catch{cleanup();}}
     else{try{source.stop();}catch{}cleanup();}
   }
@@ -225,7 +241,7 @@ export class StudioEngine extends EventTarget {
     this.setEQ(id, 0, 0); this.setEQ(id, 1, 0); this.setEQ(id, 2, 0); this.setFilter(id, 0); if(!preserveTail)this.setEcho(id, false);else d.echo=false;
     this.dispatchEvent(new Event('change'));
   }
-  async play(id, when) {
+  async play(id, when,{preserveRetiring=false,slip=null}={}) {
     const d=this.decks[id];if(!d.track||d.playing)return;if(d.playRequest)return d.playRequest.promise;
     const track=d.track,request={};d.playRequest=request;this.dispatchEvent(new Event('change'));
     request.promise=(async()=>{try{try{await this.keyLockProfileChanging;}catch{}await this.init();
@@ -233,14 +249,16 @@ export class StudioEngine extends EventTarget {
     if(d.playRequest!==request||d.track!==track)return;
     if(d.scratching)await this.endScratch(id,{resume:false});
     if (!d.track || d.playing) return;
+    if(slip){const latency=this.keyLock&&this.keyLockAvailable&&!d.brakeBypass?(this.keyLockLatency||0):0;d.offset=clamp(slip.position+Math.max(0,this.context.currentTime+latency-slip.time)*d.rate,0,Math.max(0,d.track.buffer.duration-.021));}
     if (d.offset >= d.track.buffer.duration - 0.02) d.offset = 0;
-    this.stopSource(d);
+    this.stopSource(d,{preserveRetiring});
     const source = this.context.createBufferSource();request.source=source; source.buffer = d.track.stemBuffer||d.track.buffer; source.playbackRate.value = d.rate;
     if (d.loop) { source.loop = true; source.loopStart = d.loop.start; source.loopEnd = d.loop.end; }
     d.voiceGain=this.context.createGain();d.voiceGain.gain.value=0;d.voiceGain.connect(d.input);
-    let signal=source;
+    const sourceLatency=this.keyLock&&this.keyLockAvailable&&!d.brakeBypass?(this.keyLockLatency||0):0,sourceWhen=Math.max(this.context.currentTime,(when??this.context.currentTime+sourceLatency)-sourceLatency);
+    let signal=source;if(this.LoopSeamNode){d.loopSeam=new this.LoopSeamNode(this.context,{offset:d.offset,started:sourceWhen,rate:d.rate,channels:source.buffer.numberOfChannels||2,loop:d.loop});source.connect(d.loopSeam);signal=d.loopSeam;}
     if(d.track.stemBuffer){
-      const split=this.context.createChannelSplitter(8),sum=this.context.createGain();sum.channelCount=2;sum.channelCountMode='explicit';source.connect(split);d.stemNodes=[split,sum];d.stemGains={};d.stemTransitionGains={};
+      const split=this.context.createChannelSplitter(8),sum=this.context.createGain();sum.channelCount=2;sum.channelCountMode='explicit';signal.connect(split);d.stemNodes=[split,sum];d.stemGains={};d.stemTransitionGains={};
       for(const [index,name] of stemNames.entries()){
         const stereo=this.context.createChannelMerger(2),gain=this.context.createGain(),automation=this.context.createGain();
         gain.gain.value=effectiveStemGain(d.track,name);
@@ -256,9 +274,9 @@ export class StudioEngine extends EventTarget {
     } else signal.connect(d.voiceGain);
     d.source=source;d.endedNaturally=false;d.latency=d.pitchNode?(this.keyLockLatency||0):0;const sourceStart=Math.max(this.context.currentTime,(when??this.context.currentTime+d.latency)-d.latency);d.started=sourceStart+d.latency;d.playing=true;
     d.voiceGain.gain.setValueAtTime(0,sourceStart);d.voiceGain.gain.setValueAtTime(0,Math.max(sourceStart,d.started-.005));d.voiceGain.gain.linearRampToValueAtTime(1,d.started+.005);
-    const voice=d.voiceGain,pitch=d.pitchNode,stemNodes=d.stemNodes;
-    source.onended=()=>{if(d.source===source){if(d.braking?.source===source)this.pause(id);else{d.playing=false;d.endedNaturally=true;d.offset=d.track.buffer.duration;d.source=null;d.stemGains=null;d.stemTransitionGains=null;this.dispatchEvent(new Event('naturalend'));this.dispatchEvent(new Event('change'));}}setTimeout(()=>{source.disconnect();voice.disconnect();for(const n of stemNodes||[])n.disconnect();if(pitch){pitch.disconnect();pitch.port.close();}if(d.pitchNode===pitch)d.pitchNode=null;if(d.voiceGain===voice)d.voiceGain=null;if(d.stemNodes===stemNodes)d.stemNodes=null;},Math.ceil((d.latency+.1)*1000));};
-    source.start(sourceStart, d.offset);
+    const voice=d.voiceGain,pitch=d.pitchNode,seam=d.loopSeam,stemNodes=d.stemNodes;
+    source.onended=()=>{if(d.source===source){if(d.braking?.source===source)this.pause(id);else{d.playing=false;d.endedNaturally=true;d.offset=d.track.buffer.duration;d.source=null;d.stemGains=null;d.stemTransitionGains=null;this.dispatchEvent(new Event('naturalend'));this.dispatchEvent(new Event('change'));}}setTimeout(()=>{source.disconnect();voice.disconnect();if(seam){seam.disconnect();seam.port.close();if(d.loopSeam===seam)d.loopSeam=null;}for(const n of stemNodes||[])n.disconnect();if(pitch){pitch.disconnect();pitch.port.close();}if(d.pitchNode===pitch)d.pitchNode=null;if(d.voiceGain===voice)d.voiceGain=null;if(d.stemNodes===stemNodes)d.stemNodes=null;},Math.ceil((d.latency+.1)*1000));};
+    d.loopSeam?.arm(d.offset,sourceStart);source.start(sourceStart, d.offset);
     this.dispatchEvent(new Event('change'));
     }finally{if(d.playRequest===request)d.playRequest=null;this.dispatchEvent(new Event('change'));}})();return request.promise;
   }
@@ -352,7 +370,7 @@ export class StudioEngine extends EventTarget {
     this.releaseContinuity(id);
     const d = this.decks[id], position=this.position(id);if(d.roll)d.loop=null;d.roll=null;
     if(d.rateRamp) d.rate=this.currentRate(id);
-    d.offset=position; d.rateRamp=null; d.playing = false;d.endedNaturally=false; this.stopSource(d); this.dispatchEvent(new Event('change'));
+    d.offset=position;if(d.loop)d.loop.clockOffset=0; d.rateRamp=null; d.playing = false;d.endedNaturally=false; this.stopSource(d); this.dispatchEvent(new Event('change'));
   }
   clearBrake(d){
     const brake=d.braking;if(!brake)return;
@@ -423,22 +441,23 @@ export class StudioEngine extends EventTarget {
     return track;
   }
   async setRate(id, rate,{cancel=true}={}) {
-    if(cancel)this.cancelTransition(); const d = this.decks[id], pos=this.position(id);
+    if(cancel)this.cancelTransition(); const d = this.decks[id], pos=this.position(id);this.rebaseRoll(d);
     if(d.braking){this.pause(id);d.offset=pos;d.rate=clamp(rate,.5,2);await this.play(id);this.dispatchEvent(new Event('change'));return;}
-    d.offset=pos; if(this.context)d.started=this.context.currentTime; d.rateRamp=null; d.rate=clamp(rate,0.5,2);
+    d.offset=pos;if(d.loop)d.loop.clockOffset=0; if(this.context)d.started=this.context.currentTime; d.rateRamp=null; d.rate=clamp(rate,0.5,2);
     if(d.source) { d.source.playbackRate.cancelScheduledValues(this.context.currentTime); d.source.playbackRate.setValueAtTime(d.rate,this.context.currentTime); }
+    if(d.loopSeam){d.loopSeam.playbackRate.cancelScheduledValues(this.context.currentTime);d.loopSeam.playbackRate.setValueAtTime(d.rate,this.context.currentTime);}if(d.roll)d.roll.rate=d.rate;
     if(d.pitchNode) { d.pitchNode.playbackRate.cancelScheduledValues(this.context.currentTime); d.pitchNode.playbackRate.setValueAtTime(d.rate,this.context.currentTime); }
     this.dispatchEvent(new Event('change'));
   }
   currentRate(id) { const d=this.decks[id],r=d.braking||d.rateRamp; return r?tempoAt(this.context.currentTime-r.start,r.from,r.to,r.duration,r.shape):d.rate; }
   scheduleRate(id,to,start,duration,shape='linear') {
-    const d=this.decks[id]; d.rateRamp={from:d.rate,to,start,duration,shape};
-    for(const param of [d.source?.playbackRate,d.pitchNode?.playbackRate].filter(Boolean)) {const at=Math.max(this.context.currentTime,start-(d.latency||0));param.cancelScheduledValues(this.context.currentTime);param.setValueAtTime(d.rate,this.context.currentTime);param.setValueAtTime(d.rate,at);scheduleTempo(param,d.rate,to,at,duration,shape); }
+    const d=this.decks[id];this.rebaseRoll(d);d.rateRamp={from:d.rate,to,start,duration,shape};if(d.roll){d.roll.rate=d.rate;d.roll.ramp={...d.rateRamp};}
+    for(const param of [d.source?.playbackRate,d.pitchNode?.playbackRate,d.loopSeam?.playbackRate].filter(Boolean)) {const at=Math.max(this.context.currentTime,start-(d.latency||0));param.cancelScheduledValues(this.context.currentTime);param.setValueAtTime(d.rate,this.context.currentTime);param.setValueAtTime(d.rate,at);scheduleTempo(param,d.rate,to,at,duration,shape); }
   }
   settleRate(id) {
     const d=this.decks[id]; if(!d.rateRamp)return;
-    const position=this.position(id),rate=this.currentRate(id);d.offset=position;d.started=this.context.currentTime;d.rate=rate;d.rateRamp=null;
-    for(const param of [d.source?.playbackRate,d.pitchNode?.playbackRate].filter(Boolean)) {param.cancelScheduledValues(this.context.currentTime);param.setValueAtTime(rate,this.context.currentTime);}
+    const position=this.position(id),rate=this.currentRate(id);this.rebaseRoll(d);d.offset=position;if(d.loop)d.loop.clockOffset=0;d.started=this.context.currentTime;d.rate=rate;d.rateRamp=null;if(d.roll)d.roll.rate=rate;
+    for(const param of [d.source?.playbackRate,d.pitchNode?.playbackRate,d.loopSeam?.playbackRate].filter(Boolean)) {param.cancelScheduledValues(this.context.currentTime);param.setValueAtTime(rate,this.context.currentTime);}
   }
   async sync(id) {
     const d = this.decks[id], other = this.decks[1 - id];
@@ -489,10 +508,17 @@ export class StudioEngine extends EventTarget {
       // capture preserves the audible cursor instead of jumping back a beat.
       const start=quantize?Math.max(0,nextMusicalTime(pos+(d.latency||0)*d.rate,d.track.bpm||120,offset,Math.min(1,beats))):pos;
       if(start>=d.track.buffer.duration-.005)return;
-      d.loop = { start, end: Math.min(start + beats * beat, d.track.buffer.duration) };
+      d.loop = {...roundedLoop(start,Math.min(start+beats*beat,d.track.buffer.duration),d.source?.buffer?.sampleRate??d.track.buffer.sampleRate),beats};
       if (d.source) { d.source.loopStart = d.loop.start; d.source.loopEnd = d.loop.end; d.source.loop = true; }
     }
-    this.dispatchEvent(new Event('change'));
+    this.updateLoopSeam(d);this.dispatchEvent(new Event('change'));
+  }
+  resizeLoop(id,beats){
+    const d=this.decks[id];if(!d?.loop||d.continuity||!Number.isFinite(beats)||beats<=0)return;
+    const heard=this.position(id),raw=this.unwrappedPosition(id);
+    const bounds=roundedLoop(d.loop.start,Math.min(d.loop.start+beats*60/(d.track.bpm||120),d.track.buffer.duration),d.source?.buffer?.sampleRate??d.track.buffer.sampleRate);
+    const loop={...bounds,beats,clockOffset:(heard>=bounds.end?bounds.start:heard)-raw};if(loop.end<=loop.start)return;
+    d.loop=loop;if(d.roll)d.roll.beats=beats;if(d.source){d.source.loopStart=loop.start;d.source.loopEnd=loop.end;}this.updateLoopSeam(d);this.dispatchEvent(new Event('change'));
   }
   setDeckEffect(id,kind,amount){const d=this.decks[id];d.fx?.set(kind,amount,(d.track?.bpm||120)*this.currentRate(id));this.dispatchEvent(new Event('change'));}
   holdForNext(id,{maxSeconds=30}={}){
@@ -506,23 +532,36 @@ export class StudioEngine extends EventTarget {
     // ramps run on the audio clock, including when the UI is stalled.
     for(let edge=firstEdge;edge<=now+clamp(maxSeconds,1,30)+period;edge+=period){gain.setValueAtTime(1,edge-seconds);gain.linearRampToValueAtTime(0,edge);gain.linearRampToValueAtTime(1,edge+seconds);lastEdge=edge;}
     d.continuity={track:d.track,armedAt:now,window,fade:{firstEdge,lastEdge,period,seconds}};d.loop=window;
-    d.source.loopStart=window.start;d.source.loopEnd=window.end;d.source.loop=true;
+    d.source.loopStart=window.start;d.source.loopEnd=window.end;d.source.loop=true;this.updateLoopSeam(d);
     this.dispatchEvent(new Event('change'));return true;
   }
   releaseContinuity(id){
     const d=this.decks[id];if(!d?.continuity)return;
     const held=d.continuity,owned=d.loop===held.window;d.continuity=null;if(!owned)return;
     const position=this.position(id);this.settleRate(id);d.loop=null;d.offset=position;d.started=this.context?.currentTime||0;
-    if(d.source)d.source.loop=false;
+    if(d.source)d.source.loop=false;this.updateLoopSeam(d);
     if(d.voiceGain&&held.fade){const now=this.context.currentTime,f=held.fade,edge=f.firstEdge+Math.round((now-f.firstEdge)/f.period)*f.period,level=edge>=f.firstEdge&&edge<=f.lastEdge?clamp(Math.abs(now-edge)/f.seconds,0,1):1;const gain=d.voiceGain.gain;gain.cancelScheduledValues(now);gain.setValueAtTime(level,now);gain.linearRampToValueAtTime(1,now+.004);}
     this.dispatchEvent(new Event('change'));
   }
   async roll(id,beats){
     const d=this.decks[id];if(!d.track)return;this.cancelTransition();if(d.roll){await this.endRoll(id);return;}
     if(!d.playing)await this.play(id);if(d.loop)this.loop(id,1);const position=this.position(id),now=this.context.currentTime;
-    this.loop(id,beats);d.roll={position,started:now,rate:d.rate,beats};this.dispatchEvent(new Event('change'));
+    this.loop(id,beats);d.roll={position,started:now,rate:this.currentRate(id),ramp:d.rateRamp?{...d.rateRamp}:null,beats};this.dispatchEvent(new Event('change'));
   }
-  async endRoll(id,{cancel=true}={}){const d=this.decks[id],r=d.roll;if(!r)return;const position=r.position+Math.max(0,this.context.currentTime-r.started)*r.rate;d.roll=null;await this.seek(id,position,{cancel});}
+  async endRoll(id,{cancel=true}={}){
+    const d=this.decks[id],r=d.roll;if(!r)return;const position=slipPosition(r,this.context.currentTime),time=this.context.currentTime,track=d.track,rate=this.currentRate(id);d.roll=null;
+    if(cancel)this.cancelTransition();
+    const latency=this.keyLock&&this.keyLockAvailable?(this.keyLockLatency||0):0;
+    if(position+latency*rate>=track.buffer.duration-.02){this.pause(id);d.loop=null;d.offset=track.buffer.duration;d.endedNaturally=true;this.dispatchEvent(new Event('naturalend'));this.dispatchEvent(new Event('change'));return;}
+    if(!d.playing||!d.source){await this.seek(id,position,{cancel:false});return;}
+    const previous={source:d.source,voice:d.voiceGain,pitch:d.pitchNode,seam:d.loopSeam,stemNodes:d.stemNodes};d.retiringVoices||=new Set();d.retiringVoices.add(previous);
+    d.source=null;d.pitchNode=null;d.loopSeam=null;d.voiceGain=null;d.stemNodes=null;d.stemGains=null;d.stemTransitionGains=null;d.playing=false;d.loop=null;d.rate=rate;d.rateRamp=null;d.offset=position;
+    try{
+      const pending=this.play(id,undefined,{preserveRetiring:true,slip:{position,time}}),ticket=d.playRequest;await pending;
+      if(d.track!==track||!d.playing||d.source!==ticket?.source){this.fadeRetiring(d,previous);return;}
+      const audible=d.started;d.offset=position;d.started=time;this.fadeRetiring(d,previous,audible);this.dispatchEvent(new Event('change'));
+    }catch(error){this.fadeRetiring(d,previous);throw error;}
+  }
   async playTexture(kind,options={}){await this.init();return this.textures.play(kind,options);}
   silence(){
     this.cancelTransition();this.pause(0);this.pause(1);this.stopTextures();this.pumping?.reset();if(!this.context)return;const now=this.context.currentTime;

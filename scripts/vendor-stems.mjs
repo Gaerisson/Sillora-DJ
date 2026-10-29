@@ -3,11 +3,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const source=process.env.GAERISSON_STEMS_SOURCE||'D:/Codex/tools/sillage-stems';
-const model=process.env.GAERISSON_STEMS_MODEL||'D:/Codex/tools/cache/torch/hub/checkpoints/955717e8-8726e21a.th';
+const source=process.env.GAERISSON_STEMS_SOURCE;
+const model=process.env.GAERISSON_STEMS_MODEL;
 const target=path.join(root,'desktop/vendor/stems');
 const exists=async p=>fs.access(p).then(()=>true,()=>false);
-if(!await exists(path.join(source,'python.exe'))||!await exists(model))throw new Error('Runtime CPU Demucs et modèle requis pour la distribution. Définir GAERISSON_STEMS_SOURCE et GAERISSON_STEMS_MODEL.');
+if(!source||!model||!await exists(path.join(source,'python.exe'))||!await exists(model))throw new Error('Runtime CPU Demucs et modèle requis pour la distribution. Définir GAERISSON_STEMS_SOURCE et GAERISSON_STEMS_MODEL.');
 await fs.mkdir(target,{recursive:true});
 await fs.cp(source,path.join(target,'python'),{recursive:true,filter:async p=>{
  const relative=path.relative(source,p).replaceAll('\\','/');

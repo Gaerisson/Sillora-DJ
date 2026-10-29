@@ -50,7 +50,7 @@ test('remote key-lock profile settings retain measured latency and reject invali
 
 test('state is explicitly filtered, bounded and excludes audio, local paths and credentials',()=>{
  assert.equal(sanitizeState(null).decks.length,2);
- const raw=snapshot();Object.assign(raw,{token:'private-pair-secret',path:'C:\\Users\\Name\\Music',audio:new Uint8Array(1000)});raw.decks[0].buffer={secret:'audio'};raw.decks[0].title='C:\\Users\\Name\\Music\\song.mp3';raw.library=Array.from({length:400},(_,i)=>({id:'track-'+i,title:'x'.repeat(300),path:'C:\\private',token:'audio-token',duration:Infinity}));raw.recommendations.push({id:'foreign',title:'outside collection'});
+ const raw=snapshot();Object.assign(raw,{token:'private-pair-secret',path:'C:\\Private\\Collection',audio:new Uint8Array(1000)});raw.decks[0].buffer={secret:'audio'};raw.decks[0].title='C:\\Private\\Collection\\song.mp3';raw.library=Array.from({length:400},(_,i)=>({id:'track-'+i,title:'x'.repeat(300),path:'C:\\private',token:'audio-token',duration:Infinity}));raw.recommendations.push({id:'foreign',title:'outside collection'});
  const state=sanitizeState(raw),serialized=JSON.stringify(state);assert.equal(state.library.length,250);assert.equal(state.library[0].title.length,120);assert.equal(state.decks[0].title,'');assert.equal(state.library[0].duration,0);assert.equal(state.audio.armed,false);assert.equal(Object.hasOwn(state.audio,'0'),false);assert.equal(/private-pair-secret|C:|audio-token|"buffer"|"path"|"token"/.test(serialized),false);
 });
 

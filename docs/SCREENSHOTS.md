@@ -117,4 +117,8 @@ Deux titres chargés, pochettes sur les vinyles, onde globale, détail rythmique
 
 ![Titre indisponible écarté et prochain morceau préparé](images/next-preparation-034.png)
 
+## Boucles et Roll — 0.35
+
+![Boucle courte sur les platines](images/loop-controls-035.png)
+
 [Retour au projet](../README.md)

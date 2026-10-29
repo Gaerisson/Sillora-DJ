@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.34.0
+# Suivi de l’audit — Sillora DJ 0.35.0
 
 Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -21,10 +21,9 @@ Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | M · 0.30.0 | Quatre courbes de tempo, partition/horloges/repères communs et contrôle PC/Remote | 375 tests ; 61 cas natifs source, 27 depuis le paquet. [Courbes](TEMPO-CURVES-0.30.md) · [Mesures](CHANGELOG-0.30.0.md) |
 | N · 0.31.0 | Plafond partagé moteur/propositions, BPM réel et phase des courbes mesurée | 383 tests ; 32 cas natifs source, 20 depuis le paquet. [Politique](TEMPO-POLICY-0.31.md) · [Mesures](CHANGELOG-0.31.0.md) |
 | O · 0.32.0 | Repères de phrase nommés PC/Remote, sauvegarde, ondes et relais préparés | 393 tests ; 25 cas natifs source, 19 depuis le paquet. [Repères](PHRASE-CUES-0.32.md) · [Recette](CHANGELOG-0.32.0.md) |
-
 | P · 0.33.0 | Densité des zones armées, protection optionnelle du chevauchement PC/Remote et tempo progressif | 404 tests ; 25 cas natifs source, 19 depuis le paquet. [Utilisation](OVERLAP-0.33.md) · [Recette](CHANGELOG-0.33.0.md) |
-
 | Q · 0.34.0 | Préparation du prochain titre, fichiers indisponibles, réservations mémoire et propriété du set | 416 tests ; 19 cas natifs source, 17 depuis le paquet. [Utilisation](NEXT-PREPARATION-0.34.md) · [Recette](CHANGELOG-0.34.0.md) |
+| R · 0.35.0 | Raccords autonomes des boucles, fractions et taille PC/Remote, horloge et retour du Roll | 431 tests ; 32 cas natifs source, 30 depuis le paquet. [Utilisation](LOOPS-0.35.md) · [Recette](CHANGELOG-0.35.0.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -289,3 +288,14 @@ Les suggestions et le moteur partagent la mesure réciproque de l’écart, la l
 | Continuité du set | V dans le périmètre | Sept passages accélérés et fin normale malgré un import séparé ; ce ne sont ni huit titres distincts ni plusieurs heures d’usage. |
 
 416 tests, 19 scénarios natifs source et 17 depuis le paquet passent. Neuf cas de préparation/PC/Remote, six rendus sur quatre fichiers et quatre cas de continuité. La chaîne partage les buffers de deux vrais fichiers ; les autres rendus utilisent quatre fichiers distincts. Sessions longues, mémoire totale, préparation des stems et autres sections de refonte restent ouvertes. [Recette et limites](CHANGELOG-0.34.0.md).
+
+## Lot R — boucles, raccords et Slip Roll — 0.35.0
+
+| Référence | État | Évolution et limite |
+| :--- | :---: | :--- |
+| R2.2-02, R2.2-04 | P | Retour du Roll suivant les vitesses et courbes réelles, flux audible retenu pendant l’amorçage, fin sans relance à EOF. Comparatifs 0.34/0.35 ; le jugement perceptif général reste ouvert. |
+| R2.2-03 | V dans le périmètre | Huit tailles PC/Remote, redimensionnement actif et état commun. Grilles des morceaux toujours estimées et modifiables. |
+| R2.2-05 | P | Microfondus autonomes, précision des bornes et vitesse commune avec la source. Dix bancs synthétiques et cinq rendus musicaux ; pas de garantie universelle de timbre. |
+| Transport et interface | P | Origine de boucle et curseur préservés à l’expansion, au changement de vitesse et à la pause/reprise. La latence du traitement de hauteur reste présente. |
+
+431 tests, 32 scénarios natifs source et 30 depuis le paquet passent. Deux vrais fichiers pour les boucles, une fixture stems huit canaux et quatre fichiers distincts pour les régressions de transitions. Les bancs sont courts et les placements explicites ; longues sessions, reconnaissance musicale et autres sections restent ouverts. [Recette et limites](CHANGELOG-0.35.0.md).
