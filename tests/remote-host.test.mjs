@@ -3,6 +3,12 @@ const {RemoteHost,sanitizeState,sanitizeCommand,privateIPv4}=createRequire(impor
 const publicDir=fileURLToPath(new URL('../public',import.meta.url));
 const snapshot=()=>({decks:[{loaded:true,title:'Titre A',artist:'Artiste A',playing:true,duration:180,position:30},{loaded:true,title:'Titre B',duration:200}],master:.7,crossfader:.2,automix:{enabled:true,mode:'compatible',scopeName:'Musique',remaining:2},library:[{id:'track-1',title:'Titre A',bpm:120,key:'Am · 8A',duration:180},{id:'track-2',title:'Titre B',bpm:122,key:'C · 8B',duration:200}],recommendations:[{id:'track-2',title:'Titre B',reason:'Tonalité relative'}]});
 
+test('Remote arrival markers require a matching deck and strip untrusted fields and labels',()=>{
+ const raw=snapshot();raw.decks[1].trackId='track-2';const point={version:1,trackId:'track-2',time:24,index:2,label:'private label',confidence:.8,path:'private'};raw.transition={incomingLanding:point};const expected={version:1,trackId:'track-2',time:24,index:2,label:'R3',confidence:.8};assert.deepEqual(sanitizeState(raw).transition.incomingLanding,expected);
+ for(const patch of [{trackId:'other'},{trackId:null},{time:200},{time:-1},{time:NaN},{index:256},{confidence:.5}]){raw.transition.incomingLanding={...point,...patch};assert.equal(sanitizeState(raw).transition.incomingLanding,null);}
+ assert.deepEqual(sanitizeCommand({type:'transition:configure',value:{alignArrival:false}},raw),{type:'transition:configure',value:{alignArrival:false}});assert.throws(()=>sanitizeCommand({type:'transition:configure',value:{alignArrival:'false'}},raw));
+});
+
 test('absolute waveform scratch requires matching track identity and bounded audio targets',async t=>{const s=snapshot();s.decks[0].trackId='track-1';const command={type:'deck:scratchTo',deck:0,trackId:'track-1',gestureId:'test-gesture',position:40,elapsedMs:16};assert.deepEqual(sanitizeCommand({...command,path:'private'},s),command);for(const patch of [{position:-1},{position:181},{position:NaN},{trackId:'track-2'},{trackId:undefined},{elapsedMs:0}])assert.throws(()=>sanitizeCommand({...command,...patch},s));const f=await fixture(t);for(const file of ['/wave-gesture.mjs','/wave-controls.js','/wave-controls.css','/wave-seek.mjs'])assert.equal((await fetch(f.origin+file)).status,200,file);});
 
 test('Remote preserves bounded grid evidence and serves its shared interpretation',async t=>{

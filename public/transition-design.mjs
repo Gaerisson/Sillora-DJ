@@ -1,3 +1,4 @@
+import {selectIncomingLanding} from './incoming-landing.mjs';
 import {clamp} from './audio-math.mjs';
 import {selectAutomaticFx,selectMusicalFx} from './automatic-fx.mjs';
 import {makeTransitionScore,scoreProgress} from './transition-score.mjs';
@@ -10,7 +11,7 @@ export const transitionCatalog = [
   {id:'clean',label:'Relais propre',group:'Passages composés',description:'Le groove reste présent jusqu’au relais, puis le prochain titre entre au niveau plein avec un écho discret.'},
   {id:'bridge',label:'Écho & reprise',group:'Passages composés',description:'Préparation filtrée, écho de sortie et entrée au nouveau tempo.'},
   {id:'landing',label:'Suspension & reprise',group:'Passages composés',description:'Les mélodies se séparent dans une réverbération amortie, puis le prochain groove prend sa place.'},
-  {id:'phrase',label:'Relais harmonique',group:'Passages composés',description:'Longue entrée sur la phrase, échange de basses et rappel d’écho discret.'},
+  {id:'phrase',label:'Relais harmonique',group:'Passages composés',description:'Longue entrée sur les mesures, échange de basses et rappel d’écho discret.'},
   {id:'blend',label:'Fondu · Velours',group:'Fluides',description:'Fondu long à puissance constante.'},
   {id:'dissolve',label:'Dissolve',group:'Fluides',description:'Graves et aigus s’effacent, médiums en relief, entrée progressive.'},
   {id:'stemfade',label:'Stems · Fondu des voix',group:'Stems',description:'Voix espacées, batterie et basse relayées. Stems préparés requis.'},
@@ -86,7 +87,12 @@ export function resolveTransition(a,b,options={}){
  const referenceStages={lunarecho:[[0,'Installer le groove'],[.25,'Ouvrir l’écho orbital'],[.55,'Relayer les graves'],[.82,'Laisser les répétitions']],sweep:[[0,'Préparer le filtre'],[.25,'Balayer le spectre'],[.60,'Ouvrir le nouveau titre'],[.86,'Relâcher la réverbération']],hydrant:[[0,'Installer le jet'],[.30,'Faire monter la pression'],[.60,'Relayer les graves'],[.80,'Relâcher le souffle']],stemsustain:[[0,'Séparer les voix'],[.32,'Suspendre les instruments'],[.56,'Relayer le groove'],[.80,'Poser la nouvelle voix']]};
  const stages=referenceStages[style]?.map(([at,label])=>({at,label}))??composition?.stages;
  const timedStages=tempoBlend&&stages?stages.map(stage=>({...stage,at:tempoFraction(stage.at,bpmA,bpmB,seconds)/seconds})):stages;
- return {...(composition||{}),score,sourceSpanSeconds,sync:separated?false:sync,rate:sync&&!separated?ratio:1,beats,seconds,style,tempoBlend,fallback:(!sync||separated)&&options.sync!==false,bpmA,bpmB,reason,energyA:ea,energyB:eb,profile,trustworthy,harmonic,keyKnown:harmony.known,keyRelation:harmony.relation,incomingQuantizeBeats:octave===1?undefined:4/octave,trimDb,automatic,effectSelection,inPoint,outPoint,preserveInPoint:Boolean(B.manualRegions||!sync&&(B.regionAnalysisVersion||gridReliable(B))),...timing,...(score?{handoffFraction:score.handoffFraction,handoffPosition:outPoint+sourceSpanSeconds*score.handoffFraction,incomingStartFraction:0,sourceStopFraction:1,quantizeHandoff:false,fadeSeconds:undefined}:{}),...(score?{stages:score.stages.map(stage=>({...stage,at:tempoBlend?tempoFraction(stage.at,bpmA,bpmB,seconds)/seconds:stage.at}))}:timedStages?{stages:timedStages}:{})};
+ const result={...(composition||{}),score,sourceSpanSeconds,sync:separated?false:sync,rate:sync&&!separated?ratio:1,beats,seconds,style,tempoBlend,fallback:(!sync||separated)&&options.sync!==false,bpmA,bpmB,reason,energyA:ea,energyB:eb,profile,trustworthy,harmonic,keyKnown:harmony.known,keyRelation:harmony.relation,incomingQuantizeBeats:octave===1?undefined:4/octave,trimDb,automatic,effectSelection,inPoint,outPoint,preserveInPoint:Boolean(B.manualRegions||!sync&&(B.regionAnalysisVersion||gridReliable(B))),...timing,...(score?{handoffFraction:score.handoffFraction,handoffPosition:outPoint+sourceSpanSeconds*score.handoffFraction,incomingStartFraction:0,sourceStopFraction:1,quantizeHandoff:false,fadeSeconds:undefined}:{}),...(score?{stages:score.stages.map(stage=>({...stage,at:tempoBlend?tempoFraction(stage.at,bpmA,bpmB,seconds)/seconds:stage.at}))}:timedStages?{stages:timedStages}:{})};
+ result.baseInPoint=inPoint;
+ result.baseReason=result.reason;
+ result.incomingLanding=selectIncomingLanding(B,result,{enabled:options.alignArrival!==false&&!A.manualRegions});
+ if(result.incomingLanding){result.inPoint=result.incomingLanding.cue;result.preserveInPoint=true;result.reason+=' Arrivée sur le repère '+result.incomingLanding.label+' au relais.';}
+ return result;
 }
 export function transitionProgress(style,p,duration=8,score=null){
   if(score)return scoreProgress(score,p);

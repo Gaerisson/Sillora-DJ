@@ -30,7 +30,8 @@ export function sanitizePreferences(value = {}) {
     intensity: Number.isFinite(value.intensity)?clamp(value.intensity,0,1):0.45,
     profile: profiles[value.profile]?value.profile:'musical',
     beats: [4, 8, 16, 32].includes(value.beats) ? value.beats : 16,
-    sync: value.sync !== false, tempoBlend: value.tempoBlend !== false, quantize: value.quantize !== false
+    sync: value.sync !== false, tempoBlend: value.tempoBlend !== false, quantize: value.quantize !== false,
+    alignArrival:value.alignArrival!==false
   };
 }
 

@@ -5,6 +5,16 @@ import {transitionProgress} from '../public/transition-design.mjs';
 import {makeTransitionPlan} from '../public/analysis.mjs';
 import {readGrid,gridRevision} from '../public/grid-editor.mjs';
 
+test('scheduled and Next arrivals put both measured downbeats at the real score handoff through tempo morphs',async()=>{
+ for(const [a,b]of [[120,120],[110,98],[98,110],[80,160],[160,80]])for(const startNow of [false,true]){
+  const e=new StudioEngine();await e.init();const make=(id,bpm)=>{const bar=240/bpm,at=.25+8*bar;return{id,bpm,confidence:'generated',downbeat:.25,beatOffset:.25,keyRoot:0,keyMode:'major',keyConfidence:1,buffer:{duration:180},audibleEnd:180,mixIn:0,mixOut:160,envelope:Array.from({length:1800},(_,i)=>i/10<at?.06:.2),bassEnvelope:Array.from({length:1800},(_,i)=>i/10<at?.01:.1),structure:Array.from({length:Math.floor(180/bar)},(_,i)=>({time:.25+i*bar,rms:i<8?.06:.2,density:.2}))};};
+  e.load(0,make('a',a));e.load(1,make('b',b));await e.play(0);await e.startTransition({style:'auto',profile:'musical',automix:true,sync:true,tempoBlend:true,quantize:true,beats:16,startNow,skipBeats:4});const t=e.transition;assert.ok(t.incomingLanding,JSON.stringify({a,b,startNow,t}));e.context.currentTime=t.handoffAt;assert.ok(Math.abs(e.position(1)-t.incomingLanding.time)<1e-7);const sourceBar=(e.position(0)-.25)*a/240;assert.ok(Math.abs(sourceBar-Math.round(sourceBar))<1e-7);assert.equal(t.handoffAt,t.incomingLandingAt);
+ }
+});
+test('late bounded arrivals fall back safely instead of claiming a target landmark at the wrong source bar',async()=>{
+ const e=new StudioEngine();await e.init();const t=track('late');Object.assign(t,{confidence:'generated',keyRoot:0,keyMode:'major',keyConfidence:1,downbeat:0,beatOffset:0,envelope:Array.from({length:600},(_,i)=>i<160?.06:.2),bassEnvelope:Array.from({length:600},(_,i)=>i<160?.01:.1),structure:Array.from({length:30},(_,i)=>({time:i*2,rms:i<8?.06:.2,density:.2}))});e.load(0,{...t,id:'a'});e.load(1,{...t,id:'b'});e.decks[0].offset=59.6;await e.play(0);await e.startTransition({style:'auto',profile:'musical',automix:true,sync:true,tempoBlend:true,quantize:true,beats:16,startNow:true});assert.equal(e.transition.incomingLanding,null);assert.ok(e.transition.duration<.5);assert.ok(Number.isFinite(e.transition.inPoint));assert.ok(e.transition.reason.includes('écarté'));
+});
+
 test('grid preparation preserves the playing source, measured baseline and explicit regions',async()=>{
  const e=new StudioEngine();await e.init();const t=track('prepare');Object.assign(t,{manualRegions:true,mixIn:3.125,mixOut:48.875,hotCues:[7],analysis:{bpm:123.456,downbeat:.234567,beatOffset:.234567,confidence:'low'}});e.load(0,t);e.decks[0].rate=1.12;await e.play(0);const source=e.decks[0].source,baseline=structuredClone(t.analysis),rev=gridRevision(t);
  e.setGrid(0,{bpm:126.789,downbeat:10.123456},{expectedTrack:t,expectedRevision:rev});assert.equal(e.decks[0].source,source);assert.equal(e.decks[0].rate,1.12);assert.equal(t.mixIn,3.125);assert.equal(t.mixOut,48.875);assert.deepEqual(t.hotCues,[7]);assert.deepEqual(t.analysis,baseline);assert.equal(t.manualGrid,true);assert.equal(t.arrangement.downbeat,10.123456);

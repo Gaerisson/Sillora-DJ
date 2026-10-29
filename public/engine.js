@@ -1,3 +1,4 @@
+import {runtimeIncomingLanding} from './incoming-landing.mjs';
 import {checkedGrid,automaticGrid,gridRevision} from './grid-editor.mjs';
 import {keyLockProfile as resolveKeyLockProfile} from './keylock-profiles.mjs';
 import {ProgramBus,programOptions} from './program-bus.js';
@@ -566,7 +567,7 @@ export class StudioEngine extends EventTarget {
     if (a.loop) this.loop(source, 4,{cancel:false});
     if (b.loop) this.loop(target, 4,{cancel:false});
     const plan=makeTransitionPlan(a,b,{...options,tempoBlend,history:this.transitionHistory,position:this.position(source),stemsAvailable:Boolean(a.stemGains&&b.track.stemBuffer)});
-    if(recovering)Object.assign(plan,{style:'linear',sync:false,tempoBlend:false,seconds:.2,beats:0,reason:'Titre sortant terminé : reprise du prochain titre sans relancer le précédent.'});
+    if(recovering)Object.assign(plan,{style:'linear',sync:false,tempoBlend:false,seconds:.2,beats:0,inPoint:plan.baseInPoint??plan.inPoint,incomingLanding:null,reason:'Titre sortant terminé : reprise du prochain titre sans relancer le précédent.'});
     const style=plan.style,bridge=['bridge','landing'].includes(style),clean=style==='clean';
     if(plan.sync) await this.setRate(target,plan.rate,{cancel:false});
     else await this.setRate(target,1,{cancel:false});
@@ -574,30 +575,39 @@ export class StudioEngine extends EventTarget {
     const now = this.context.currentTime;
     const pos=this.position(source), lookahead=Math.max(.12,(this.keyLockLatency||0)+.04);
     const requestedPoint=options.automix&&!options.startNow&&!recovering?(options.plannedPoint??plan.outPoint??a.track.mixOut??0):0;
+    const sourceMeanRate=plan.tempoBlend?(a.rate+plan.bpmB/(a.track.bpm||120))/2:a.rate;
+    const previewSeconds=options.startNow?Math.min(plan.seconds,clamp(Number(options.skipBeats)||4,1,16)*60/(plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA)):plan.seconds;
+    const arrivalScore=plan.incomingLanding?makeTransitionScore(plan,{seconds:previewSeconds}):null;
+    const alignArrival=Boolean(arrivalScore&&quantize&&gridReliable(a.track)&&!a.track.manualRegions&&(!options.quantizeBeats||options.quantizeBeats===4));
     const canQuantizeSource=!plan.automatic||!options.automix||options.startNow||gridReliable(a.track);
     const alignStart=!recovering&&canQuantizeSource&&quantize&&a.track.bpm&&(!plan.automatic||plan.trustworthy||plan.quantizeHandoff||plan.tempoBlend)&&!(options.automix&&a.track.manualRegions);
-    const alignmentOffset=(a.track.downbeat??a.track.beatOffset??0)-(options.automix&&!options.startNow&&plan.score&&gridReliable(a.track)?plan.sourceSpanSeconds*plan.score.handoffFraction:0);
-    const targetPosition=alignStart?nextMusicalTime(Math.max(pos+lookahead*a.rate,requestedPoint),a.track.bpm,alignmentOffset,options.quantizeBeats||(options.startNow?1:4)):Math.max(pos+lookahead*a.rate,requestedPoint);
+    const alignmentOffset=(a.track.downbeat??a.track.beatOffset??0)-(alignArrival?previewSeconds*sourceMeanRate*arrivalScore.handoffFraction:options.automix&&!options.startNow&&plan.score&&gridReliable(a.track)?plan.sourceSpanSeconds*plan.score.handoffFraction:0);
+    const targetPosition=alignStart?nextMusicalTime(Math.max(pos+lookahead*a.rate,requestedPoint),a.track.bpm,alignmentOffset,options.quantizeBeats||(alignArrival?4:options.startNow?1:4)):Math.max(pos+lookahead*a.rate,requestedPoint);
     const endPosition=Math.min(a.track.audibleEnd||a.track.buffer.duration,a.track.buffer.duration);
     const remaining=(endPosition-pos)/a.rate;
     const delay=(targetPosition-pos)/a.rate;
     // Prefer a short immediate handover when the next measure is past the ending.
     const transportWait=Math.max(0,a.started-now);
     const start=now+transportWait+(delay+0.1<remaining?delay:Math.max(0,Math.min(lookahead,remaining-0.1)));
-    const sourceMeanRate=plan.tempoBlend?(a.rate+plan.bpmB/(a.track.bpm||120))/2:a.rate;
     const availableA=recovering?Infinity:Math.max(0,endPosition-pos-Math.max(0,start-now-transportWait)*a.rate)/sourceMeanRate-.02;
-    let incomingCue=plan.inPoint??b.track.mixIn??b.cue;
-    if(quantize&&plan.sync&&b.track.bpm&&!plan.preserveInPoint&&!b.track.manualRegions){
+    let fallbackCue=plan.baseInPoint??plan.inPoint??b.track.mixIn??b.cue;
+    if(quantize&&plan.sync&&b.track.bpm&&(!plan.preserveInPoint||plan.incomingLanding)&&!b.track.manualRegions){
       const quantum=plan.incomingQuantizeBeats||4,rawBeat=(targetPosition-(a.track.downbeat??a.track.beatOffset??0))*(a.track.bpm||120)/60,sourceBeat=Math.abs(rawBeat-Math.round(rawBeat))<1e-6?Math.round(rawBeat):rawBeat,phase=((sourceBeat%4)+4)%4/4;
-      const aligned=nextMusicalTime(incomingCue,b.track.bpm,(b.track.downbeat??b.track.beatOffset??0)+phase*quantum*60/b.track.bpm,quantum);
-      if(aligned<b.track.buffer.duration-.05)incomingCue=aligned;
+      const aligned=nextMusicalTime(fallbackCue,b.track.bpm,(b.track.downbeat??b.track.beatOffset??0)+phase*quantum*60/b.track.bpm,quantum);
+      if(aligned<b.track.buffer.duration-.05)fallbackCue=aligned;
     }
+    let incomingCue=plan.incomingLanding?plan.inPoint:fallbackCue;
     const targetMeanRate=plan.tempoBlend?(b.rate+1)/2:b.rate,availableB=(b.track.buffer.duration-incomingCue)/Math.max(.01,targetMeanRate);
     const nominal=plan.seconds;
     const requested=options.startNow?Math.min(nominal,clamp(Number(options.skipBeats)||4,1,16)*60/(plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA)):nominal;
     const sourcePart=clean?cleanTiming(requested).sourceStopFraction:bridge?.48:1,incomingPart=clean?.25:bridge?.5:1;
     const bounded=Math.max(.05,Math.min(requested,Math.max(.05,availableA)/sourcePart,availableB/incomingPart)),barSeconds=4*60/(plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA);
     const duration=plan.automatic&&plan.sync&&bounded>=barSeconds?Math.max(barSeconds,Math.floor((bounded+1e-6)/barSeconds)*barSeconds):bounded;
+    const runtimeScore=makeTransitionScore(plan,{seconds:duration,intensity:options.intensity});
+    const sourceHandoff=pos+Math.max(0,start-now-transportWait)*a.rate+duration*sourceMeanRate*(runtimeScore?.handoffFraction||0),sourcePhase=(sourceHandoff-(a.track.downbeat??a.track.beatOffset??0))*(a.track.bpm||120)/240;
+    const safeArrival=!quantize||alignArrival&&Math.abs(sourcePhase-Math.round(sourcePhase))<1e-5;
+    const incomingLanding=safeArrival?runtimeIncomingLanding(b.track,plan,runtimeScore,duration):null;
+    incomingCue=incomingLanding?.cue??fallbackCue;
     if(b.playing)this.pause(target);
     b.offset=incomingCue;const timing=clean?cleanTiming(duration):null,incomingStart=start+duration*(clean?timing.incomingStartFraction:bridge?.5:0);const incoming=this.play(target,incomingStart),incomingTicket=b.playRequest;await incoming;
     if(obsolete()||!b.playing){if(incomingTicket?.source&&b.source===incomingTicket.source)this.pause(target);return;}
@@ -607,7 +617,9 @@ export class StudioEngine extends EventTarget {
     const t=this.transition;t.reason=plan.reason;t.stages=plan.stages;t.incomingStart=incomingStart;t.inPoint=incomingCue;t.outPoint=pos+Math.max(0,start-now-transportWait)*a.rate;t.beats=plan.beats;t.profile=plan.profile;t.effectSelection=plan.effectSelection;t.titleA=a.track.title;t.titleB=b.track.title;t.intensity=clamp(Number(options.intensity??0.45),0,1);t.previousEcho=Boolean(a.echo);t.previousDelay=a.delay.delayTime.value;t.previousFeedback=a.feedback.gain.value;t.voices=[];t.trimDb=plan.trimDb;t.sync=plan.sync;t.bpmA=plan.bpmA;t.bpmB=plan.bpmB;
     const at=fraction=>start+(plan.tempoBlend?tempoFraction(fraction,plan.bpmA,plan.bpmB,duration):duration*fraction);
     t.sourceSpanSeconds=duration*sourceMeanRate;
-    t.score=makeTransitionScore(plan,{seconds:duration,intensity:t.intensity});
+    t.score=runtimeScore;t.incomingLanding=incomingLanding;
+    if(plan.incomingLanding&&!incomingLanding)t.reason=plan.baseReason+' Repère entrant écarté : passage raccourci ou calage indisponible.';
+    if(incomingLanding)t.incomingLandingAt=at(incomingLanding.handoffFraction);
     if(t.score){t.beats=t.score.beats;t.stages=t.score.stages.map(stage=>({...stage,at:(at(stage.at)-start)/duration}));t.handoffAt=at(t.score.handoffFraction);t.handoffPosition=t.outPoint+t.sourceSpanSeconds*t.score.handoffFraction;}
     if(clean)Object.assign(t,timing,{handoffPosition:t.outPoint+duration*timing.handoffFraction*a.rate});
     b.trim.gain.cancelScheduledValues(now);b.trim.gain.setValueAtTime(10**(plan.trimDb/20),now);b.trim.gain.setValueAtTime(10**(plan.trimDb/20),start+duration);b.trim.gain.linearRampToValueAtTime(1,start+duration+8);

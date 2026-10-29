@@ -2,6 +2,16 @@
 
 Les vues générales proviennent de la 0.16.1 exécutée ; les vues de préparation et de gestes sont datées ci-dessous. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
 
+## Arrivée au relais · 0.26.0
+
+![Calage du titre entrant dans le plan](images/arrival-026.png)
+
+![Option et position d’arrivée dans Porcelaine](images/arrival-porcelain-026.png)
+
+<img src="images/arrival-remote-026.png" alt="Repère d’arrivée transmis au téléphone appairé" width="390">
+
+Captures du paquet avec deux Opus analysés automatiquement. Le repère mesure un changement de niveau ou de graves ; aucune phrase sémantique n’est reconnue. [Fonctionnement](ARRIVAL-0.26.md).
+
 ## Grille rythmique · 0.25.0
 
 ![Préparation de grille, onde détaillée et aperçu global](images/preparation-025.png)

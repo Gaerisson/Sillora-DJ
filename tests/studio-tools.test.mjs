@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {sanitizePreferences,restorePreparation,trackPreparation,fileKey,moveQueueItem,smoothQueue,TapTempo,csvTracklist} from '../public/studio-tools.mjs';
 
 test('stored preferences accept silence and reject invalid or obsolete values',()=>{
+  assert.equal(sanitizePreferences().alignArrival,true);assert.equal(sanitizePreferences({alignArrival:false}).alignArrival,false);
   assert.equal(sanitizePreferences({master:0}).master,0);
   const result=sanitizePreferences({master:Infinity,style:'unknown',beats:-4,view:'waves',zoom:'8'});
   assert.equal(result.master,0.7);assert.equal(result.style,'auto');assert.equal(result.beats,16);assert.equal(result.view,'waves');assert.equal(result.zoom,'8');

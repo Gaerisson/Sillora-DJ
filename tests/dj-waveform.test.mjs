@@ -2,6 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {drawDJWaveform,rollingWaveRange} from '../public/dj-waveform.mjs';
 
+test('arrival flags belong only to their prepared track and remain bounded',()=>{
+ const labels=[],ctx={canvas:{width:600,height:94},save(){},restore(){},clearRect(){},fillRect(){},beginPath(){},rect(){},clip(){},moveTo(){},lineTo(){},closePath(){},fill(){},fillText(text){labels.push(text);},measureText(s){return{width:s.length*5};}};
+ const track={id:'target',bpm:120,buffer:{duration:40}},point={version:1,trackId:'target',time:16,label:'R1'};drawDJWaveform(ctx,{track,arrivalPoint:point});assert.ok(labels.includes('ARRIVÉE R1'));
+ for(const patch of [{trackId:'old'},{time:-1},{time:40},{time:NaN}]){labels.length=0;drawDJWaveform(ctx,{track,arrivalPoint:{...point,...patch}});assert.ok(!labels.some(l=>l.startsWith('ARRIVÉE')));}
+});
+
 test('waveform arrangement flags use only confident in-range cached landmarks',()=>{
  const labels=[],rects=[],ctx={canvas:{width:600,height:94},save(){},restore(){},clearRect(){},fillRect(...r){rects.push(r);},beginPath(){},rect(){},clip(){},moveTo(){},lineTo(){},closePath(){},fill(){},fillText(text,x,y){labels.push({text,x,y});},measureText(s){return{width:s.length*5};}};
  const track={bpm:120,buffer:{duration:20,getChannelData(){throw Error('No PCM in drawing');}},arrangement:{version:1,landmarks:[{time:4,confidence:.9,kind:'lift'},{time:12,confidence:.2,kind:'change'},{time:22,confidence:.95,kind:'release'}]}};

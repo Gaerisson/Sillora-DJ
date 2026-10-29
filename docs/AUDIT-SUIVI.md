@@ -1,6 +1,6 @@
-# Suivi de l’audit — Sillora DJ 0.25.0
+# Suivi de l’audit — Sillora DJ 0.26.0
 
-Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
+Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
 ## Lots réalisés
 
@@ -14,6 +14,7 @@ Mise à jour du 28 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | F · 0.23.0 | Précision de grille séparée de la couverture, contrôles de contraste/support, mesures partagées PC/Remote | 296 tests ; 68 cas natifs depuis le paquet, dont quatre grille PC/Remote/cache et quatre rendus sans correction manuelle. [Diagnostic et portée](GRID-0.23.md) |
 | G · 0.24.0 | Gestes d’onde PC/Remote, propriété des prises et relais sur grille incertaine ; corpus élargi | 313 tests ; 99 fichiers analysés et 50 cas natifs depuis le paquet, dont 20 rendus de transitions et 20 cas de gestes MP3/Opus. [Gestes](GESTURES-0.24.md) · [Corpus](CORPUS-0.24.md) |
 | H · 0.25.0 | Préparation visuelle de grille, calibration, brouillon et restauration automatique | 322 tests ; 54 cas natifs, dont 18 de préparation MP3/Opus. [Fonctionnement](PREPARATION-0.25.md) · [Recette](CHANGELOG-0.25.0.md) |
+| I · 0.26.0 | Repère entrant au relais, Next recalculé, option et marqueurs PC/Remote | 332 tests ; 53 cas natifs, dont douze comparatifs Opus et deux rendus de repli. [Fonctionnement](ARRIVAL-0.26.md) · [Mesures](ARRIVAL-MEASURES-0.26.json) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -177,11 +178,25 @@ Le paquet final passe ses 50 cas natifs ; 145 sources comparées, versions et re
 
 54 cas natifs passent depuis le paquet final, dont 18 de préparation sur quatre fichiers réels et huit rendus automatiques sans corrections de grille. 322 tests automatisés, 148 sources comparées, ressources et exécutables contrôlés, contenu identique et intégrité de l’archive vérifiée. Installation personnelle non exécutée. Relecture par l’auteur uniquement. Les 66 grilles incertaines du corpus précédent ne sont pas requalifiées. [Recette détaillée](CHANGELOG-0.25.0.md).
 
+## Section 3 — points revus dans le lot I
+
+| Référence | État actuel | Résultat et limite |
+| :--- | :---: | :--- |
+| R3.1-12, R3.1-13, R3.2-04 | P | Changement entrant mesuré placé au relais, avec avance audible et réserve. Douze comparatifs sur trois paires ; pertinence d’écoute et reconnaissance des phrases toujours ouvertes. |
+| R3.2-08 | V | Durée finale, intégrale de tempo, Next et phase de mesure commandent le même départ. IN/OUT manuels prioritaires, repli en fin courte et identité de piste contrôlés. |
+| R3.2-09 | P | Dans le banc natif, tête entrante à moins de 10 ms du repère pour les cas activés ; contrôle de mesure sortante et audio fini. Mesure d’horloge, sans certification acoustique ni référence humaine. |
+| R3.7-03, R3.7-08, R3.7-09 | V | Option réelle, temps d’arrivée et marqueur sur l’onde, transmis à Remote. Deux thèmes et téléphone appairé vérifiés ; la maquette complète reste distincte. |
+| R3.1-08, R3.1-10, R3.1-11 | A | Aucun détecteur sémantique de buildup/drop, de voix ou de partie instrumentale n’est ajouté. |
+
+332 tests et 53 cas natifs depuis le paquet final passent. Douze comparatifs activé/désactivé couvrent programmé/Next sur trois paires Opus ; deux rendus supplémentaires conservent un repli sur grille incertaine. Les 149 sources, ressources et exécutables sont contrôlés, avec contenu identique et intégrité vérifiée. Relecture par l’auteur ; installation personnelle non exécutée. Le corpus n’est pas réétiqueté comme juste. [Recette et limites](CHANGELOG-0.26.0.md).
+
 ## Prochain travail prioritaire
 
 1. Automix musical : élargir le jeu de grilles annotées, travailler les phrases et les points de passage, puis valider les rendus à l’écoute. Les grilles des deux références sont désormais exploitables sans correction manuelle ; cela ne clôt pas la fiabilité générale ni les nouveaux modes et la reconnaissance sémantique.
 2. Préparation audio : stems hors du thread interface, budgets de calcul et tests de ressources manquantes/longues sessions.
 3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
 4. Poursuivre les sections restantes du registre, notamment réglages avancés du scratch, playlists, mises à jour et validation acoustique micro.
+
+Le bandeau de version Remote reste figé à 0.24 ; sa correction visuelle rejoint le chantier UI. Les commandes et captures de ce lot utilisent bien le code 0.26 embarqué.
 
 Chaque prochain lot devra apporter son code exécuté, sa recette et ses limites avant de changer les états correspondants.

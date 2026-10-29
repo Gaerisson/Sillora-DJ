@@ -93,7 +93,7 @@ function label(ctx, text, x, y, color, width, background, align = 'left') {
 export function drawDJWaveform(ctx, {
   track, position = 0, from = 0, to, width = ctx.canvas.width,
   height = ctx.canvas.height, colors = {}, deckColor = colors.a || '#5bd9e7',
-  transitionPlan = null, loop = null,
+  transitionPlan = null, loop = null, arrivalPoint = null,
 } = {}) {
   if (!(width > 0 && height > 0)) return;
   const text = colors.text || '#eef3f8', dim = colors.dim || '#8996a8';
@@ -197,6 +197,9 @@ export function drawDJWaveform(ctx, {
     const x = clamp(xAt(value), .5, width - 1);
     ctx.globalAlpha = .65; ctx.fillStyle = color; ctx.fillRect(x, 14, 1, height - 14); ctx.globalAlpha = 1;
     label(ctx, name, x + 2, 23, color, width, panel, x > width - 34 ? 'right' : 'left');
+  }
+  if(arrivalPoint?.version===1&&typeof arrivalPoint.trackId==='string'&&arrivalPoint.trackId===track.id&&Number.isFinite(arrivalPoint.time)&&arrivalPoint.time>=0&&arrivalPoint.time<duration&&arrivalPoint.time>=from&&arrivalPoint.time<=to){
+    const x=xAt(arrivalPoint.time);ctx.fillStyle=deckColor;ctx.globalAlpha=.8;ctx.fillRect(x,0,1,height);ctx.globalAlpha=1;label(ctx,'ARRIVÉE '+arrivalPoint.label,x+2,Math.min(height-8,56),deckColor,width,panel,x>width-80?'right':'left');
   }
   if (position >= from && position <= to) {
     const x = clamp(xAt(position), 1, width - 2);
