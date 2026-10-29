@@ -1,3 +1,4 @@
+import {tempoShape} from './tempo-automation.mjs';
 import {transitionIds,profiles} from './transition-design.mjs';
 import { clamp } from './audio-math.mjs';
 import {audioContentId} from './audio-identity.mjs';
@@ -22,6 +23,7 @@ export const transitionPresets = {
 export function sanitizePreferences(value = {}) {
   value = value && typeof value === 'object' ? value : {};
   return {
+    tempoShape:tempoShape(value.tempoShape??'smooth'),
     keyLockProfile:value.keyLockProfile==='rhythm'?'rhythm':'standard',
     view: value.view === 'waves' ? 'waves' : 'decks',
     zoom: ['full', '16', '8'].includes(value.zoom) ? value.zoom : 'full',

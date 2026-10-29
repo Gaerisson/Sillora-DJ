@@ -2,7 +2,7 @@ import {selectIncomingLanding} from './incoming-landing.mjs';
 import {clamp} from './audio-math.mjs';
 import {selectAutomaticFx,selectMusicalFx} from './automatic-fx.mjs';
 import {makeTransitionScore,scoreProgress} from './transition-score.mjs';
-import {tempoFraction} from './tempo-automation.mjs';
+import {tempoFraction,tempoMean,tempoShape} from './tempo-automation.mjs';
 import {composedPlan,cleanTiming,musicalEntry,musicalExit,gridReliable} from './musical-plan.mjs';
 import {harmonicCompatibility,tempoCompatibility} from './dj-library.mjs';
 
@@ -49,7 +49,7 @@ export function resolveTransition(a,b,options={}){
  const A=a.track,B=b.track,bpmA=(A.bpm||120)*(a.rate||1),automatic=options.style==='auto',pulse=tempoCompatibility({...A,bpm:bpmA},B),octave=automatic&&options.profile==='musical'&&pulse.compatible?pulse.octave:1,bpmB=(B.bpm||120)*octave,ratio=bpmA/bpmB;
  // A deliberate tempo morph accepts up to 20%, while ordinary Sync keeps its
  // conservative range. Estimated grids remain explicitly identified in Auto.
- const morph=options.tempoBlend===true,trustworthy=reliable(A)&&reliable(B),within=Math.abs(Math.log2(ratio))<=Math.log2(morph?1.20:automatic?1.055:1.085);
+ const shape=tempoShape(options.tempoShape),morph=options.tempoBlend===true,trustworthy=reliable(A)&&reliable(B),within=Math.abs(Math.log2(ratio))<=Math.log2(morph?1.20:automatic?1.055:1.085);
  const measuredTempo=[A,B].every(t=>reliable(t)||t.tempoConfidence>=.65);
  const sync=Boolean(options.sync!==false&&A.bpm&&B.bpm&&within&&(!automatic||trustworthy||morph&&measuredTempo));
  let style=transitionIds.includes(options.style)?options.style:'blend',beats=Number(options.beats)||16,profile=profiles[options.profile]?options.profile:'flow',reason='';
@@ -78,16 +78,16 @@ export function resolveTransition(a,b,options={}){
   }
  }
  if(['stemfade','stemecho','stemsustain'].includes(style)&&!(options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer))){style='bass';reason='Stems indisponibles sur une platine : relais EQ. Préparez les deux titres et activez leurs stems avant la lecture.';}
- const bridge=['bridge','landing'].includes(style),separated=bridge||style==='clean',tempoBlend=Boolean(!separated&&sync&&morph&&Math.abs(ratio-1)>.001),nominal=beats*60/(tempoBlend?(bpmA+bpmB)/2:bpmA),seconds=composition&&!tempoBlend?composition.seconds:bridge?clamp(nominal,7,12):automatic&&!sync?clamp(nominal,1.2,3):nominal;
+ const bridge=['bridge','landing'].includes(style),separated=bridge||style==='clean',tempoBlend=Boolean(!separated&&sync&&morph&&Math.abs(ratio-1)>.001),nominal=beats*60/(tempoBlend?tempoMean(bpmA,bpmB,shape):bpmA),seconds=composition&&!tempoBlend?composition.seconds:bridge?clamp(nominal,7,12):automatic&&!sync?clamp(nominal,1.2,3):nominal;
  if(!automatic&&!reason)reason=sync&&!separated?(tempoBlend?'Tempo commun '+bpmA.toFixed(1)+' → '+bpmB.toFixed(1)+' BPM pendant le passage. ':'Tempo entrant calé à '+bpmA.toFixed(1)+' BPM. ')+(!trustworthy?'Grille estimée : vérifiez le premier temps.':'Mesures alignées.'):(options.sync===false?'Sync désactivée : tempos naturels.':separated?'Reprise au tempo naturel du prochain titre.':'Écart supérieur à la plage de synchronisation : tempos naturels.');
- const score=makeTransitionScore({style,seconds,beats,bpmA,bpmB,tempoBlend,harmonicGuard:composition?.harmonicGuard},{intensity:options.intensity});
+ const score=makeTransitionScore({style,seconds,beats,bpmA,bpmB,tempoBlend,tempoShape:shape,harmonicGuard:composition?.harmonicGuard},{intensity:options.intensity});
  const timing=style==='clean'?cleanTiming(seconds):{},inPoint=musicalEntry(B),sourceSpanSeconds=tempoBlend?beats*60/(A.bpm||120):seconds*(a.rate||1),outPoint=musicalExit(A,sourceSpanSeconds,options.position||0,score&&gridReliable(A)?{handoffFraction:score.handoffFraction}:timing);
  const ea=regionEnergy(A,true,outPoint,Math.min(4,seconds*(a.rate||1))),eb=regionEnergy(B,false,inPoint,Math.min(4,seconds));
  const gainA=(A.autoGain||1)*(a.volume??.85),gainB=(B.autoGain||1)*(b.volume??.85),trimDb=ea&&eb?clamp(20*Math.log10(ea*gainA/(eb*gainB)),-3,3):0;
  const referenceStages={lunarecho:[[0,'Installer le groove'],[.25,'Ouvrir l’écho orbital'],[.55,'Relayer les graves'],[.82,'Laisser les répétitions']],sweep:[[0,'Préparer le filtre'],[.25,'Balayer le spectre'],[.60,'Ouvrir le nouveau titre'],[.86,'Relâcher la réverbération']],hydrant:[[0,'Installer le jet'],[.30,'Faire monter la pression'],[.60,'Relayer les graves'],[.80,'Relâcher le souffle']],stemsustain:[[0,'Séparer les voix'],[.32,'Suspendre les instruments'],[.56,'Relayer le groove'],[.80,'Poser la nouvelle voix']]};
  const stages=referenceStages[style]?.map(([at,label])=>({at,label}))??composition?.stages;
- const timedStages=tempoBlend&&stages?stages.map(stage=>({...stage,at:tempoFraction(stage.at,bpmA,bpmB,seconds)/seconds})):stages;
- const result={...(composition||{}),score,sourceSpanSeconds,sync:separated?false:sync,rate:sync&&!separated?ratio:1,beats,seconds,style,tempoBlend,fallback:(!sync||separated)&&options.sync!==false,bpmA,bpmB,reason,energyA:ea,energyB:eb,profile,trustworthy,harmonic,keyKnown:harmony.known,keyRelation:harmony.relation,incomingQuantizeBeats:octave===1?undefined:4/octave,trimDb,automatic,effectSelection,inPoint,outPoint,preserveInPoint:Boolean(B.manualRegions||!sync&&(B.regionAnalysisVersion||gridReliable(B))),...timing,...(score?{handoffFraction:score.handoffFraction,handoffPosition:outPoint+sourceSpanSeconds*score.handoffFraction,incomingStartFraction:0,sourceStopFraction:1,quantizeHandoff:false,fadeSeconds:undefined}:{}),...(score?{stages:score.stages.map(stage=>({...stage,at:tempoBlend?tempoFraction(stage.at,bpmA,bpmB,seconds)/seconds:stage.at}))}:timedStages?{stages:timedStages}:{})};
+ const timedStages=tempoBlend&&stages?stages.map(stage=>({...stage,at:tempoFraction(stage.at,bpmA,bpmB,seconds,shape)/seconds})):stages;
+ const result={...(composition||{}),score,sourceSpanSeconds,sync:separated?false:sync,rate:sync&&!separated?ratio:1,beats,seconds,style,tempoBlend,tempoShape:shape,fallback:(!sync||separated)&&options.sync!==false,bpmA,bpmB,reason,energyA:ea,energyB:eb,profile,trustworthy,harmonic,keyKnown:harmony.known,keyRelation:harmony.relation,incomingQuantizeBeats:octave===1?undefined:4/octave,trimDb,automatic,effectSelection,inPoint,outPoint,preserveInPoint:Boolean(B.manualRegions||!sync&&(B.regionAnalysisVersion||gridReliable(B))),...timing,...(score?{handoffFraction:score.handoffFraction,handoffPosition:outPoint+sourceSpanSeconds*score.handoffFraction,incomingStartFraction:0,sourceStopFraction:1,quantizeHandoff:false,fadeSeconds:undefined}:{}),...(score?{stages:score.stages.map(stage=>({...stage,at:tempoBlend?tempoFraction(stage.at,bpmA,bpmB,seconds,shape)/seconds:stage.at}))}:timedStages?{stages:timedStages}:{})};
  result.baseInPoint=inPoint;
  result.baseReason=result.reason;
  result.incomingLanding=selectIncomingLanding(B,result,{enabled:options.alignArrival!==false&&!A.manualRegions});

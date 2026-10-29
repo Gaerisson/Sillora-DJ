@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/images/sillora-banner.svg" alt="Sillora DJ — Le mix, dans son mouvement. Par Gaerisson." width="100%"></p>
 
-<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix, stems et télécommande Web.<br><sub>Version de développement 0.29.0 · Par Gaerisson</sub></p>
+<p align="center"><strong>Console DJ &amp; régie live pour Windows</strong><br>Deux platines, Automix, stems et télécommande Web.<br><sub>Version de développement 0.30.0 · Par Gaerisson</sub></p>
 
 <p align="center"><a href="#le-studio">Découvrir</a> · <a href="docs/SCREENSHOTS.md">Galerie</a> · <a href="#prise-en-main">Démarrer</a> · <a href="#feuille-de-route">Feuille de route</a> · <a href="#validation-et-limites-actuelles">État &amp; limites</a></p>
 
@@ -12,13 +12,13 @@
 
 La priorité de la refonte est le **résultat audio**, puis la stabilité, l’ergonomie et la finition visuelle. Les fonctions ci-dessous sont présentes dans la version actuelle ; les évolutions de la feuille de route restent à implémenter et à valider.
 
-### Fonctions présentes en 0.29.0
+### Fonctions présentes en 0.30.0
 
 | Mixer | Préparer et diffuser |
 | :--- | :--- |
 | Deux platines, pochettes et ondes RGB déroulantes | Bibliothèque par dossiers, favoris et tri BPM / clé |
 | Scratch à la souris, Hot Cues, boucles et beat jump | Suggestions dans le dossier du set et file Automix |
-| Transitions par filtres, EQ, échos et textures | Variation commune du tempo pendant les passages |
+| Transitions par filtres, EQ, échos et textures | Tempo commun avec quatre courbes de progression |
 | Sidechain léger activable et réduction visible | Quatre entrées micro / ligne et autoduck configurable |
 | Stems voix, batterie, basse et instruments | Gate, compresseur, EQ, limiteur et filtres anti-larsen |
 | Sampler huit pads et enregistrement du programme | Remote Web, visuels et fenêtres média séparées |
@@ -65,6 +65,8 @@ La **0.27.0** ajoute les budgets de préparation des stems (CPU, mémoire décod
 
 La **0.28.0** réunit quatre espaces réels, une bibliothèque redimensionnable, une densité de liste et des modules mémorisés. Les recettes sont regroupées, avec une console UI et les tests unitaires en parallèle ; une compilation rapide est disponible. [Espaces](docs/WORKSPACES-0.28.md) · [Vérification regroupée](docs/QA-BATCH.md).
 
+La **0.30.0** ajoute quatre **courbes de tempo** réelles, leur aperçu PC/Remote et une horloge distante qui suit leur phase. Whoosh, Auto et Next sont contrôlés sur les deux MP3 et une paire Pop. [Utilisation](docs/TEMPO-CURVES-0.30.md) · [Mesures et limites](docs/CHANGELOG-0.30.0.md).
+
 La **0.29.0** ajoute **Mute / Solo** aux stems PC/Remote et une gestion du cache disque : quota, dernier accès, protections et nettoyage des résultats inactifs. [Mixage](docs/STEM-MIX-0.29.md) · [Cache](docs/STEM-CACHE-0.29.md).
 
 Le catalogue actuel propose notamment fondu, filtre, échange de graves, Echo Out, Whoosh, Sweep et transitions à stems. Leur présence ne signifie pas que leur qualité musicale est acquise : le calage, le déclenchement au point OUT et le rendu des effets font partie des priorités de correction.
@@ -92,7 +94,7 @@ Captures de l’application exécutée avec des fichiers audio réels. Les fichi
 3. Sélectionner un passage dans **Transition Lab**, puis **Mixer maintenant**.
 4. Ouvrir **Master** pour le sidechain, **Micros / ligne** pour la régie et **Remote** pour l’appairage sur le réseau local.
 
-Le build produit `Sillora-DJ-Setup-0.29.0.exe` et `Sillora-DJ-0.29.0-Windows.exe`. **Les binaires ne sont pas encore publiés dans GitHub Releases.** Pour démarrer depuis les sources :
+Le build produit `Sillora-DJ-Setup-0.30.0.exe` et `Sillora-DJ-0.30.0-Windows.exe`. **Les binaires ne sont pas encore publiés dans GitHub Releases.** Pour démarrer depuis les sources :
 
 ```powershell
 npm ci
@@ -127,7 +129,7 @@ Une transition devra être préparée en amont, démarrer sur un repère musical
 
 ## Validation et limites actuelles
 
-Version **0.29.0**, Windows x64, Electron et Web Audio. **369 tests unitaires passent ; 52 cas natifs sur les sources et 42 depuis le paquet final**, dont seize sur le mixage/cache des stems. Les 162 sources, ressources et le contenu identique des exécutables sont contrôlés. [Recette et empreintes](docs/CHANGELOG-0.29.0.md). Ces contrôles ne certifient pas la qualité d’écoute de tous les presets ni les longues sessions.
+Version **0.30.0**, Windows x64, Electron et Web Audio. **375 tests unitaires passent ; 61 cas natifs source et 27 depuis le paquet final**, avec 24 rendus musicaux sur quatre titres côté sources et 12 rejoués dans le paquet, ainsi que quatre contrôles d’impulsions PCM. Les 164 sources, ressources et le contenu identique des exécutables sont contrôlés. [Recette et empreintes](docs/CHANGELOG-0.30.0.md). Ces contrôles ne certifient pas la qualité d’écoute de toutes les paires ni les longues sessions.
 
 Le premier lot corrige la préparation au point OUT, les sources entrantes après annulation, la sortie de boucle après variation du tempo et la copie native du lien Remote. L’analyse fonctionne en arrière-plan pendant la lecture. La 0.18 ajoute des microfondus aux raccords du secours. La 0.19 valide six scénarios de bibliothèque sous Electron, dont une reprise après changement de port, et rejoue quatre scénarios audio/Remote sur deux vrais MP3. La gestion de très grandes collections, la qualité d’isolation sur morceaux complets et les sessions prolongées restent à approfondir.
 
@@ -141,7 +143,7 @@ La validation de chaque lot devra préciser les fonctions testées, les mesures 
 
 ## Documentation et contributions
 
-[Installation](docs/INSTALLATION.md) · [Galerie](docs/SCREENSHOTS.md) · [Identité visuelle](docs/BRAND.md) · [Version 0.29](docs/CHANGELOG-0.29.0.md) · [Suivi de l’audit](docs/AUDIT-SUIVI.md) · [Données & réseau](docs/PRIVACY.md) · [Dépendances](THIRD_PARTY.md)
+[Installation](docs/INSTALLATION.md) · [Galerie](docs/SCREENSHOTS.md) · [Identité visuelle](docs/BRAND.md) · [Version 0.30](docs/CHANGELOG-0.30.0.md) · [Suivi de l’audit](docs/AUDIT-SUIVI.md) · [Données & réseau](docs/PRIVACY.md) · [Dépendances](THIRD_PARTY.md)
 
 Un bug, une transition à améliorer ou une idée ? [Ouvrir une issue](https://github.com/Gaerisson/Sillora-DJ/issues/new/choose) ou consulter [le guide de contribution](CONTRIBUTING.md). Pour un problème audio, préciser la version, les réglages, le point de déclenchement et les étapes permettant de le reproduire.
 

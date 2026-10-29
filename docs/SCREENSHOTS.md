@@ -97,4 +97,8 @@ Deux titres chargés, pochettes sur les vinyles, onde globale, détail rythmique
 
 <img src="images/remote-mobile.jpg" alt="Télécommande sur téléphone" width="390">
 
+## Courbes de tempo — 0.30
+
+![Réglages du passage avec une courbe tardive](images/tempo-controls-030.png)
+
 [Retour au projet](../README.md)

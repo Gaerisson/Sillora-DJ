@@ -1,5 +1,5 @@
 import {clamp} from './audio-math.mjs';
-import {tempoBeats} from './tempo-automation.mjs';
+import {tempoBeats,tempoMean} from './tempo-automation.mjs';
 
 const supported=new Set(['bass','phrase','filter','riser','echo']);
 const smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x);};
@@ -7,7 +7,7 @@ const smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x);};
 // scheduling share the same handoff; elapsed seconds are never a second grid.
 export function makeTransitionScore(plan,{seconds=plan.seconds,intensity=.45}={}){
  if(!supported.has(plan.style))return null;
- const bpm=plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA;
+ const bpm=plan.tempoBlend?tempoMean(plan.bpmA,plan.bpmB,plan.tempoShape):plan.bpmA;
  const rawBeats=Math.max(.1,seconds*Math.max(30,bpm||120)/60),beats=Math.abs(rawBeats-Math.round(rawBeats))<1e-6?Math.round(rawBeats):rawBeats,bass=['bass','phrase'].includes(plan.style);
  const handoffBeat=bass?(beats>=8?Math.floor(beats/8)*4:beats*.5):(beats>=8?Math.max(4,Math.floor((beats-4)/4)*4):beats*.75);
  const edge=clamp(handoffBeat/beats,.1,.9),half=Math.min(.5/beats,edge*.45,(1-edge)*.45),amount=clamp(Number(intensity)||0,0,1);
@@ -42,7 +42,7 @@ export function makeTransitionScore(plan,{seconds=plan.seconds,intensity=.45}={}
 export function scoreProgress(score,fraction){const {begin,end}=score.crossfade;return smooth((fraction-begin)/Math.max(.00001,end-begin));}
 export function transitionSourceOffset(plan,fraction){
  const seconds=plan.seconds??plan.duration,span=plan.sourceSpanSeconds??seconds,p=clamp(fraction,0,1);
- return span*(plan.tempoBlend?tempoBeats(p*seconds,plan.bpmA,plan.bpmB,seconds)/tempoBeats(seconds,plan.bpmA,plan.bpmB,seconds):p);
+ return span*(plan.tempoBlend?tempoBeats(p*seconds,plan.bpmA,plan.bpmB,seconds,plan.tempoShape)/tempoBeats(seconds,plan.bpmA,plan.bpmB,seconds,plan.tempoShape):p);
 }
 
 // Consecutive equal positions are consolidated before scheduling, including

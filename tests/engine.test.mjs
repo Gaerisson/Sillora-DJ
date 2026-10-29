@@ -4,11 +4,22 @@ import { StudioEngine, createDemo } from '../public/engine.js';
 import {transitionProgress} from '../public/transition-design.mjs';
 import {makeTransitionPlan} from '../public/analysis.mjs';
 import {readGrid,gridRevision} from '../public/grid-editor.mjs';
+import {tempoAt,tempoFraction} from '../public/tempo-automation.mjs';
+
+test('nonlinear transitions keep both clocks and score landmarks coherent through Next, cancellation and completion',async()=>{
+ for(const tempoShape of ['smooth','early','late'])for(const [a,b]of [[110,98],[98,110]])for(const startNow of [false,true]){
+  const e=new StudioEngine();await e.init();e.load(0,{...track('a'),bpm:a,confidence:'generated'});e.load(1,{...track('b'),bpm:b,confidence:'generated'});await e.play(0);await e.startTransition({style:'riser',beats:16,sync:true,quantize:true,tempoBlend:true,tempoShape,startNow,skipBeats:4});const t=e.transition;assert.equal(t.tempoShape,tempoShape);const sources=e.decks.map(d=>d.source);
+  for(const p of [0,.23,.61,1]){e.context.currentTime=t.start+t.duration*p;assert.ok(Math.abs(e.currentRate(0)*a-tempoAt(p*t.duration,t.bpmA,t.bpmB,t.duration,tempoShape))<1e-7);assert.ok(Math.abs(e.currentRate(0)*a-e.currentRate(1)*b)<1e-7);assert.ok(Math.abs((e.position(0)-t.outPoint)*a-(e.position(1)-t.inPoint)*b)<1e-6);}
+  e.context.currentTime=t.handoffAt;assert.ok(Math.abs(t.handoffAt-t.start-tempoFraction(t.score.handoffFraction,t.bpmA,t.bpmB,t.duration,tempoShape))<1e-9);assert.ok(e.decks[0].source.playbackRate.events.filter(v=>v.type==='ramp').length>=128);
+  if(startNow){const pos=e.decks.map((_,id)=>e.position(id)),rates=e.decks.map((_,id)=>e.currentRate(id));e.cancelTransition();assert.deepEqual(e.decks.map((_,id)=>e.position(id)),pos);e.context.currentTime+=.2;for(let id=0;id<2;id++)assert.ok(Math.abs(e.position(id)-pos[id]-.2*rates[id])<1e-7);assert.equal(e.decks[0].source,sources[0]);}
+  else{e.context.currentTime=t.start+t.duration+.01;e.tick();assert.equal(e.transition,null);assert.equal(e.decks[1].rate,1);assert.equal(e.decks[1].playing,true);}
+ }
+});
 
 test('scheduled and Next arrivals put both measured downbeats at the real score handoff through tempo morphs',async()=>{
- for(const [a,b]of [[120,120],[110,98],[98,110],[80,160],[160,80]])for(const startNow of [false,true]){
+ for(const tempoShape of ['linear','smooth','early','late'])for(const [a,b]of [[120,120],[110,98],[98,110],[80,160],[160,80]])for(const startNow of [false,true]){
   const e=new StudioEngine();await e.init();const make=(id,bpm)=>{const bar=240/bpm,at=.25+8*bar;return{id,bpm,confidence:'generated',downbeat:.25,beatOffset:.25,keyRoot:0,keyMode:'major',keyConfidence:1,buffer:{duration:180},audibleEnd:180,mixIn:0,mixOut:160,envelope:Array.from({length:1800},(_,i)=>i/10<at?.06:.2),bassEnvelope:Array.from({length:1800},(_,i)=>i/10<at?.01:.1),structure:Array.from({length:Math.floor(180/bar)},(_,i)=>({time:.25+i*bar,rms:i<8?.06:.2,density:.2}))};};
-  e.load(0,make('a',a));e.load(1,make('b',b));await e.play(0);await e.startTransition({style:'auto',profile:'musical',automix:true,sync:true,tempoBlend:true,quantize:true,beats:16,startNow,skipBeats:4});const t=e.transition;assert.ok(t.incomingLanding,JSON.stringify({a,b,startNow,t}));e.context.currentTime=t.handoffAt;assert.ok(Math.abs(e.position(1)-t.incomingLanding.time)<1e-7);const sourceBar=(e.position(0)-.25)*a/240;assert.ok(Math.abs(sourceBar-Math.round(sourceBar))<1e-7);assert.equal(t.handoffAt,t.incomingLandingAt);
+  e.load(0,make('a',a));e.load(1,make('b',b));await e.play(0);await e.startTransition({style:'auto',profile:'musical',automix:true,sync:true,tempoBlend:true,quantize:true,beats:16,tempoShape,startNow,skipBeats:4});const t=e.transition;assert.ok(t.incomingLanding,JSON.stringify({a,b,startNow,t}));e.context.currentTime=t.handoffAt;assert.ok(Math.abs(e.position(1)-t.incomingLanding.time)<1e-7);const sourceBar=(e.position(0)-.25)*a/240;assert.ok(Math.abs(sourceBar-Math.round(sourceBar))<1e-7);assert.equal(t.handoffAt,t.incomingLandingAt);
  }
 });
 test('late bounded arrivals fall back safely instead of claiming a target landmark at the wrong source bar',async()=>{

@@ -1,3 +1,4 @@
+import {tempoMean} from './tempo-automation.mjs';
 import {arrangementFor} from './arrangement.mjs';
 
 const mean=values=>values.reduce((sum,v)=>sum+v,0)/Math.max(1,values.length);
@@ -13,7 +14,7 @@ function usableLead(track,cue,point,span){
 }
 function cueAt(track,plan,point,score,seconds){
  if(!score||!(seconds>0)||!Number.isFinite(plan.rate)||plan.rate<=0)return null;
- const span=seconds*(plan.tempoBlend?(plan.rate+1)/2:plan.rate),lead=span*score.handoffFraction,cue=point.time-lead;
+ const span=seconds*(plan.tempoBlend?tempoMean(plan.rate,1,plan.tempoShape):plan.rate),lead=span*score.handoffFraction,cue=point.time-lead;
  if(lead<.1||!usableLead(track,cue,point.time,span))return null;
  return {...point,cue,leadSeconds:lead,spanSeconds:span,handoffFraction:score.handoffFraction};
 }

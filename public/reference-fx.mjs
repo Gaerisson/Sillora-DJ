@@ -17,8 +17,8 @@ export function scheduleReferenceFx(context,{a,b,t,plan,start,duration,level=.45
  level=clamp(Number.isFinite(level)?level:.45,0,1);duration=Math.max(.05,duration);
  const now=context.currentTime,nodes=[],inputs=[],sources=[],sends=[],voices=[],feedbacks=[];
  const end=start+duration,from=plan.bpmA||120,to=plan.tempoBlend?(plan.bpmB||from):from;
- const when=at||((fraction)=>start+(plan.tempoBlend?tempoFraction(fraction,from,to,duration):duration*fraction));
- const beats=p=>tempoBeats(duration*p,from,to,duration);
+ const when=at||((fraction)=>start+(plan.tempoBlend?tempoFraction(fraction,from,to,duration,plan.tempoShape):duration*fraction));
+ const beats=p=>tempoBeats(duration*p,from,to,duration,plan.tempoShape);
  const totalBeats=beats(1),musicalCurve=(fn,count=512)=>curve(p=>fn(beats(p)/totalBeats),count);
  const node=n=>(nodes.push(n),n),gain=value=>{const n=node(context.createGain());n.gain.value=value;return n;};
  const filter=(type,frequency,q=.7)=>{const n=node(context.createBiquadFilter());n.type=type;n.frequency.value=frequency;n.Q.value=q;return n;};
@@ -39,7 +39,7 @@ export function scheduleReferenceFx(context,{a,b,t,plan,start,duration,level=.45
   for(let i=0;i<2;i++){
    split.connect(delays[i],i);delays[i].connect(lowpasses[i]).connect(returns[i]);returns[i].connect(merge,0,i);
    const feedback=gain(fb);feedbacks.push(feedback);lowpasses[i].connect(feedback).connect(delays[1-i]);
-   automate(delays[i].delayTime,curve(p=>tempoDelay(duration*p,i?.75:.5,from,to,duration),256));
+   automate(delays[i].delayTime,curve(p=>tempoDelay(duration*p,i?.75:.5,from,to,duration,plan.tempoShape),256));
    automate(returns[i].gain,curve(p=>(.36+.16*level*Math.sin(beats(p)*Math.PI+(i?Math.PI:0)))));
    parameter(lowpasses[i].frequency,[[0,7000],[.45,4200],[1,900]],true);
   }
@@ -77,7 +77,7 @@ export function scheduleReferenceFx(context,{a,b,t,plan,start,duration,level=.45
  if(style==='stemsustain'){
   tailSeconds=.7;diagnostics.stemOnly=true;
   const stemBuffer=a.track.stemBuffer,sr=stemBuffer.sampleRate,grainSeconds=Math.min(.50,Math.max(.16,60/from*.75)),frames=Math.max(2,Math.min(stemBuffer.length,Math.round(sr*grainSeconds)));
-  const captureTime=when(.32)-start,position=(t?.outPoint??a.offset??0)+tempoBeats(captureTime,from,to,duration)*60/(a.track.bpm||from);
+  const captureTime=when(.32)-start,position=(t?.outPoint??a.offset??0)+tempoBeats(captureTime,from,to,duration,plan.tempoShape)*60/(a.track.bpm||from);
   const first=clamp(Math.round(position*sr),0,Math.max(0,stemBuffer.length-frames)),buffer=context.createBuffer(2,frames,sr);
   for(let ch=0;ch<2;ch++){const input=stemBuffer.getChannelData(instrumentChannel+ch),out=buffer.getChannelData(ch);let mean=0;for(let i=0;i<frames;i++)mean+=input[first+i]||0;mean/=frames;for(let i=0;i<frames;i++)out[i]=(input[first+i]||0)-mean;}
   const manualLevel=a.stemGains?.other?.gain?.value??a.track.stemLevels?.other??1,instrumentLevel=clamp(Number.isFinite(manualLevel)?manualLevel:1,0,1);

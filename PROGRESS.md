@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.29.0. Les premiers lots ci-dessous conservent leurs constats historiques.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.30.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
@@ -212,3 +212,7 @@ Navigation réelle entre quatre espaces, bibliothèque redimensionnable, densit�
 Mute/Solo préparés PC/Remote, faders séparés et presets en une commande. Cache géré v2 avec quota, dernier accès, protection active/récente, nettoyage ciblé et politique persistante. Les données de recette participent maintenant aux empreintes et la syntaxe est vérifiée avant Electron. La mémoire de bibliothèque affiche le PCM total.
 
 369 tests unitaires, 52 cas natifs source et 42 depuis le paquet passent. Les 162 sources, ressources et exécutables sont contrôlés. La recette recharge un résultat neuronal réel de huit secondes sans réinférence ; elle ne certifie pas une nouvelle qualité d’isolation. Les corrections de banc et du style Remote sont consignées. Scratch multicanal, sauvegarde des mutes/solos entre sessions, anticipation Automix, anciens caches/gros volumes et longues sessions restent ouverts. [Mixage](docs/STEM-MIX-0.29.md) · [Cache](docs/STEM-CACHE-0.29.md) · [Recette](docs/CHANGELOG-0.29.0.md).
+
+## Lot M — courbes de tempo — 0.30.0
+
+Souple, Linéaire, Anticipée et Tardive pilotent le tempo réel, les deux têtes, le score, les échos et la position Remote. Préférence persistante, aperçu et isolation du passage déjà engagé. 375 tests, 61 cas natifs source et 27 depuis le paquet, avec 24 rendus source sur quatre musiques et 12 rendus rejoués dans le paquet. 164 sources embarquées et exécutables contrôlés. La qualité d’écoute et les phrases restent à valider. [Courbes](docs/TEMPO-CURVES-0.30.md) · [Recette](docs/CHANGELOG-0.30.0.md).

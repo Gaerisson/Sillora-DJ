@@ -75,3 +75,6 @@ test('arrangement preparation validates an IN or OUT patch without mutating the 
  assert.deepEqual(regionTools.mixRegionPatch(t,'in',16),{manualRegions:true,mixIn:16});assert.deepEqual(regionTools.mixRegionPatch(t,'out',64),{manualRegions:true,mixOut:64});assert.equal(t.mixIn,4);assert.equal(t.manualRegions,undefined);
  for(const [kind,at]of [['in',81],['out',3],['out',101],['in',NaN],['other',20]])assert.throws(()=>regionTools.mixRegionPatch(t,kind,at));
 });
+test('tempo profile preference restores only supported curves and defaults to a soft path',()=>{
+ assert.equal(sanitizePreferences().tempoShape,'smooth');for(const tempoShape of ['linear','smooth','early','late'])assert.equal(sanitizePreferences({tempoShape}).tempoShape,tempoShape);assert.equal(sanitizePreferences({tempoShape:'unknown'}).tempoShape,'linear');
+});

@@ -13,7 +13,7 @@ import {DeckEffects,TextureBus,impulse} from './performance-fx.js';
 import {faderCurves,transitionProgress,textureNames} from './transition-design.mjs';
 import {makeTransitionScore,scheduleTransitionScore} from './transition-score.mjs';
 import {eqCurves} from './transition-envelopes.mjs';
-import {tempoAt,tempoBeats,tempoFraction,tempoDelay,warpTempoCurve} from './tempo-automation.mjs';
+import {tempoAt,tempoMean,rampDistance,scheduleTempo,tempoBeats,tempoFraction,tempoDelay,warpTempoCurve} from './tempo-automation.mjs';
 import {cleanTiming,gridReliable} from './musical-plan.mjs';
 import {stemNames} from './stems.mjs';
 import {analyzeWaveDetail} from './wave-colors.mjs';
@@ -139,7 +139,7 @@ export class StudioEngine extends EventTarget {
     let pos = d.offset + (d.playing ? Math.max(0,now - d.started) * d.rate : 0);
     if(d.playing && d.rateRamp) {
       const r=d.rateRamp, before=Math.max(0,Math.min(now,r.start)-d.started), during=clamp(now-r.start,0,r.duration), after=Math.max(0,now-r.start-r.duration);
-      pos=d.offset+before*r.from+during*r.from+(r.to-r.from)*during*during/(2*r.duration)+after*r.to;
+      pos=d.offset+before*r.from+rampDistance(during,r.from,r.to,r.duration,r.shape)+after*r.to;
     }
     if(d.braking){const r=d.braking,t=clamp(now-r.start,0,r.duration);pos=r.position+r.from*t+(r.to-r.from)*t*t/(2*r.duration);}
     if (d.loop && pos >= d.loop.end) pos = d.loop.start + (pos - d.loop.start) % (d.loop.end - d.loop.start);
@@ -428,10 +428,10 @@ export class StudioEngine extends EventTarget {
     if(d.pitchNode) { d.pitchNode.playbackRate.cancelScheduledValues(this.context.currentTime); d.pitchNode.playbackRate.setValueAtTime(d.rate,this.context.currentTime); }
     this.dispatchEvent(new Event('change'));
   }
-  currentRate(id) { const d=this.decks[id],r=d.braking||d.rateRamp; return r?r.from+(r.to-r.from)*clamp((this.context.currentTime-r.start)/r.duration,0,1):d.rate; }
-  scheduleRate(id,to,start,duration) {
-    const d=this.decks[id]; d.rateRamp={from:d.rate,to,start,duration};
-    for(const param of [d.source?.playbackRate,d.pitchNode?.playbackRate].filter(Boolean)) {const at=Math.max(this.context.currentTime,start-(d.latency||0));param.cancelScheduledValues(this.context.currentTime);param.setValueAtTime(d.rate,this.context.currentTime);param.setValueAtTime(d.rate,at);param.linearRampToValueAtTime(to,at+duration); }
+  currentRate(id) { const d=this.decks[id],r=d.braking||d.rateRamp; return r?tempoAt(this.context.currentTime-r.start,r.from,r.to,r.duration,r.shape):d.rate; }
+  scheduleRate(id,to,start,duration,shape='linear') {
+    const d=this.decks[id]; d.rateRamp={from:d.rate,to,start,duration,shape};
+    for(const param of [d.source?.playbackRate,d.pitchNode?.playbackRate].filter(Boolean)) {const at=Math.max(this.context.currentTime,start-(d.latency||0));param.cancelScheduledValues(this.context.currentTime);param.setValueAtTime(d.rate,this.context.currentTime);param.setValueAtTime(d.rate,at);scheduleTempo(param,d.rate,to,at,duration,shape); }
   }
   settleRate(id) {
     const d=this.decks[id]; if(!d.rateRamp)return;
@@ -544,7 +544,7 @@ export class StudioEngine extends EventTarget {
     if (!this.transition || !this.context) return;
     const t = this.transition, p = clamp((this.context.currentTime - t.start) / t.duration, 0, 1);
     this.transition = null;this.settleRate(0);this.settleRate(1);
-    const beatProgress=t.tempoBlend?tempoBeats(p*t.duration,t.bpmA,t.bpmB,t.duration)/tempoBeats(t.duration,t.bpmA,t.bpmB,t.duration):p;
+    const beatProgress=t.tempoBlend?tempoBeats(p*t.duration,t.bpmA,t.bpmB,t.duration,t.tempoShape)/tempoBeats(t.duration,t.bpmA,t.bpmB,t.duration,t.tempoShape):p;
     this.crossfade = t.from + (t.to - t.from) * transitionProgress(t.style,beatProgress,t.duration,t.score);
     if(t.incomingStart>this.context.currentTime){this.pause(t.target);this.crossfade=t.from;}
     this.setCrossfade(this.crossfade, false);
@@ -580,8 +580,8 @@ export class StudioEngine extends EventTarget {
     const now = this.context.currentTime;
     const pos=this.position(source), lookahead=Math.max(.12,(this.keyLockLatency||0)+.04);
     const requestedPoint=options.automix&&!options.startNow&&!recovering?(options.plannedPoint??plan.outPoint??a.track.mixOut??0):0;
-    const sourceMeanRate=plan.tempoBlend?(a.rate+plan.bpmB/(a.track.bpm||120))/2:a.rate;
-    const previewSeconds=options.startNow?Math.min(plan.seconds,clamp(Number(options.skipBeats)||4,1,16)*60/(plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA)):plan.seconds;
+    const sourceMeanRate=plan.tempoBlend?tempoMean(a.rate,plan.bpmB/(a.track.bpm||120),plan.tempoShape):a.rate;
+    const previewSeconds=options.startNow?Math.min(plan.seconds,clamp(Number(options.skipBeats)||4,1,16)*60/(plan.tempoBlend?tempoMean(plan.bpmA,plan.bpmB,plan.tempoShape):plan.bpmA)):plan.seconds;
     const arrivalScore=plan.incomingLanding?makeTransitionScore(plan,{seconds:previewSeconds}):null;
     const alignArrival=Boolean(arrivalScore&&quantize&&gridReliable(a.track)&&!a.track.manualRegions&&(!options.quantizeBeats||options.quantizeBeats===4));
     const canQuantizeSource=!plan.automatic||!options.automix||options.startNow||gridReliable(a.track);
@@ -602,11 +602,11 @@ export class StudioEngine extends EventTarget {
       if(aligned<b.track.buffer.duration-.05)fallbackCue=aligned;
     }
     let incomingCue=plan.incomingLanding?plan.inPoint:fallbackCue;
-    const targetMeanRate=plan.tempoBlend?(b.rate+1)/2:b.rate,availableB=(b.track.buffer.duration-incomingCue)/Math.max(.01,targetMeanRate);
+    const targetMeanRate=plan.tempoBlend?tempoMean(b.rate,1,plan.tempoShape):b.rate,availableB=(b.track.buffer.duration-incomingCue)/Math.max(.01,targetMeanRate);
     const nominal=plan.seconds;
-    const requested=options.startNow?Math.min(nominal,clamp(Number(options.skipBeats)||4,1,16)*60/(plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA)):nominal;
+    const requested=options.startNow?Math.min(nominal,clamp(Number(options.skipBeats)||4,1,16)*60/(plan.tempoBlend?tempoMean(plan.bpmA,plan.bpmB,plan.tempoShape):plan.bpmA)):nominal;
     const sourcePart=clean?cleanTiming(requested).sourceStopFraction:bridge?.48:1,incomingPart=clean?.25:bridge?.5:1;
-    const bounded=Math.max(.05,Math.min(requested,Math.max(.05,availableA)/sourcePart,availableB/incomingPart)),barSeconds=4*60/(plan.tempoBlend?(plan.bpmA+plan.bpmB)/2:plan.bpmA);
+    const bounded=Math.max(.05,Math.min(requested,Math.max(.05,availableA)/sourcePart,availableB/incomingPart)),barSeconds=4*60/(plan.tempoBlend?tempoMean(plan.bpmA,plan.bpmB,plan.tempoShape):plan.bpmA);
     const duration=plan.automatic&&plan.sync&&bounded>=barSeconds?Math.max(barSeconds,Math.floor((bounded+1e-6)/barSeconds)*barSeconds):bounded;
     const runtimeScore=makeTransitionScore(plan,{seconds:duration,intensity:options.intensity});
     const sourceHandoff=pos+Math.max(0,start-now-transportWait)*a.rate+duration*sourceMeanRate*(runtimeScore?.handoffFraction||0),sourcePhase=(sourceHandoff-(a.track.downbeat??a.track.beatOffset??0))*(a.track.bpm||120)/240;
@@ -617,10 +617,10 @@ export class StudioEngine extends EventTarget {
     b.offset=incomingCue;const timing=clean?cleanTiming(duration):null,incomingStart=start+duration*(clean?timing.incomingStartFraction:bridge?.5:0);const incoming=this.play(target,incomingStart),incomingTicket=b.playRequest;await incoming;
     if(obsolete()||!b.playing){if(incomingTicket?.source&&b.source===incomingTicket.source)this.pause(target);return;}
     const from = this.crossfade, to = target;
-    this.transition = { source, target, from, to, start, duration, style, fallback:plan.fallback,tempoBlend:plan.tempoBlend };
-    if(plan.tempoBlend) {this.scheduleRate(source,plan.bpmB/(a.track.bpm||120),start,duration);this.scheduleRate(target,1,start,duration);}
+    this.transition = { source, target, from, to, start, duration, style, fallback:plan.fallback,tempoBlend:plan.tempoBlend,tempoShape:plan.tempoShape };
+    if(plan.tempoBlend) {this.scheduleRate(source,plan.bpmB/(a.track.bpm||120),start,duration,plan.tempoShape);this.scheduleRate(target,1,start,duration,plan.tempoShape);}
     const t=this.transition;t.reason=plan.reason;t.stages=plan.stages;t.incomingStart=incomingStart;t.inPoint=incomingCue;t.outPoint=pos+Math.max(0,start-now-transportWait)*a.rate;t.beats=plan.beats;t.profile=plan.profile;t.effectSelection=plan.effectSelection;t.titleA=a.track.title;t.titleB=b.track.title;t.intensity=clamp(Number(options.intensity??0.45),0,1);t.previousEcho=Boolean(a.echo);t.previousDelay=a.delay.delayTime.value;t.previousFeedback=a.feedback.gain.value;t.voices=[];t.trimDb=plan.trimDb;t.sync=plan.sync;t.bpmA=plan.bpmA;t.bpmB=plan.bpmB;
-    const at=fraction=>start+(plan.tempoBlend?tempoFraction(fraction,plan.bpmA,plan.bpmB,duration):duration*fraction);
+    const at=fraction=>start+(plan.tempoBlend?tempoFraction(fraction,plan.bpmA,plan.bpmB,duration,plan.tempoShape):duration*fraction);
     t.sourceSpanSeconds=duration*sourceMeanRate;
     t.score=runtimeScore;t.incomingLanding=incomingLanding;
     if(plan.incomingLanding&&!incomingLanding)t.reason=plan.baseReason+' Repère entrant écarté : passage raccourci ou calage indisponible.';
@@ -628,7 +628,7 @@ export class StudioEngine extends EventTarget {
     if(t.score){t.beats=t.score.beats;t.stages=t.score.stages.map(stage=>({...stage,at:(at(stage.at)-start)/duration}));t.handoffAt=at(t.score.handoffFraction);t.handoffPosition=t.outPoint+t.sourceSpanSeconds*t.score.handoffFraction;}
     if(clean)Object.assign(t,timing,{handoffPosition:t.outPoint+duration*timing.handoffFraction*a.rate});
     b.trim.gain.cancelScheduledValues(now);b.trim.gain.setValueAtTime(10**(plan.trimDb/20),now);b.trim.gain.setValueAtTime(10**(plan.trimDb/20),start+duration);b.trim.gain.linearRampToValueAtTime(1,start+duration+8);
-    const rawCurves=faderCurves(from,to,style,duration,clean?4096:1024,t.score),curves=plan.tempoBlend?rawCurves.map(curve=>warpTempoCurve(curve,plan.bpmA,plan.bpmB,duration)):rawCurves;
+    const rawCurves=faderCurves(from,to,style,duration,clean?4096:1024,t.score),curves=plan.tempoBlend?rawCurves.map(curve=>warpTempoCurve(curve,plan.bpmA,plan.bpmB,duration,plan.tempoShape)):rawCurves;
     for(let id=0;id<2;id++){const gain=this.decks[id].fader.gain;gain.cancelScheduledValues(now);gain.setValueAtTime(crossfadeGains(from)[id],now);gain.setValueCurveAtTime(curves[id],start,duration);}
     const level=t.intensity;
     scheduleTransitionScore(this.context,{score:t.score,a,b,t,start,duration,at});
@@ -657,7 +657,7 @@ export class StudioEngine extends EventTarget {
     if(!t.score&&['bass','dissolve','phrase'].includes(style)){
       const eq=eqCurves(style==='phrase'?'bass':style);
       for(const [d,side] of [[a,'out'],[b,'in']])for(const [band,node] of [d.transitionLow,d.transitionMid,d.transitionHigh].entries()){
-        node.gain.cancelScheduledValues(now);node.gain.setValueAtTime(eq[side][band][0],now);node.gain.setValueCurveAtTime(plan.tempoBlend?warpTempoCurve(eq[side][band],plan.bpmA,plan.bpmB,duration):eq[side][band],start,duration);
+        node.gain.cancelScheduledValues(now);node.gain.setValueAtTime(eq[side][band][0],now);node.gain.setValueCurveAtTime(plan.tempoBlend?warpTempoCurve(eq[side][band],plan.bpmA,plan.bpmB,duration,plan.tempoShape):eq[side][band],start,duration);
       }
       if(style==='phrase'){
         t.echoUsed=true;a.delay.delayTime.cancelScheduledValues(now);a.delay.delayTime.setValueAtTime(60/plan.bpmA,now);a.feedback.gain.cancelScheduledValues(now);a.feedback.gain.setValueAtTime(.32,now);a.wet.gain.cancelScheduledValues(now);a.wet.gain.setValueAtTime(.4,now);
@@ -706,7 +706,7 @@ export class StudioEngine extends EventTarget {
       a.transitionLow.gain.cancelScheduledValues(now);a.transitionLow.gain.setValueAtTime(0,start);a.transitionLow.gain.linearRampToValueAtTime(-12,start+duration*.7);
     }
     if(['stutter','tremolo'].includes(style)){
-      const values=Float32Array.from({length:2048},(_,i)=>{const p=i/2047,seconds=p*duration,beats=plan.tempoBlend?tempoBeats(seconds,plan.bpmA,plan.bpmB,duration):seconds*plan.bpmA/60,depth=Math.min(1,p*2)*level;return style==='tremolo'?1-depth*0.8*(0.5-0.5*Math.cos(beats*Math.PI*2)):p<0.3?1:1-depth*(.5-.5*Math.tanh(Math.cos(beats*Math.PI*4)*4));});
+      const values=Float32Array.from({length:2048},(_,i)=>{const p=i/2047,seconds=p*duration,beats=plan.tempoBlend?tempoBeats(seconds,plan.bpmA,plan.bpmB,duration,plan.tempoShape):seconds*plan.bpmA/60,depth=Math.min(1,p*2)*level;return style==='tremolo'?1-depth*0.8*(0.5-0.5*Math.cos(beats*Math.PI*2)):p<0.3?1:1-depth*(.5-.5*Math.tanh(Math.cos(beats*Math.PI*4)*4));});
       a.transitionGate.gain.cancelScheduledValues(now);a.transitionGate.gain.setValueCurveAtTime(values,start,duration);
     }
     const texture=['filter','riser'].includes(style)?'rise':style==='downlift'?'fall':style==='slam'?'impact':null;
@@ -716,7 +716,7 @@ export class StudioEngine extends EventTarget {
       const division=t.score?.echo?.division??(['filter','riser'].includes(style)?.5:style==='dub'?.75:1);
       // Delay taps follow the integral of the changing beat clock; using the
       // original fixed delay made repeats drift away during tempo morphs.
-      const values=Float32Array.from({length:256},(_,i)=>tempoDelay(duration*i/255,division,plan.bpmA,plan.bpmB,duration));
+      const values=Float32Array.from({length:256},(_,i)=>tempoDelay(duration*i/255,division,plan.bpmA,plan.bpmB,duration,plan.tempoShape));
       a.delay.delayTime.cancelScheduledValues(now);a.delay.delayTime.setValueAtTime(values[0],now);a.delay.delayTime.setValueCurveAtTime(values,start,duration);
     }
     t.referenceFx=scheduleReferenceFx(this.context,{a,b,t,plan,start,duration,level,musicBus:this.musicBus,textures:this.textures,at});
@@ -734,7 +734,7 @@ export class StudioEngine extends EventTarget {
   tick() {
     if (!this.transition) return null;
     const t = this.transition, progress = this.context.currentTime >= t.start + t.duration - 0.000001 ? 1 : clamp((this.context.currentTime - t.start) / t.duration, 0, 1);
-    const beatProgress=t.tempoBlend?tempoBeats(progress*t.duration,t.bpmA,t.bpmB,t.duration)/tempoBeats(t.duration,t.bpmA,t.bpmB,t.duration):progress;
+    const beatProgress=t.tempoBlend?tempoBeats(progress*t.duration,t.bpmA,t.bpmB,t.duration,t.tempoShape)/tempoBeats(t.duration,t.bpmA,t.bpmB,t.duration,t.tempoShape):progress;
     this.crossfade = t.from + (t.to - t.from) * transitionProgress(t.style,beatProgress,t.duration,t.score);
     if (progress >= 1) {
       this.settleRate(0);this.settleRate(1);

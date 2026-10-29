@@ -1,0 +1,536 @@
+{
+  "version": "0.30.0",
+  "scope": "Native digital rendering and PC/Remote checks. Four user-supplied songs, not the full corpus. No perceptual listening certification.",
+  "impulses": [
+    {
+      "name": "Rendered linear impulse onsets follow the integrated tempo",
+      "shape": "linear",
+      "onsets": 16,
+      "maxError": 0.00013431013431031147
+    },
+    {
+      "name": "Rendered smooth impulse onsets follow the integrated tempo",
+      "shape": "smooth",
+      "onsets": 16,
+      "maxError": 0.0001373538813300712
+    },
+    {
+      "name": "Rendered early impulse onsets follow the integrated tempo",
+      "shape": "early",
+      "onsets": 16,
+      "maxError": 0.0001434648748972478
+    },
+    {
+      "name": "Rendered late impulse onsets follow the integrated tempo",
+      "shape": "late",
+      "onsets": 16,
+      "maxError": 0.0001290444614419073
+    }
+  ],
+  "renders": [
+    {
+      "pair": "mp3",
+      "shape": "linear",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 9.23076923076923,
+      "bpmA": 110,
+      "bpmB": 98,
+      "peak": 0.450194776058197,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.34183332448179e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "linear",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 9.23076923076923,
+      "bpmA": 98,
+      "bpmB": 110,
+      "peak": 0.4531134068965912,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 3.552713678800501e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "smooth",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 9.23076923076923,
+      "bpmA": 110,
+      "bpmB": 98,
+      "peak": 0.4505530893802643,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7763568394002505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "smooth",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 9.23076923076923,
+      "bpmA": 98,
+      "bpmB": 110,
+      "peak": 0.4513229727745056,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 3.552713678800501e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "early",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 9.411753442199178,
+      "bpmA": 110,
+      "bpmB": 98,
+      "peak": 0.45537471771240234,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.3092638912203256e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "early",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 9.056614203242697,
+      "bpmA": 98,
+      "bpmB": 110,
+      "peak": 0.4417620897293091,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.2648549702353193e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "late",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 9.056614203242697,
+      "bpmA": 110,
+      "bpmB": 98,
+      "peak": 0.44608259201049805,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.6645352591003757e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "late",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 9.411753442199178,
+      "bpmA": 98,
+      "bpmB": 110,
+      "peak": 0.4509729743003845,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.5987211554602254e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "smooth",
+      "style": "riser",
+      "requestedStyle": "auto",
+      "reverse": false,
+      "next": false,
+      "seconds": 9.23076923076923,
+      "bpmA": 110,
+      "bpmB": 98,
+      "peak": 0.4505646228790283,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7763568394002505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "smooth",
+      "style": "bass",
+      "requestedStyle": "auto",
+      "reverse": true,
+      "next": false,
+      "seconds": 4.615384615384615,
+      "bpmA": 98,
+      "bpmB": 110,
+      "peak": 0.40191665291786194,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7052982290155505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "late",
+      "style": "riser",
+      "requestedStyle": "auto",
+      "reverse": false,
+      "next": true,
+      "seconds": 2.2641535508106743,
+      "bpmA": 110,
+      "bpmB": 98,
+      "peak": 0.4255988299846649,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.8681345533011484e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "mp3",
+      "shape": "late",
+      "style": "bass",
+      "requestedStyle": "auto",
+      "reverse": true,
+      "next": true,
+      "seconds": 2.3529383605497944,
+      "bpmA": 98,
+      "bpmB": 110,
+      "peak": 0.37999528646469116,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.9984014443252818e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "linear",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 8.03347280334728,
+      "bpmA": 123,
+      "bpmB": 116,
+      "peak": 0.48813170194625854,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 5.684341886080802e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "linear",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 8.03347280334728,
+      "bpmA": 116,
+      "bpmB": 123,
+      "peak": 0.4314331114292145,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "smooth",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 8.03347280334728,
+      "bpmA": 123,
+      "bpmB": 116,
+      "peak": 0.48802733421325684,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 5.684341886080802e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "smooth",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 8.03347280334728,
+      "bpmA": 116,
+      "bpmB": 123,
+      "peak": 0.43185463547706604,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "early",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 8.112671174497086,
+      "bpmA": 123,
+      "bpmB": 116,
+      "peak": 0.4855702519416809,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 4.796163466380676e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "early",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 7.955805799843854,
+      "bpmA": 116,
+      "bpmB": 123,
+      "peak": 0.4318466782569885,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "late",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": false,
+      "next": false,
+      "seconds": 7.955805799843854,
+      "bpmA": 123,
+      "bpmB": 116,
+      "peak": 0.4870450496673584,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 5.6192030195578724e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "late",
+      "style": "riser",
+      "requestedStyle": "riser",
+      "reverse": true,
+      "next": false,
+      "seconds": 8.112671174497086,
+      "bpmA": 116,
+      "bpmB": 123,
+      "peak": 0.4297528564929962,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "smooth",
+      "style": "filter",
+      "requestedStyle": "auto",
+      "reverse": false,
+      "next": false,
+      "seconds": 8.03347280334728,
+      "bpmA": 123,
+      "bpmB": 116,
+      "peak": 0.5452338457107544,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 5.684341886080802e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "smooth",
+      "style": "filter",
+      "requestedStyle": "auto",
+      "reverse": true,
+      "next": false,
+      "seconds": 8.03347280334728,
+      "bpmA": 116,
+      "bpmB": 123,
+      "peak": 0.41543057560920715,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "late",
+      "style": "filter",
+      "requestedStyle": "auto",
+      "reverse": false,
+      "next": true,
+      "seconds": 1.9889514499609635,
+      "bpmA": 123,
+      "bpmB": 116,
+      "peak": 0.49793359637260437,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 2.842170943040401e-14,
+      "maxClockPhaseErrorBeats": 5.773159728050814e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "pop",
+      "shape": "late",
+      "style": "filter",
+      "requestedStyle": "auto",
+      "reverse": true,
+      "next": true,
+      "seconds": 2.0281677936242715,
+      "bpmA": 116,
+      "bpmB": 123,
+      "peak": 0.4086277186870575,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 2.842170943040401e-14,
+      "maxClockPhaseErrorBeats": 2.4868995751603507e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    }
+  ]
+}
