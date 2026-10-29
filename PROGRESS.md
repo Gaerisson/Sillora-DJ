@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.33.0. Les premiers lots ci-dessous conservent leurs constats historiques.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.34.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
@@ -228,3 +228,7 @@ Annotation jusqu’à 32 points, rôles Entrée/Sortie, édition PC/Remote et ma
 ## Lot P — occupation spectrale et chevauchement — 0.33.0
 
 Mesure pondérée sur les zones réellement armées, option PC/Remote et score de relais plus court quand les deux zones sont chargées. Les repères et la durée sont conservés ; le filtre, le souffle et l’écho suivent l’intensité FX. 404 tests, 25 cas natifs source et 19 depuis le paquet passent, avec douze rendus sur quatre titres. La mesure ne détecte pas les voix. Validation musicale, phrases automatiques, longues sessions et autres chantiers restent ouverts. [Utilisation](docs/OVERLAP-0.33.md) · [Recette](docs/CHANGELOG-0.33.0.md).
+
+## Lot Q — prochain titre et continuité du set — 0.34.0
+
+Repli sur un autre morceau après fichier illisible, exclusions temporaires PC/Remote, réservations PCM et propriété annulable des chargements. Un import séparé ne déclenche plus de maintien à la fin du set. 416 tests, 19 cas natifs source et 17 depuis le paquet passent. La chaîne de sept passages réemploie deux buffers avec huit identités ; six rendus distincts couvrent quatre fichiers réels. Les longues sessions et la préparation anticipée des stems restent ouvertes. [Utilisation](docs/NEXT-PREPARATION-0.34.md) · [Recette](docs/CHANGELOG-0.34.0.md).

@@ -22,9 +22,10 @@ export class DJSession{
  recommendations(current,{exclude=[],transition}={}){
   return this.enabled?rankCandidates(current,this.tracks,{played:[...this.played],recent:this.recent,exclude,transition}):[];
  }
- remaining(current){
+ remaining(current,{exclude=[]}={}){
+  const blocked=new Set(exclude);
   if(!this.enabled)return 0;
-  return this.tracks.filter(track=>track.id!==current?.id&&!this.played.has(track.id)).length;
+  return this.tracks.filter(track=>track.id!==current?.id&&!this.played.has(track.id)&&!blocked.has(track.id)).length;
  }
  clear(){this.enabled=false;this.scope=null;this.tracks=[];this.played=new Set();this.recent=[];this.mode='compatible';return this;}
 }

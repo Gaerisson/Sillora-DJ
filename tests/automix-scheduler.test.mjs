@@ -44,3 +44,7 @@ test('pending asynchronous preparation is protected while busy, and disabling re
 test('emergency hold expires once on the audio clock and cannot rearm forever',async()=>{
  const s=holdable(setup({position:36,prepared:false}));s.scheduler.pending=()=>true;await s.scheduler.tick();s.engine.context.currentTime=31;await s.scheduler.tick();assert.equal(s.source.continuity,null);assert.equal(s.scheduler.metrics.holdTimeouts,1);await s.scheduler.tick();assert.equal(s.source.continuity,null);assert.equal(s.scheduler.metrics.holds,1);
 });
+
+test('an old preparation cannot rearm a stopped and restarted set even when the same source remains loaded',async()=>{const s=setup({position:20});let release;s.scheduler.prepare=()=>new Promise(resolve=>release=resolve);const pending=s.scheduler.tick();s.scheduler.reset();release(true);await pending;assert.equal(s.calls.length,0);s.scheduler.prepare=()=>true;await s.scheduler.tick();assert.equal(s.calls.length,1);});
+
+test('an obsolete preparation failure cannot stop a restarted set',async()=>{const s=setup({position:20});let reject,errors=0;s.scheduler.onError=()=>errors++;s.scheduler.prepare=()=>new Promise((_,r)=>reject=r);const pending=s.scheduler.tick();s.scheduler.reset();reject(Error('Old request'));await pending;assert.equal(errors,0);assert.equal(s.scheduler.state.phase,'off');});

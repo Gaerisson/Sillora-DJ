@@ -40,3 +40,5 @@ test('recent history stays unique, capped at four, and clear fully resets state'
  session.clear();assert.equal(session.enabled,false);assert.equal(session.scope,null);assert.deepEqual(session.tracks,[]);assert.deepEqual(session.recent,[]);assert.equal(session.played.size,0);assert.equal(session.mode,'compatible');
  session.markPlayed(tracks[0]);assert.equal(session.played.size,0);
 });
+
+test('unavailable titles are excluded from remaining count without being marked played',()=>{const s=new DJSession().start({tracks:[{id:'a'},{id:'b'},{id:'c'}],current:{id:'a'}});assert.equal(s.remaining({id:'a'},{exclude:['b']}),1);assert.equal(s.played.has('b'),false);assert.equal(s.next({id:'a'},{exclude:['b']}).id,'c');});

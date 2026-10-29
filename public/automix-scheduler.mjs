@@ -5,9 +5,10 @@ import {makeTransitionPlan} from './analysis.mjs';
 export class AutomixScheduler {
   constructor(engine,{enabled,prepare,options,pending=()=>false,onExhausted=()=>{},onError=()=>{},lookahead=6,holdAhead=6,maxHold=30}={}) {
     Object.assign(this,{engine,enabled,prepare,options,pending,onExhausted,onError,lookahead,holdAhead,maxHold});
-    this.state={phase:'off',countdown:null};this.busy=false;
+    this.state={phase:'off',countdown:null};this.busy=false;this.generation=0;
     this.metrics={scheduled:0,recovered:0,late:0,preparationMs:0,holds:0,holdTimeouts:0};
   }
+  reset(){this.generation++;this.releaseHolds();this.expiredTrack=null;this.state={phase:'off',countdown:null};}
   releaseHolds(){for(let id=0;id<2;id++)this.engine.releaseContinuity?.(id);}
   protect(active,pending){
     const e=this.engine,d=e.decks[active],held=d.continuity;
@@ -34,12 +35,12 @@ export class AutomixScheduler {
     if(!d.playing&&!d.endedNaturally){this.releaseHolds();this.state={phase:'paused',countdown:null};return;}
     if(d.loop&&!d.continuity){this.state={phase:'loop',countdown:null};return;}
     if(this.busy){if(this.preparing===d.track)this.protect(active,true);return;}
-    const track=d.track;
+    const track=d.track,generation=this.generation;
     this.busy=true;this.preparing=track;
     try {
       const began=performance.now(),ready=await this.prepare(active);
       this.metrics.preparationMs=performance.now()-began;
-      if(!this.enabled()||engine.transition||(engine.crossfade<.5?0:1)!==active||engine.decks[active].track!==track)return;
+      if(generation!==this.generation||!this.enabled()||engine.transition||(engine.crossfade<.5?0:1)!==active||engine.decks[active].track!==track)return;
       if((!d.playing&&!d.endedNaturally)||d.scratching||(d.loop&&!d.continuity))return;
       const b=engine.decks[other];
       if(!ready||!b.track){
@@ -61,7 +62,7 @@ export class AutomixScheduler {
       if(d.endedNaturally)this.metrics.recovered++;
       await engine.startTransition({...options,automix:true,plannedPoint:plan.outPoint});
       if(engine.transition){this.metrics.scheduled++;this.state={...this.state,phase:'scheduled',countdown:Math.max(0,engine.transition.start-engine.context.currentTime)};}
-    }catch(error){this.releaseHolds();this.state={phase:'error',countdown:null,error:error.message};this.onError(error);}
+    }catch(error){if(generation!==this.generation||!this.enabled()||engine.decks[active].track!==track)return;this.releaseHolds();this.state={phase:'error',countdown:null,error:error.message};this.onError(error);}
     finally{this.busy=false;this.preparing=null;}
   }
 }

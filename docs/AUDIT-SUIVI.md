@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.33.0
+# Suivi de l’audit — Sillora DJ 0.34.0
 
 Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -23,6 +23,8 @@ Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | O · 0.32.0 | Repères de phrase nommés PC/Remote, sauvegarde, ondes et relais préparés | 393 tests ; 25 cas natifs source, 19 depuis le paquet. [Repères](PHRASE-CUES-0.32.md) · [Recette](CHANGELOG-0.32.0.md) |
 
 | P · 0.33.0 | Densité des zones armées, protection optionnelle du chevauchement PC/Remote et tempo progressif | 404 tests ; 25 cas natifs source, 19 depuis le paquet. [Utilisation](OVERLAP-0.33.md) · [Recette](CHANGELOG-0.33.0.md) |
+
+| Q · 0.34.0 | Préparation du prochain titre, fichiers indisponibles, réservations mémoire et propriété du set | 416 tests ; 19 cas natifs source, 17 depuis le paquet. [Utilisation](NEXT-PREPARATION-0.34.md) · [Recette](CHANGELOG-0.34.0.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -275,3 +277,15 @@ Les suggestions et le moteur partagent la mesure réciproque de l’écart, la l
 | Commande PC/Remote | V dans ce périmètre | Option mémorisée, désactivation selon Sync, badge A/B borné, changement sans reprogrammation du passage actif. |
 
 404 tests, 25 scénarios natifs source et 19 depuis le paquet passent. Douze rendus sur quatre titres contrôlent les deux sens, la protection et Next. Le comparatif MP3 chargé réduit le chevauchement de 16 à 2 temps à points, durée et relais identiques. Les échantillons et les horloges sont contrôlés séparément. Reconnaissance sémantique, annotation humaine, longues sessions et refonte complète restent ouvertes. [Recette et limites](CHANGELOG-0.33.0.md).
+
+## Lot Q — préparation et propriété du prochain titre — 0.34.0
+
+| Référence | État | Évolution et limite |
+| :--- | :---: | :--- |
+| R2.1-07 | P | Décodage prioritaire, attente d’une analyse en cours et réservation PCM jusqu’au chargement. Les gros fichiers et budgets totaux restent à mesurer. |
+| R3.2-09 | P | Un fichier illisible est exclu temporairement et remplacé ; chargements et erreurs obsolètes ne reprennent pas le contrôle du set. La qualité musicale reste un chantier distinct. |
+| R4.3-10 | P | Réservations de catalogue indépendantes des consommateurs, sans persistance, en complément du cache existant. Pas de nouveau gestionnaire mémoire total. |
+| R5.auto-01 à 06 | Inchangés | Pas de préparation automatique anticipée des stems. |
+| Continuité du set | V dans le périmètre | Sept passages accélérés et fin normale malgré un import séparé ; ce ne sont ni huit titres distincts ni plusieurs heures d’usage. |
+
+416 tests, 19 scénarios natifs source et 17 depuis le paquet passent. Neuf cas de préparation/PC/Remote, six rendus sur quatre fichiers et quatre cas de continuité. La chaîne partage les buffers de deux vrais fichiers ; les autres rendus utilisent quatre fichiers distincts. Sessions longues, mémoire totale, préparation des stems et autres sections de refonte restent ouvertes. [Recette et limites](CHANGELOG-0.34.0.md).

@@ -113,4 +113,8 @@ Deux titres chargés, pochettes sur les vinyles, onde globale, détail rythmique
 
 ![Option PC et densité des fenêtres source/cible](images/overlap-protection-033.png)
 
+## Préparation du set — 0.34
+
+![Titre indisponible écarté et prochain morceau préparé](images/next-preparation-034.png)
+
 [Retour au projet](../README.md)

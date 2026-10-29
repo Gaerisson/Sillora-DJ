@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.33.0.exe` et `Sillora-DJ-0.33.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.34.0.exe` et `Sillora-DJ-0.34.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -86,3 +86,11 @@ npm run test:transitions:windows -- --rhythm --overlap "piste-A.mp3" "piste-B.mp
 ```
 
 La matrice compare les passages complets avec/sans protection dans les deux sens, puis Next avec protection. Les mesures spectrales ne constituent pas une détection vocale.
+
+Préparation et repli du set :
+
+```powershell
+node_modules/.bin/electron scripts/qa-next-preparation-windows.cjs "piste-A.mp3" "piste-B.mp3"
+```
+
+La recette crée des références de test à partir des deux fichiers fournis, injecte un refus de lecture natif et accélère sept passages avec des IN/OUT courts. Elle ne modifie pas les fichiers originaux ni le profil personnel.

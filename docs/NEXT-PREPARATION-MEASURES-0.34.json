@@ -1,0 +1,165 @@
+{
+  "version": "0.34.0",
+  "scope": "Native preparation faults and seven accelerated real-engine passages. The preparation fixture uses two actual music files as distinct catalogue references and then eight references sharing those two decoded buffers. Not eight distinct songs or a long-duration session. Four actual files in separate transition regression renders; computed grids.",
+  "nativeChecks": [
+    {
+      "name": "Cold preparation has a real PC and paired Remote state before the native read finishes"
+    },
+    {
+      "name": "A rejected native file read skips the title and prepares another without stopping the source or Automix"
+    },
+    {
+      "name": "The skipped title is excluded from proposals and remaining count, and is not marked played"
+    },
+    {
+      "name": "A real cold native decode remains retained under zero cache budget until commit",
+      "retained": 1,
+      "pcm": true,
+      "source": true,
+      "analysis": "ready"
+    },
+    {
+      "name": "Preparation releases its memory lease after the fully analysed title reaches the deck"
+    },
+    {
+      "name": "Stop cancels ownership immediately; a late result cannot replace a manually retried deck"
+    },
+    {
+      "name": "An unrelated pending import does not create an emergency loop or keep an exhausted set enabled"
+    },
+    {
+      "name": "Seven accelerated real-engine transitions alternate both decks and consume eight unique catalogue references",
+      "decks": [
+        {
+          "playing": false
+        },
+        {
+          "id": "chain-7",
+          "playing": true
+        }
+      ],
+      "retained": 0,
+      "transitions": 7,
+      "uniquePlayed": 8
+    },
+    {
+      "name": "Exhausting the available references does not schedule a repeat or leave preparation reentered"
+    }
+  ],
+  "renders": [
+    {
+      "pair": "mp3",
+      "style": "riser",
+      "reverse": false,
+      "seconds": 9.23076923076923,
+      "sync": true,
+      "tempoBlend": true,
+      "gridTrustworthy": true,
+      "manualGrids": [
+        false,
+        false
+      ],
+      "peak": 0.45022064447402954,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxBpmError": 1.4210854715202004e-14,
+      "maxPhaseErrorBeats": 2.34183332448179e-14
+    },
+    {
+      "pair": "mp3",
+      "style": "riser",
+      "reverse": true,
+      "seconds": 9.23076923076923,
+      "sync": true,
+      "tempoBlend": true,
+      "gridTrustworthy": true,
+      "manualGrids": [
+        false,
+        false
+      ],
+      "peak": 0.4531134068965912,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxBpmError": 1.4210854715202004e-14,
+      "maxPhaseErrorBeats": 3.552713678800501e-14
+    },
+    {
+      "pair": "mp3",
+      "style": "riser",
+      "reverse": false,
+      "seconds": 9.23076923076923,
+      "sync": true,
+      "tempoBlend": true,
+      "gridTrustworthy": true,
+      "manualGrids": [
+        false,
+        false
+      ],
+      "peak": 0.45019397139549255,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxBpmError": 1.4210854715202004e-14,
+      "maxPhaseErrorBeats": 2.34183332448179e-14
+    },
+    {
+      "pair": "mp3",
+      "style": "bass",
+      "reverse": true,
+      "seconds": 9.23076923076923,
+      "sync": true,
+      "tempoBlend": true,
+      "gridTrustworthy": true,
+      "manualGrids": [
+        false,
+        false
+      ],
+      "peak": 0.43149638175964355,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxBpmError": 1.4210854715202004e-14,
+      "maxPhaseErrorBeats": 3.552713678800501e-14
+    },
+    {
+      "pair": "pop",
+      "style": "filter",
+      "reverse": false,
+      "seconds": 8.03347280334728,
+      "sync": true,
+      "tempoBlend": true,
+      "gridTrustworthy": true,
+      "manualGrids": [
+        false,
+        false
+      ],
+      "peak": 0.547537624835968,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxBpmError": 1.4210854715202004e-14,
+      "maxPhaseErrorBeats": 5.684341886080802e-14
+    },
+    {
+      "pair": "pop",
+      "style": "filter",
+      "reverse": true,
+      "seconds": 8.03347280334728,
+      "sync": true,
+      "tempoBlend": true,
+      "gridTrustworthy": true,
+      "manualGrids": [
+        false,
+        false
+      ],
+      "peak": 0.414835661649704,
+      "nonFinite": 0,
+      "clipped": 0,
+      "silent50ms": 0,
+      "maxBpmError": 1.4210854715202004e-14,
+      "maxPhaseErrorBeats": 2.842170943040401e-14
+    }
+  ]
+}

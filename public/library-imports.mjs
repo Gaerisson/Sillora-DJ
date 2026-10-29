@@ -8,7 +8,7 @@ const metadata=track=>Object.fromEntries(['title','artist','album','bpm','key','
 // File references stay in memory; snapshots contain metadata and durable IDs,
 // never PCM, credentials, IPC tokens or renderer-supplied filesystem paths.
 export class LibraryImports extends EventTarget{
- constructor({decode,canRun=()=>true}={}){super();this.decode=decode;this.canRun=canRun;this.records=new Map();this.byKey=new Map();this.byContent=new Map();this.jobs=new Map();this.active=null;this.sequence=0;this.batch=null;}
+ constructor({decode,canRun=()=>true}={}){super();this.decode=decode;this.canRun=canRun;this.records=new Map();this.byKey=new Map();this.byContent=new Map();this.jobs=new Map();this.retained=new Map();this.active=null;this.sequence=0;this.batch=null;}
  emit(type='change',detail={}){this.dispatchEvent(new CustomEvent(type,{detail}));}
  discover(files){return files.map(file=>{
   const key=fileKey(file);let record=this.byKey.get(key);
@@ -56,10 +56,13 @@ export class LibraryImports extends EventTarget{
   this.restoredBatch=snapshot.batch;this.emit();
  }
  resumeFiles(){const b=this.restoredBatch;if(!b)return [];const done=new Set(b.completed||[]);return(b.keys||[]).filter(id=>!done.has(id)).map(id=>this.get(id)?.file).filter(Boolean);}
+ // Short-lived consumers retain a catalogue identity before decoding. Multiple
+ // consumers release independently; no PCM or lease is persisted.
+ retain(id){if(!this.records.has(id))return()=>{};this.retained.set(id,(this.retained.get(id)||0)+1);let released=false;return()=>{if(released)return;released=true;const n=(this.retained.get(id)||1)-1;if(n)this.retained.set(id,n);else this.retained.delete(id);this.emit();};}
  get pending(){return [...this.jobs.values()].some(j=>!j.controller.signal.aborted&&(j.manual||j.batch?.state==='running'));}
  evict({pinned=new Set(),budget=384*1024*1024}={}){
   const records=[...this.records.values()],bytes=r=>(audioReady(r.track)?r.track.buffer.length*r.track.buffer.numberOfChannels*4:0)+(r.track?.stemBuffer?r.track.stemBuffer.length*r.track.stemBuffer.numberOfChannels*4:0);let total=records.reduce((sum,r)=>sum+bytes(r),0),removed=0;
-  for(const r of records.sort((a,b)=>(a.lastUsed||0)-(b.lastUsed||0))){if(total<=budget)break;const track=r.track,size=bytes(r);if(!size||!r.file||pinned.has(track)||!['ready','error','cancelled'].includes(track.analysisStatus)||this.active?.id===r.id||track.stemPreparing)continue;const b=track.buffer;if(track.stemBuffer){track.stemBuffer=null;track.stemEnvelopes=null;track.stemStatus='Stems sur disque';}track.buffer={duration:b.duration,sampleRate:b.sampleRate,numberOfChannels:b.numberOfChannels};track.libraryState=r.state='stored';total-=size;removed++;}
+  for(const r of records.sort((a,b)=>(a.lastUsed||0)-(b.lastUsed||0))){if(total<=budget)break;const track=r.track,size=bytes(r);if(!size||!r.file||pinned.has(track)||this.retained.has(r.id)||!['ready','error','cancelled'].includes(track.analysisStatus)||this.active?.id===r.id||track.stemPreparing)continue;const b=track.buffer;if(track.stemBuffer){track.stemBuffer=null;track.stemEnvelopes=null;track.stemStatus='Stems sur disque';}track.buffer={duration:b.duration,sampleRate:b.sampleRate,numberOfChannels:b.numberOfChannels};track.libraryState=r.state='stored';total-=size;removed++;}
   this.bufferBytes=total;if(removed)this.emit();return{bytes:total,removed};
  }
 }
