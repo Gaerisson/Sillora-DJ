@@ -2,6 +2,16 @@
 
 Les vues générales proviennent de la 0.16.1 exécutée ; les vues de préparation et de gestes sont datées ci-dessous. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
 
+## Préparation des stems · 0.27.0
+
+![Budgets CPU, mémoire et temps](images/stems-027.png)
+
+![Réglages Porcelaine](images/stems-porcelain-027.png)
+
+<img src="images/stems-remote-027.png" alt="Budgets de préparation dans Remote" width="390">
+
+Réglages réels du paquet Windows et de Remote appairé. [Fonctionnement](STEMS-0.27.md).
+
 ## Arrivée au relais · 0.26.0
 
 ![Calage du titre entrant dans le plan](images/arrival-026.png)

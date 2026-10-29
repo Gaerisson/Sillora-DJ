@@ -58,8 +58,8 @@ export class LibraryImports extends EventTarget{
  resumeFiles(){const b=this.restoredBatch;if(!b)return [];const done=new Set(b.completed||[]);return(b.keys||[]).filter(id=>!done.has(id)).map(id=>this.get(id)?.file).filter(Boolean);}
  get pending(){return [...this.jobs.values()].some(j=>!j.controller.signal.aborted&&(j.manual||j.batch?.state==='running'));}
  evict({pinned=new Set(),budget=384*1024*1024}={}){
-  const records=[...this.records.values()],bytes=r=>audioReady(r.track)?r.track.buffer.length*r.track.buffer.numberOfChannels*4:0;let total=records.reduce((sum,r)=>sum+bytes(r),0),removed=0;
-  for(const r of records.sort((a,b)=>(a.lastUsed||0)-(b.lastUsed||0))){if(total<=budget)break;const track=r.track,size=bytes(r);if(!size||!r.file||pinned.has(track)||!['ready','error','cancelled'].includes(track.analysisStatus)||this.active?.id===r.id||track.stemBuffer||track.stemPreparing)continue;const b=track.buffer;track.buffer={duration:b.duration,sampleRate:b.sampleRate,numberOfChannels:b.numberOfChannels};track.libraryState=r.state='stored';total-=size;removed++;}
+  const records=[...this.records.values()],bytes=r=>(audioReady(r.track)?r.track.buffer.length*r.track.buffer.numberOfChannels*4:0)+(r.track?.stemBuffer?r.track.stemBuffer.length*r.track.stemBuffer.numberOfChannels*4:0);let total=records.reduce((sum,r)=>sum+bytes(r),0),removed=0;
+  for(const r of records.sort((a,b)=>(a.lastUsed||0)-(b.lastUsed||0))){if(total<=budget)break;const track=r.track,size=bytes(r);if(!size||!r.file||pinned.has(track)||!['ready','error','cancelled'].includes(track.analysisStatus)||this.active?.id===r.id||track.stemPreparing)continue;const b=track.buffer;if(track.stemBuffer){track.stemBuffer=null;track.stemEnvelopes=null;track.stemStatus='Stems sur disque';}track.buffer={duration:b.duration,sampleRate:b.sampleRate,numberOfChannels:b.numberOfChannels};track.libraryState=r.state='stored';total-=size;removed++;}
   this.bufferBytes=total;if(removed)this.emit();return{bytes:total,removed};
  }
 }

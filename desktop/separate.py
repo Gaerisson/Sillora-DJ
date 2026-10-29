@@ -1,5 +1,6 @@
 """Local four-stem preparation. No audio is sent to a service."""
 import json
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -17,7 +18,12 @@ def main():
 
     source, destination = map(Path, sys.argv[1:3])
     destination.mkdir(parents=True, exist_ok=True)
-    torch.set_num_threads(min(4, os.cpu_count() or 2))
+    threads=max(1, min(4, int(sys.argv[3]) if len(sys.argv)>3 else 2))
+    input_digest=sys.argv[4] if len(sys.argv)>4 else ''
+    if len(input_digest)!=64 or any(c not in '0123456789abcdef' for c in input_digest):
+        raise ValueError('Identité audio invalide.')
+    torch.set_num_threads(threads)
+    torch.set_num_interop_threads(1)
     torch.manual_seed(0)
     data, rate = sf.read(source, dtype='float32', always_2d=True)
     if not 1 <= data.shape[1] <= 2 or not np.isfinite(data).all():
@@ -58,9 +64,19 @@ def main():
         if not np.isfinite(stem).all():
             raise ValueError('Résultat audio non fini.')
         sf.write(destination/(name+'.wav'), stem, rate, subtype='FLOAT')
+    hashes={}
+    for name in model.sources:
+        digest=hashlib.sha256()
+        with (destination/(name+'.wav')).open('rb') as handle:
+            for block in iter(lambda:handle.read(1024*1024), b''):
+                digest.update(block)
+        hashes[name]=digest.hexdigest()
     manifest = dict(model='htdemucs', sources=model.sources, sampleRate=rate,
-                    frames=len(data), mixtureConsistency=True, version=1,device=device)
-    (destination/'complete.json').write_text(json.dumps(manifest), encoding='utf-8')
+                    frames=len(data), mixtureConsistency=True, version=2,device=device,
+                    cpuThreads=torch.get_num_threads(), inputDigest=input_digest, hashes=hashes)
+    temporary=destination/'complete.json.tmp'
+    temporary.write_text(json.dumps(manifest), encoding='utf-8')
+    temporary.replace(destination/'complete.json')
     emit(stage='done', **manifest)
 
 if __name__ == '__main__':

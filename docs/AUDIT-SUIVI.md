@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.26.0
+# Suivi de l’audit — Sillora DJ 0.27.0
 
 Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -15,6 +15,7 @@ Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | G · 0.24.0 | Gestes d’onde PC/Remote, propriété des prises et relais sur grille incertaine ; corpus élargi | 313 tests ; 99 fichiers analysés et 50 cas natifs depuis le paquet, dont 20 rendus de transitions et 20 cas de gestes MP3/Opus. [Gestes](GESTURES-0.24.md) · [Corpus](CORPUS-0.24.md) |
 | H · 0.25.0 | Préparation visuelle de grille, calibration, brouillon et restauration automatique | 322 tests ; 54 cas natifs, dont 18 de préparation MP3/Opus. [Fonctionnement](PREPARATION-0.25.md) · [Recette](CHANGELOG-0.25.0.md) |
 | I · 0.26.0 | Repère entrant au relais, Next recalculé, option et marqueurs PC/Remote | 332 tests ; 53 cas natifs, dont douze comparatifs Opus et deux rendus de repli. [Fonctionnement](ARRIVAL-0.26.md) · [Mesures](ARRIVAL-MEASURES-0.26.json) |
+| J · 0.27.0 | Stems en Worker, budgets CPU/mémoire/temps, annulation globale et cache validé | 345 tests ; 51 cas natifs, dont douze stems et quatre rendus Automix. [Réglages](STEMS-0.27.md) · [Mesures](STEMS-MEASURES-0.27.json) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -43,7 +44,7 @@ V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T =
 | R4.3-07 | V | Énergie et enveloppes sérialisées dans le cache natif. Tests `analysis-store`. |
 | R4.3-08 | V | Ondes précalculées sauvegardées, cache natif gzip puis IndexedDB en repli. Tests de cache. |
 | R4.3-09 | V | Cues, favoris, grille, tonalité et régions manuelles conservés lors de la réanalyse, du redémarrage et associés au contenu connu. Tests `library-imports`, `library-index` et recette n° 4. |
-| R4.3-10 | P | Cache stems existant, mais pas de gestionnaire unifié ni d’optimisation complète de sa préparation. |
+| R4.3-10 | P | Préparation et cache stems améliorés en 0.27 (lot J ci-dessous) ; gestionnaire unifié et quota disque restent ouverts. |
 | R4.3-11 | V | Clés et résultats versionnés ; cache incompatible ou corrompu ignoré. Tests `analysis-store`. |
 | R4.4-01 | P | Navigation et table paginées ; la réponse native attend encore les métadonnées du dossier et reste plafonnée à 2 000 entrées. |
 | R4.4-02 | A | Pas d’analyse audio passive par simple consultation d’un dossier. Import, chargement ou réanalyse explicite nécessaires. |
@@ -190,13 +191,25 @@ Le paquet final passe ses 50 cas natifs ; 145 sources comparées, versions et re
 
 332 tests et 53 cas natifs depuis le paquet final passent. Douze comparatifs activé/désactivé couvrent programmé/Next sur trois paires Opus ; deux rendus supplémentaires conservent un repli sur grille incertaine. Les 149 sources, ressources et exécutables sont contrôlés, avec contenu identique et intégrité vérifiée. Relecture par l’auteur ; installation personnelle non exécutée. Le corpus n’est pas réétiqueté comme juste. [Recette et limites](CHANGELOG-0.26.0.md).
 
+## Lot J — préparation des stems — 0.27.0
+
+Les boucles d’encodage WAV et d’enveloppes passent dans un Worker dédié. Transferts et assemblage sont découpés ; les budgets CPU, mémoire décodée par titre et temps de calcul se règlent sur le PC et Remote. Un seul processus est actif, et son annulation reste possible après remplacement de platine ou rechargement du renderer.
+
+| Points du registre | État | Évolution et limites |
+| :--- | :---: | :--- |
+| X2-03 | P | WAV/enveloppes hors du thread interface, assemblage par blocs et budgets avant allocation. Les allocations de statistiques dans les worklets et le profilage global restent ouverts. |
+| X3-02 | P | Stems sur demande avec calcul séparé, cache contrôlé et annulation. Les niveaux d’analyse musicale approfondie restent à compléter. |
+| R4.3-01, R4.3-10 | P | Cache stems v2 par SHA-256 d’entrée, horloges/formats et empreintes des quatre résultats, manifeste atomique, recalcul après corruption et éviction des tampons inactifs. Pas de schéma unifié complet ni de quota/purge du cache disque. |
+
+345 tests et 51 cas natifs passent depuis le paquet final : douze stems avec le vrai modèle, six arrivée/interface, neuf préparation, dix gestes, six bibliothèque, quatre continuité et quatre rendus automatiques. Les 155 sources, ressources, métadonnées et contenu identique des exécutables sont vérifiés, avec intégrité contrôlée. L’extrait de huit secondes prend environ 276 s sur le PC de test pendant la compression ; ce n’est pas une certification de temps réel ni de morceaux complets. Une commande figée après annulation a été reproduite puis corrigée. Installation personnelle non exécutée et revue par l’auteur. [Réglages et limites](STEMS-0.27.md) · [Recette](CHANGELOG-0.27.0.md).
+
 ## Prochain travail prioritaire
 
 1. Automix musical : élargir le jeu de grilles annotées, travailler les phrases et les points de passage, puis valider les rendus à l’écoute. Les grilles des deux références sont désormais exploitables sans correction manuelle ; cela ne clôt pas la fiabilité générale ni les nouveaux modes et la reconnaissance sémantique.
-2. Préparation audio : stems hors du thread interface, budgets de calcul et tests de ressources manquantes/longues sessions.
+2. Préparation audio : mesurer les morceaux complets et les longues sessions, profiler la mémoire totale et prévoir le quota/purge du cache disque. La séparation d’un extrait ne clôt pas ces validations.
 3. Brancher progressivement la [refonte UI](REFONTE-UI.md) sur les états réels. La maquette navigable utilise toujours des données illustratives ; sa présence ne signifie pas que la nouvelle console est intégrée.
 4. Poursuivre les sections restantes du registre, notamment réglages avancés du scratch, playlists, mises à jour et validation acoustique micro.
 
-Le bandeau de version Remote reste figé à 0.24 ; sa correction visuelle rejoint le chantier UI. Les commandes et captures de ce lot utilisent bien le code 0.26 embarqué.
+Le numéro figé à 0.24 dans le bandeau Remote a été retiré en 0.27 ; les captures utilisent le code du paquet vérifié.
 
 Chaque prochain lot devra apporter son code exécuté, sa recette et ses limites avant de changer les états correspondants.

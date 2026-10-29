@@ -3,6 +3,7 @@ import {scheduleReferenceFx,stopReferenceFx,referenceFxIds} from '../public/refe
 import {resolveTransition,transitionIds,faderCurves} from '../public/transition-design.mjs';
 import {tempoFraction} from '../public/tempo-automation.mjs';
 import {stemNames,prepareStems} from '../public/stems.mjs';
+import {NodeStemWorker} from './helpers/stem-worker-adapter.mjs';
 
 class Param{
  constructor(value=0){this.value=value;this.events=[];}
@@ -76,7 +77,7 @@ test('the real stem loader packing contract feeds the instrument grain, excludin
  }
  ctx.decodeAudioData=async name=>files[name];const track={buffer:ctx.createBuffer(2,length,ctx.sampleRate),bpm:110,autoGain:1};
  const desktop={stemAvailability:async()=>({available:true}),prepareStems:async()=>({id:'layout-test',state:'done',manifest:{model:'known-labelled-fixtures'}}),readStem:async(_id,name)=>name};
- await prepareStems(track,ctx,desktop);input.a.track=track;
+ await prepareStems(track,ctx,desktop,()=>{},undefined,{}, {createWorker:()=>new NodeStemWorker()});input.a.track=track;
  const handle=scheduleReferenceFx(ctx,input),grains=handle.nodes.filter(node=>node.buffer?.numberOfChannels===2&&Number.isFinite(node.startTime));
  const first=Math.round(handle.diagnostics.capturePosition*ctx.sampleRate),expected=files.other.getChannelData(0).subarray(first,first+grains[0].buffer.length),mean=expected.reduce((sum,value)=>sum+value,0)/expected.length;
  const actual=grains[0].buffer.getChannelData(0);assert.equal(actual.length,expected.length);

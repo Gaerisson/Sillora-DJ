@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.26.0.exe` et `Sillora-DJ-0.26.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.27.0.exe` et `Sillora-DJ-0.27.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -50,6 +50,7 @@ npm run test:transitions:windows -- "piste-A.mp3" "piste-B.mp3"
 npm run test:transitions:windows -- --rhythm "piste-A.mp3" "piste-B.mp3"
 npm run test:library:windows -- "piste-A.mp3" "piste-B.mp3"
 npm run test:audio:windows -- "piste-A.mp3" "piste-B.mp3"
+npm run test:stems:windows -- "piste-A.mp3" "piste-B.mp3"
 npm run test:keylock:windows
 npm run test:keylock-ui:windows -- "piste-A.mp3"
 npm run test:arrangement:windows -- "piste-A.mp3" "piste-B.mp3"
@@ -68,3 +69,5 @@ Le banc de préparation utilise les commandes réelles de correction de grille e
 La recette `test:grid:windows` importe au contraire les fichiers sans correction de grille, contrôle les mesures PC/Remote et leur restauration depuis le cache natif. Ses résultats sont dans `.runtime/grid-proof/results`. La matrice `--automatic-grid` utilise également les seules grilles automatiques pour quatre rendus Whoosh/automatique, dans les deux directions ; elle exige un rythme stable et au moins un repère de sortie exploité. Ces contraintes définissent le banc, pas la prise en charge de toute une collection. [Diagnostic et limites 0.23](GRID-0.23.md).
 
 Les gestes utilisent `.runtime/wave-gesture-proof`, avec profils isolés. Le corpus écrit ses analyses dans `.runtime/corpus-proof/results` ; ses rapports locaux contiennent les noms/chemins des fichiers testés et restent hors du dépôt. `--survey` accepte des grilles incertaines et contrôle le repli sans imposer une synchronisation. Deux rendus automatiques de 42 s sont produits, dans les deux sens, sans corrections manuelles des régions/grilles. [Périmètre 0.24](CORPUS-0.24.md).
+
+La recette stems utilise le moteur embarqué sur un extrait réel de huit secondes et un encodage de 180 secondes en Worker. Elle vérifie budgets, annulation, cache, rechargement, lecture et réglages Remote dans un profil isolé. Résultats dans `.runtime/stems-proof/results`. Le calcul CPU peut prendre plusieurs minutes ; il ne faut pas assimiler l’encodage de 180 secondes à une séparation de cette durée. [Réglages](STEMS-0.27.md).

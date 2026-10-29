@@ -1,0 +1,70 @@
+{
+  "version": "0.27.0",
+  "environment": {
+    "logicalCpu": 4,
+    "model": "htdemucs",
+    "torchThreads": 2,
+    "processing": "CPU",
+    "sampleRate": 48000,
+    "concurrentWork": "Windows distribution compression during native stem recipe"
+  },
+  "scope": "Real neural separation of eight seconds; 180-second encoding uses synthetic PCM. Source waveforms and personal filenames are not published.",
+  "encoding": {
+    "durationSeconds": 180,
+    "bytes": 69120044,
+    "maxFrameGapMs": 33.400000000001455,
+    "uiFrames": 39,
+    "invalidSamples": 0
+  },
+  "preparation": {
+    "durationSeconds": 8,
+    "elapsedMs": 275625.5,
+    "channels": 8,
+    "frames": 384000,
+    "maxFrameGapMs": 149.89999999999418,
+    "uiFrames": 16136,
+    "minProgrammeRmsDb": -28.798260363592902,
+    "invalidSamples": 0
+  },
+  "reconstruction": {
+    "maxError": 1.276639522984624e-7,
+    "rmsError": 1.1788334869548476e-8,
+    "envelopes": 4
+  },
+  "viewports": [
+    {
+      "skin": "obsidian",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "skin": "obsidian",
+      "width": 480,
+      "passed": true
+    },
+    {
+      "skin": "porcelain",
+      "width": 1440,
+      "passed": true
+    },
+    {
+      "skin": "porcelain",
+      "width": 480,
+      "passed": true
+    }
+  ],
+  "processes": [
+    {
+      "cpuThreads": 2,
+      "omp": "2"
+    },
+    {
+      "cpuThreads": 2,
+      "omp": "2"
+    },
+    {
+      "cpuThreads": 1,
+      "omp": "1"
+    }
+  ]
+}

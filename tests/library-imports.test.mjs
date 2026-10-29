@@ -20,6 +20,12 @@ test('snapshots contain no PCM or IPC token and restart reconnects by identity w
 test('LRU eviction retains loaded decks and metadata while an evicted title can be loaded again',async()=>{
  const q=new LibraryImports({decode:async(f,r)=>audio(r)});const tracks=await q.start(['A','B','C'].map(file)).promise;const result=q.evict({pinned:new Set([tracks[0]]),budget:80});assert.equal(result.removed,2);assert.ok(tracks[0].buffer.getChannelData);assert.equal(tracks[1].buffer.duration,1);assert.equal(tracks[1].buffer.getChannelData,undefined);assert.ok((await q.ensure(tracks[1].id)).buffer.getChannelData);
 });
+
+test('decoded stems count toward cache pressure and only unpinned completed preparations can be evicted',async()=>{
+ const q=new LibraryImports({decode:async(f,r)=>audio(r)}),tracks=await q.start(['A','B','C'].map(file)).promise;for(const t of tracks){t.stemBuffer={length:10,numberOfChannels:8};t.stemLevels={vocals:.4};}tracks[2].stemPreparing=true;
+ const total=tracks.reduce((sum,t)=>sum+t.buffer.length*t.buffer.numberOfChannels*4+320,0);assert.equal(q.evict({pinned:new Set(tracks),budget:0}).bytes,total);
+ const r=q.evict({pinned:new Set([tracks[0]]),budget:0});assert.equal(r.removed,1);assert.ok(tracks[0].stemBuffer);assert.equal(tracks[1].stemBuffer,null);assert.equal(tracks[1].stemLevels.vocals,.4);assert.ok(tracks[2].stemBuffer);assert.equal(tracks[1].buffer.getChannelData,undefined);
+});
 test('restoring an older catalog cannot overwrite a freshly discovered record, and native identities distinguish same-name files',()=>{
  const q=new LibraryImports({decode:async(f,r)=>audio(r)}),f=file('A'),current=q.discover([f])[0];q.restore({version:1,records:[{...current,id:'older'}]});assert.equal(q.byKey.get(fileKey(f)),current);assert.notEqual(fileKey({...f,fileId:'directory-1'}),fileKey({...f,fileId:'directory-2'}));
 });

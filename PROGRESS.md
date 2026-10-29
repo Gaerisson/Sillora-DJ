@@ -1,12 +1,12 @@
 # Sillora DJ — suivi de la refonte
 
-État au 28 octobre 2026. Version de départ : 0.16.1. Lots livrés : 0.17.0 puis 0.18.0.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.27.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
 Améliorer en priorité le résultat audio et la continuité de lecture. Préserver les fonctions existantes. La présence d'une commande dans l'interface ne vaut pas validation de son comportement.
 
-Les constats et résultats des premiers lots ci-dessous sont historiques. Pour l’état courant : [suivi de l’audit](docs/AUDIT-SUIVI.md) et lot B en fin de document.
+Les constats et résultats des premiers lots ci-dessous sont historiques. Pour l’état courant : [suivi de l’audit](docs/AUDIT-SUIVI.md) et derniers lots en fin de document.
 
 ## Audit initial
 
@@ -194,3 +194,9 @@ Le corpus élargi analyse 99 fichiers Opus sans erreur : 33 grilles acceptées, 
 Le titre entrant peut commencer avant un changement durable d’énergie/graves pour que ce repère arrive au relais de la partition. Deux grilles fiables, avance audible et réserve après le relais requises ; IN/OUT manuels prioritaires. Next recalcule son avance et sa phase pour la durée finale. Un passage trop court conserve le repli. Option mémorisée PC/Remote et marqueurs liés à l’identité de piste.
 
 332 tests et 53 cas natifs passent depuis le paquet : six UI/Remote, neuf préparation, dix gestes, six bibliothèque, quatre continuité/audio et 18 rendus, dont douze comparatifs sur trois paires Opus (montée, descente, demi/double). 149 sources, ressources, métadonnées, contenu identique et intégrité des exécutables contrôlés. Installation personnelle non exécutée ; revue par l’auteur. Pas de nouvelles annotations, de précision automatique revendiquée ni de reconnaissance sémantique. [Utilisation](docs/ARRIVAL-0.26.md) · [Mesures](docs/ARRIVAL-MEASURES-0.26.json) · [Recette](docs/CHANGELOG-0.26.0.md).
+
+## Lot J — préparation des stems — 0.27.0
+
+WAV et enveloppes RMS en Worker, transferts/assemblage par blocs, budgets CPU/mémoire décodée/temps mémorisés et partagés PC/Remote. Une seule séparation native ; annulation accessible après remplacement ou rechargement et libération du verrou après fin du processus. Cache v2 vérifié par SHA-256 et formats/horloges, publication atomique et conservation des niveaux. Les stems comptent dans l’éviction PCM des titres inactifs ; les imports de fond attendent. Le modèle et sa qualité d’isolation ne changent pas.
+
+345 tests et 51 cas natifs depuis le paquet passent, dont douze stems avec le modèle embarqué sur huit secondes réelles et un encodage Worker de 180 secondes synthétiques. Les 155 sources, ressources, versions et contenu identique des exécutables sont vérifiés, avec intégrité de l’archive contrôlée. Installation personnelle non exécutée ; relecture par l’auteur. Le calcul reste lent, le modèle et les copies dépassent le budget des stems décodés ; quota disque, morceaux complets et longues sessions restent ouverts. [Réglages](docs/STEMS-0.27.md) · [Mesures](docs/STEMS-MEASURES-0.27.json) · [Recette](docs/CHANGELOG-0.27.0.md).

@@ -46,10 +46,11 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   ipcMain.on('remote:ack',(event,ack)=>{if(trusted(event))remote.acknowledge(ack);});
   stems=new StemService({cache:process.env.SILLAGE_STEMS_CACHE||path.join(profile,'stems')});
   ipcMain.handle('stems:available',event=>{permitted(event);return stems.availability();});
-  ipcMain.handle('stems:prepare',(event,wave)=>{permitted(event);return stems.begin(wave);});
+  ipcMain.handle('stems:prepare',(event,wave,options)=>{permitted(event);return stems.begin(wave,options);});
   ipcMain.handle('stems:status',(event,id)=>{permitted(event);return stems.status(id);});
   ipcMain.handle('stems:read',(event,id,name)=>{permitted(event);return stems.read(id,name);});
   ipcMain.handle('stems:cancel',(event,id)=>{permitted(event);return stems.cancel(id);});
+  ipcMain.handle('stems:cancel-active',event=>{permitted(event);return stems.cancelActive();});
   const describedFiles=new Map(),descriptionsByToken=new Map();
   const describe=async file=>{const real=await fs.realpath(file),stat=await fs.stat(real);if(!stat.isFile()||!/[.](mp3|wav|flac|ogg|m4a|aac|aiff|opus|webm)$/i.test(real))throw new Error('Format audio non pris en charge.');const previous=describedFiles.get(real),stamp=Math.floor(stat.mtimeMs);if(previous&&previous.size===stat.size&&previous.lastModified===stamp)return {...previous};const token=randomUUID(),fileId=require('node:crypto').createHash('sha256').update(process.platform==='win32'?real.toLowerCase():real).digest('hex'),entry={token,fileId,name:path.basename(real),size:stat.size,lastModified:stamp};allowed.set(token,real);descriptionsByToken.set(token,entry);describedFiles.set(real,entry);return {...entry};};
   const libraryIndex=new LibraryIndex({file:libraryFile,resolveToken:token=>allowed.get(token),describe}),analysisStore=new AnalysisStore({directory:path.join(profile,'analysis-cache')});

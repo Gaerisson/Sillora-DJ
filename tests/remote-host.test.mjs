@@ -3,6 +3,10 @@ const {RemoteHost,sanitizeState,sanitizeCommand,privateIPv4}=createRequire(impor
 const publicDir=fileURLToPath(new URL('../public',import.meta.url));
 const snapshot=()=>({decks:[{loaded:true,title:'Titre A',artist:'Artiste A',playing:true,duration:180,position:30},{loaded:true,title:'Titre B',duration:200}],master:.7,crossfader:.2,automix:{enabled:true,mode:'compatible',scopeName:'Musique',remaining:2},library:[{id:'track-1',title:'Titre A',bpm:120,key:'Am · 8A',duration:180},{id:'track-2',title:'Titre B',bpm:122,key:'C · 8B',duration:200}],recommendations:[{id:'track-2',title:'Titre B',reason:'Tonalité relative'}]});
 
+test('Remote stem resource settings preserve the other budget and cannot expose arbitrary process options',()=>{
+ const s=snapshot();s.stemOptions={cpuThreads:2,memoryMiB:1024,timeoutMinutes:90};const c=sanitizeCommand({type:'stems:configure',value:{cpuThreads:1}},s);assert.deepEqual(c.value,{cpuThreads:1,memoryMiB:1024,timeoutMinutes:90});for(const value of [{cpuThreads:8},{memoryMiB:8192},null])assert.throws(()=>sanitizeCommand({type:'stems:configure',value},s));const state=sanitizeState({...s,stemPreparation:{active:true,title:'Titre',status:'Calcul',path:'private'}});assert.deepEqual(state.stemOptions,s.stemOptions);assert.deepEqual(state.stemPreparation,{active:true,title:'Titre',status:'Calcul'});assert.deepEqual(sanitizeCommand({type:'stems:cancelActive'},s),{type:'stems:cancelActive'});
+});
+
 test('Remote arrival markers require a matching deck and strip untrusted fields and labels',()=>{
  const raw=snapshot();raw.decks[1].trackId='track-2';const point={version:1,trackId:'track-2',time:24,index:2,label:'private label',confidence:.8,path:'private'};raw.transition={incomingLanding:point};const expected={version:1,trackId:'track-2',time:24,index:2,label:'R3',confidence:.8};assert.deepEqual(sanitizeState(raw).transition.incomingLanding,expected);
  for(const patch of [{trackId:'other'},{trackId:null},{time:200},{time:-1},{time:NaN},{index:256},{confidence:.5}]){raw.transition.incomingLanding={...point,...patch};assert.equal(sanitizeState(raw).transition.incomingLanding,null);}
