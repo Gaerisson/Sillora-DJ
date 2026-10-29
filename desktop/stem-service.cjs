@@ -1,3 +1,4 @@
+const {StemCache}=require('./stem-cache.cjs');
 const fs=require('node:fs/promises'),fsSync=require('node:fs'),path=require('node:path'),os=require('node:os'),{spawn}=require('node:child_process'),{createHash,randomUUID}=require('node:crypto');
 const {STEM_LIMITS,checkedStemOptions,stemBudget,effectiveStemThreads}=require('../public/stem-budget.mjs');
 const names=['drums','bass','other','vocals'],turn=()=>new Promise(resolve=>setImmediate(resolve));
@@ -15,7 +16,7 @@ class StemService{
  constructor({cache,python,script=path.join(__dirname,'separate.py'),modelCache,bundleRoot,spawnProcess=spawn,parallelism=os.availableParallelism(),timeoutMs}={}){
   bundleRoot||=process.resourcesPath&&fsSync.existsSync(path.join(process.resourcesPath,'stems','runtime-manifest.json'))?path.join(process.resourcesPath,'stems'):path.join(__dirname,'vendor','stems');
   this.bundled=fsSync.existsSync(path.join(bundleRoot,'runtime-manifest.json'));python||=process.env.SILLAGE_STEMS_PYTHON||path.join(bundleRoot,'python','python.exe');modelCache||=process.env.SILLAGE_STEMS_MODELS||path.join(bundleRoot,'models');cache||=path.join(os.homedir(),'.gaerisson-dj-studio','stems');
-  Object.assign(this,{cache,python,script,modelCache,bundleRoot,spawnProcess,parallelism,timeoutMs});this.jobs=new Map();this.active=null;
+  Object.assign(this,{cache,python,script,modelCache,bundleRoot,spawnProcess,parallelism,timeoutMs});this.jobs=new Map();this.active=null;this.cacheStore=new StemCache({directory:this.cache,protectedDigests:()=>new Set([...this.jobs.values()].filter(j=>j===this.active||j.pinUntil>Date.now()).map(j=>j.digest).filter(Boolean)),blocked:()=>Boolean(this.active&&!this.active.digest)});
  }
  async availability(){try{await Promise.all([fs.access(this.python),fs.access(this.script),fs.access(path.join(this.modelCache,'hub','checkpoints','955717e8-8726e21a.th'))]);return {available:true,model:'htdemucs',processing:'offline',bundled:this.bundled,busy:Boolean(this.active),active:this.active?this.status(this.active.id):null,maxCpuThreads:effectiveStemThreads(4,this.parallelism),limits:STEM_LIMITS};}catch{return {available:false,busy:Boolean(this.active),active:this.active?this.status(this.active.id):null,message:'Le moteur de stems intégré, son script ou son modèle manque. Utilisez la distribution Windows complète.'};}}
  async begin(bytes,options={}){
@@ -35,19 +36,22 @@ class StemService{
    const availability=await this.availability();cancelled(job);if(!availability.available)throw Error(availability.message);
    job.digest=await hashBytes(wave,job);job.folder=path.join(this.cache,'htdemucs-v2',job.digest);job.stage='verifying';let cached;
    try{cached=await this.cached(job);}catch(error){if(error.name==='AbortError')throw error;}
-   cancelled(job);if(cached){job.manifest=cached;job.cached=true;job.state='done';return;}
-   await fs.mkdir(job.folder,{recursive:true});cancelled(job);const helper=path.join(this.cache,'separate-v2.py');await fs.writeFile(helper,await fs.readFile(this.script));cancelled(job);const input=path.join(job.folder,'input.wav');await fs.writeFile(input,wave);wave=null;cancelled(job);
+   cancelled(job);if(cached){job.manifest=cached;job.cached=true;job.pinUntil=Date.now()+120000;await this.cacheStore.touch(job.digest).catch(e=>this.cacheError=e.message);cancelled(job);job.state='done';await this.cacheStore.trim().catch(e=>this.cacheError=e.message);return;}
+   await fs.mkdir(job.folder,{recursive:true});cancelled(job);await fs.writeFile(path.join(job.folder,'cache-entry.json'),JSON.stringify({owner:'sillora-stems',version:1,digest:job.digest}));const helper=path.join(this.cache,'separate-v2.py');await fs.writeFile(helper,await fs.readFile(this.script));cancelled(job);const input=path.join(job.folder,'input.wav');await fs.writeFile(input,wave);wave=null;cancelled(job);
    const cpu=String(job.cpuThreads),child=this.spawnProcess(this.python,['-u',helper,input,job.folder,cpu,job.digest],{windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,TORCH_HOME:this.modelCache,PYTHONUTF8:'1',OMP_NUM_THREADS:cpu,MKL_NUM_THREADS:cpu,OPENBLAS_NUM_THREADS:cpu}});job.child=child;job.state='running';job.stage='loading';let line='',lastError='';
    child.stdout.on('data',data=>{line=(line+data.toString()).slice(-65536);let at;while((at=line.indexOf('\n'))>=0){const text=line.slice(0,at);line=line.slice(at+1);try{const m=JSON.parse(text);if(job.state==='running'){if(['loading','model','separating','writing','verifying'].includes(m.stage))job.stage=m.stage;if(m.error)job.error=String(m.error).slice(0,4000);}}catch{}}});
    child.stderr.on('data',data=>{const text=data.toString();lastError=(lastError+text).slice(-4000);const percentages=[...text.matchAll(/(\d+)%/g)];if(job.stage==='separating'&&percentages.length)job.percent=Math.max(0,Math.min(100,Number(percentages.at(-1)[1])));});
    const code=await new Promise((resolve,reject)=>{child.once('error',reject);child.once('close',resolve);job.timer=setTimeout(()=>{job.error='Le budget de temps de préparation est dépassé.';child.kill();},this.timeoutMs??job.timeoutMinutes*60*1000);job.timer.unref?.();});clearTimeout(job.timer);job.child=null;cancelled(job);
-   if(code!==0||job.error)throw Error(job.error||lastError||'La séparation a échoué.');job.stage='verifying';job.percent=null;job.manifest=await this.cached(job);cancelled(job);if(!job.manifest)throw Error('Les fichiers de stems sont incomplets ou leur cache est altéré.');job.state='done';
+   if(code!==0||job.error)throw Error(job.error||lastError||'La séparation a échoué.');job.stage='verifying';job.percent=null;job.manifest=await this.cached(job);cancelled(job);if(!job.manifest)throw Error('Les fichiers de stems sont incomplets ou leur cache est altéré.');job.pinUntil=Date.now()+120000;job.state='done';await this.cacheStore.touch(job.digest).then(()=>this.cacheStore.trim()).catch(e=>this.cacheError=e.message);
   }catch(error){if(job.state!=='cancelled'){job.state='error';job.error=error.message;}}
   finally{clearTimeout(job.timer);job.child=null;if(this.active===job)this.active=null;}
  }
  status(id){const job=this.jobs.get(id);if(!job)throw Error('Préparation inconnue.');return{id,state:job.state,stage:job.stage,percent:job.percent,error:job.error,cached:Boolean(job.cached),cpuThreads:job.cpuThreads,memoryMiB:job.memoryMiB,timeoutMinutes:job.timeoutMinutes,manifest:job.state==='done'?job.manifest:undefined};}
- async read(id,name){const job=this.jobs.get(id);if(!job||job.state!=='done'||!names.includes(name))throw Error('Stem indisponible.');const bytes=await fs.readFile(path.join(job.folder,name+'.wav'));if(await hashBytes(bytes,job)!==job.manifest.hashes[name])throw Error('Le cache de stems a changé. Préparez de nouveau ce morceau.');return bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);}
+ async read(id,name){const job=this.jobs.get(id);if(!job||job.state!=='done'||!names.includes(name))throw Error('Stem indisponible.');job.pinUntil=Date.now()+120000;const bytes=await fs.readFile(path.join(job.folder,name+'.wav'));if(await hashBytes(bytes,job)!==job.manifest.hashes[name])throw Error('Le cache de stems a changé. Préparez de nouveau ce morceau.');await this.cacheStore.touch(job.digest).catch(e=>this.cacheError=e.message);return bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);}
  cancel(id){const job=this.jobs.get(id);if(!job||!['running','queued'].includes(job.state))return;job.state='cancelled';job.child?.kill();}
+ async cacheInfo(){return{...await this.cacheStore.info(),error:this.cacheError||''};}
+ async setCacheLimit(value){const result=await this.cacheStore.setLimit(value);this.cacheError='';return result;}
+ async clearCache(){const result=await this.cacheStore.clear();this.cacheError='';return result;}
  cancelActive(){if(this.active)this.cancel(this.active.id);}
  close(){this.closed=true;for(const job of this.jobs.values())this.cancel(job.id);}
 }

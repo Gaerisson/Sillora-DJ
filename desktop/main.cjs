@@ -45,6 +45,9 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
   ipcMain.on('remote:state',(event,state)=>{if(trusted(event))remote.publish(state);});
   ipcMain.on('remote:ack',(event,ack)=>{if(trusted(event))remote.acknowledge(ack);});
   stems=new StemService({cache:process.env.SILLAGE_STEMS_CACHE||path.join(profile,'stems')});
+  ipcMain.handle('stems:cache-info',event=>{permitted(event);return stems.cacheInfo();});
+  ipcMain.handle('stems:cache-limit',(event,value)=>{permitted(event);return stems.setCacheLimit(value);});
+  ipcMain.handle('stems:cache-clear',event=>{permitted(event);return stems.clearCache();});
   ipcMain.handle('stems:available',event=>{permitted(event);return stems.availability();});
   ipcMain.handle('stems:prepare',(event,wave,options)=>{permitted(event);return stems.begin(wave,options);});
   ipcMain.handle('stems:status',(event,id)=>{permitted(event);return stems.status(id);});

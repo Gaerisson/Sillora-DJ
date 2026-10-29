@@ -1,0 +1,4 @@
+export const stemMixNames=['drums','bass','other','vocals'];
+export function stemMixState(track={}){track||={};return{levels:Object.fromEntries(stemMixNames.map(n=>[n,Number.isFinite(track.stemLevels?.[n])?Math.max(0,Math.min(1,track.stemLevels[n])):1])),muted:Object.fromEntries(stemMixNames.map(n=>[n,track.stemMuted?.[n]===true])),solo:Object.fromEntries(stemMixNames.map(n=>[n,track.stemSolo?.[n]===true]))};}
+export function effectiveStemGain(track,name){if(!stemMixNames.includes(name))return 0;const s=stemMixState(track);return s.muted[name]||Object.values(s.solo).some(Boolean)&&!s.solo[name]?0:s.levels[name];}
+export function applyStemPreset(track,preset){if(!['original','instrumental','acappella'].includes(preset))throw Error('Preset stems invalide.');track.stemMuted={};track.stemSolo={};track.stemLevels=Object.fromEntries(stemMixNames.map(n=>[n,preset==='original'?1:preset==='acappella'?Number(n==='vocals'):Number(n!=='vocals')]));}

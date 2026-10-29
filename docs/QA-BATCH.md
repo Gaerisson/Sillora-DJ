@@ -31,3 +31,9 @@ npm run pack:installer:fast
 ```
 
 Ce mode demande le niveau de compression 1 au builder installé, via son option prévue `ELECTRON_BUILDER_COMPRESSION_LEVEL`. Le mode normal reste disponible avec `npm run pack:installer`. Une valeur explicite de la variable d’environnement reste prioritaire. Les sources et ressources embarquées ne changent pas ; le fichier est plus volumineux. Comparer le contenu, les ressources et l’intégrité des deux exécutables après construction. Le niveau de compression n’agit pas sur le son ni sur les modèles.
+
+## Identité des données et précontrôle
+
+Le lanceur calcule désormais les SHA-256 des arguments qui désignent des fichiers existants. Les fixtures supplémentaires se déclarent dans `inputs`, une liste de chemins : leur présence est obligatoire et leur contenu participe à l’identité. `env` accepte uniquement des variables `SILLORA_QA_…` de type chaîne ; leurs valeurs participent aussi à cette identité. Déclarer comme entrées les fichiers auxquels ces variables renvoient. Les remplacements au même chemin et de même taille sont donc détectés. Les chemins et rapports restent locaux.
+
+Avant de démarrer Electron, le script généré passe `node --check`. Une erreur est conservée dans le rapport et le lanceur n’ouvre pas une console invalide. Ce contrôle ne remplace pas la recette fonctionnelle.

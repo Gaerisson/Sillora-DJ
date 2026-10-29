@@ -1,6 +1,6 @@
 # Sillora DJ — suivi de la refonte
 
-État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.28.0. Les premiers lots ci-dessous conservent leurs constats historiques.
+État au 29 octobre 2026. Version de départ : 0.16.1 ; version courante : 0.29.0. Les premiers lots ci-dessous conservent leurs constats historiques.
 
 ## Objectif
 
@@ -206,3 +206,9 @@ WAV et enveloppes RMS en Worker, transferts/assemblage par blocs, budgets CPU/m�
 Navigation réelle entre quatre espaces, bibliothèque redimensionnable, densité et modules mémorisés. Même moteur et source en lecture ; grille/stems et quatre entrées de régie existantes réutilisés. Le lanceur groupe les recettes, réserve la ressource UI, parallélise les tests Node et reprend seulement les résultats aux empreintes intactes. Le build rapide compresse au niveau 1 en conservant les ressources.
 
 353 tests unitaires et 51 cas natifs depuis le paquet passent ; 24 combinaisons vues/tailles/thèmes et 158 sources comparées. Les deux exécutables ont le même contenu, ressources/versions et intégrité vérifiées. Les échecs du parallélisme initial restent documentés. Aucun nouveau DSP ni validation acoustique/longue session revendiqués. La refonte générale reste partielle. [Espaces](docs/WORKSPACES-0.28.md) · [Recettes](docs/QA-BATCH.md) · [Distribution](docs/CHANGELOG-0.28.0.md).
+
+## Lot L — mixage et cache des stems — 0.29.0
+
+Mute/Solo préparés PC/Remote, faders séparés et presets en une commande. Cache géré v2 avec quota, dernier accès, protection active/récente, nettoyage ciblé et politique persistante. Les données de recette participent maintenant aux empreintes et la syntaxe est vérifiée avant Electron. La mémoire de bibliothèque affiche le PCM total.
+
+369 tests unitaires, 52 cas natifs source et 42 depuis le paquet passent. Les 162 sources, ressources et exécutables sont contrôlés. La recette recharge un résultat neuronal réel de huit secondes sans réinférence ; elle ne certifie pas une nouvelle qualité d’isolation. Les corrections de banc et du style Remote sont consignées. Scratch multicanal, sauvegarde des mutes/solos entre sessions, anticipation Automix, anciens caches/gros volumes et longues sessions restent ouverts. [Mixage](docs/STEM-MIX-0.29.md) · [Cache](docs/STEM-CACHE-0.29.md) · [Recette](docs/CHANGELOG-0.29.0.md).

@@ -2,6 +2,15 @@
 
 Les vues générales proviennent de la 0.16.1 exécutée ; les vues de préparation et de gestes sont datées ci-dessous. Les morceaux et pochettes illustrent une session locale ; aucun fichier musical n’est distribué avec le dépôt.
 
+## Mixage et cache des stems · 0.29.0
+
+![Mute et Solo sur la platine](images/stem-mix-029.png)
+![Cache local](images/stem-cache-029.png)
+![Cache Porcelaine](images/stem-cache-porcelain-029.png)
+<img src="images/stem-mix-remote-029.png" alt="Faders et Mute/Solo sur Remote" width="360">
+
+Régions de commandes capturées directement depuis le paquet. Quota de recette : 1 Gio ; solo de basse actif. [Mixage](STEM-MIX-0.29.md) · [Cache](STEM-CACHE-0.29.md).
+
 ## Espaces du studio · 0.28.0
 
 ![Studio](images/workspace-studio-028.png)

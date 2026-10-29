@@ -10,7 +10,7 @@ export class LibraryJobsView{
   this.find('.library-work-status span').textContent=(analysis.backgroundPaused?'Analyses de fond en pause':analysis.performanceBusy?'Analyses de fond suspendues pendant le passage':analysis.active?'Analyse en cours':'Analyses disponibles')+(analysis.waiting?' · '+analysis.waiting+' en attente':'');
   const pause=this.find('[data-job=pause]');pause.hidden=!batch||!['running','paused'].includes(batch.state);pause.textContent=batch?.state==='paused'?'Reprendre import':'Pause import';
   this.find('[data-job=cancel]').hidden=!batch||!['running','paused'].includes(batch.state);this.find('[data-job=resume]').hidden=cancelling||(!restored&&!(batch&&!['running','paused'].includes(batch.state)&&remaining>0));
-  this.find('[data-job=analysis]').textContent=analysis.backgroundPaused?'Reprendre analyses':'Pause analyses';this.find('output').textContent=Math.round((bytes||0)/1048576)+' Mio originaux';this.find('output').title='Budget souple de 384 Mio pour les fichiers originaux. Les platines chargées sont conservées.';
+  this.find('[data-job=analysis]').textContent=analysis.backgroundPaused?'Reprendre analyses':'Pause analyses';this.find('output').textContent=Math.round((bytes||0)/1048576)+' Mio PCM';this.find('output').title='Budget souple de 384 Mio pour les fichiers originaux. Les platines chargées sont conservées.';
   const pages=this.find('.library-pages');pages.hidden=total<=size;this.find('.library-pages span').textContent=(total?page*size+1:0)+'–'+Math.min(total,(page+1)*size)+' / '+total;this.find('[data-page="-1"]').disabled=page===0;this.find('[data-page="1"]').disabled=(page+1)*size>=total;
  }
 }

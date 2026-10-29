@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.28.0
+# Suivi de l’audit — Sillora DJ 0.29.0
 
 Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -17,6 +17,7 @@ Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | I · 0.26.0 | Repère entrant au relais, Next recalculé, option et marqueurs PC/Remote | 332 tests ; 53 cas natifs, dont douze comparatifs Opus et deux rendus de repli. [Fonctionnement](ARRIVAL-0.26.md) · [Mesures](ARRIVAL-MEASURES-0.26.json) |
 | J · 0.27.0 | Stems en Worker, budgets CPU/mémoire/temps, annulation globale et cache validé | 345 tests ; 51 cas natifs, dont douze stems et quatre rendus Automix. [Réglages](STEMS-0.27.md) · [Mesures](STEMS-MEASURES-0.27.json) |
 | K · 0.28.0 | Espaces réels, bibliothèque redimensionnable, densité/modules ; recettes regroupées et build rapide | 353 tests ; 51 cas natifs. [Espaces](WORKSPACES-0.28.md) · [Recettes](QA-BATCH.md) |
+| L · 0.29.0 | Mute/Solo PC/Remote, presets atomiques, quota/nettoyage du cache ; identité des données de test | 369 tests ; 52 cas natifs source, 42 depuis le paquet. [Mixage](STEM-MIX-0.29.md) · [Cache](STEM-CACHE-0.29.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -217,10 +218,23 @@ Quatre chantiers sont reliés aux états réels : espaces Studio/Automix/Prépar
 
 353 tests et 51 cas natifs passent, dont douze espaces, six arrivée, neuf préparation, dix gestes, quatre continuité, quatre rendus et six bibliothèque. Les 158 sources et exécutables sont contrôlés. Les premiers essais à deux consoles ont révélé une contention et une erreur de capture ; le lanceur protège désormais la ressource UI et parallélise Node avec une console. Les mesures sensibles restent exclusives. La compilation rapide change la compression, pas les ressources. Pas de nouvelle qualité sonore revendiquée ; ni installation personnelle, ni essai acoustique de salle. [Recette complète](CHANGELOG-0.28.0.md).
 
+## Lot L — mixage et cache des stems — 0.29.0
+
+Mute/Solo réels, solos cumulables, faders conservés et presets atomiques sont disponibles sur le PC et Remote. Une commande obsolète est refusée par identité de titre. Le quota géré v2 est mémorisé, avec ordre de dernier accès, protection active/récente, nettoyage ciblé et sérialisation des opérations.
+
+| Références | État | Évolution et limite |
+| :--- | :---: | :--- |
+| R4.3-01, R4.3-10 | P | Métadonnées de dernier accès, adoption des manifestes v2 existants, quota 1/4/16/32 Gio et nettoyage des fichiers générés reconnus. Le schéma unifié, les anciens v1, les données non reconnues et les gros volumes restent ouverts. |
+| R5.performance-05, R5.performance-06 | V dans le périmètre | Réemploi d’un vrai résultat vérifié et contrôle d’empreintes, sans processus de modèle supplémentaire ; protections de lecture et de travail. Aucun changement de qualité de séparation revendiqué. |
+| Commandes de stems | V dans le périmètre | Mute/Solo et presets réels, PC/Remote, rampes et maintien de la source ; scratch original pendant la prise et rétablissement du dosage au relâchement. Persistance entre sessions absente. |
+| R5.auto-01 à 06 | Inchangés | Pas de nouvel ordonnanceur anticipant les stems Automix ni d’analyse sémantique. |
+
+369 tests unitaires et 52 cas natifs passent sur les sources. Le paquet rejoue 42 cas ciblés : seize stems/cache, douze espaces, quatre continuité, quatre rendus et six bibliothèque. Les dix gestes supplémentaires restent une exécution source, avec sources embarquées identiques. Les 162 fichiers applicatifs, ressources, versions et contenu identique des exécutables sont vérifiés. Le résultat neuronal de huit secondes est réutilisé après vérification, sans nouvelle inférence. Aucun nettoyage du profil personnel, essai de longue durée ou validation perceptive nouvelle. Relecture par l’auteur. [Recette et limites](CHANGELOG-0.29.0.md).
+
 ## Prochain travail prioritaire
 
 1. Automix musical : élargir le jeu de grilles annotées, travailler les phrases et les points de passage, puis valider les rendus à l’écoute. Les grilles des deux références sont désormais exploitables sans correction manuelle ; cela ne clôt pas la fiabilité générale ni les nouveaux modes et la reconnaissance sémantique.
-2. Préparation audio : mesurer les morceaux complets et les longues sessions, profiler la mémoire totale et prévoir le quota/purge du cache disque. La séparation d’un extrait ne clôt pas ces validations.
+2. Préparation audio : mesurer les morceaux complets, les longues sessions et la mémoire totale, puis préparer l’anticipation Automix. Le quota/nettoyage v2 est livré en 0.29 ; gros volumes, anciens caches et fichiers non reconnus restent à traiter.
 3. Poursuivre la [refonte UI](REFONTE-UI.md) : les quatre espaces et réglages de bibliothèque sont branchés en 0.28, mais les contrôles et couches CSS historiques ne sont pas tous remplacés. La maquette reste une proposition illustrative distincte.
 4. Poursuivre les sections restantes du registre, notamment réglages avancés du scratch, playlists, mises à jour et validation acoustique micro.
 

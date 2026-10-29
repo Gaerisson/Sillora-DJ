@@ -1,3 +1,4 @@
+import {effectiveStemGain,applyStemPreset} from './stem-mix.mjs';
 import {runtimeIncomingLanding} from './incoming-landing.mjs';
 import {checkedGrid,automaticGrid,gridRevision} from './grid-editor.mjs';
 import {keyLockProfile as resolveKeyLockProfile} from './keylock-profiles.mjs';
@@ -240,7 +241,7 @@ export class StudioEngine extends EventTarget {
       const split=this.context.createChannelSplitter(8),sum=this.context.createGain();sum.channelCount=2;sum.channelCountMode='explicit';source.connect(split);d.stemNodes=[split,sum];d.stemGains={};d.stemTransitionGains={};
       for(const [index,name] of stemNames.entries()){
         const stereo=this.context.createChannelMerger(2),gain=this.context.createGain(),automation=this.context.createGain();
-        gain.gain.value=d.track.stemLevels?.[name]??1;
+        gain.gain.value=effectiveStemGain(d.track,name);
         split.connect(stereo,index*2,0);split.connect(stereo,index*2+1,1);stereo.connect(gain).connect(automation).connect(sum);
         d.stemNodes.push(stereo,gain,automation);d.stemGains[name]=gain;d.stemTransitionGains[name]=automation;
         if(name==='vocals')gain.connect(d.stemEchoSend);
@@ -330,8 +331,12 @@ export class StudioEngine extends EventTarget {
   setStemLevel(id,name,level){
     const d=this.decks[id];if(!d.track?.stemBuffer||!stemNames.includes(name))return;
     d.track.stemLevels||=Object.fromEntries(stemNames.map(name=>[name,1]));d.track.stemLevels[name]=clamp(Number.isFinite(level)?level:1,0,1);
-    d.stemGains?.[name].gain.setTargetAtTime(d.track.stemLevels[name],this.context.currentTime,.02);this.dispatchEvent(new Event('change'));
+    this.refreshStemMix(id);
   }
+  refreshStemMix(id){const d=this.decks[id];for(const name of stemNames)d.stemGains?.[name]?.gain.setTargetAtTime(effectiveStemGain(d.track,name),this.context.currentTime,.02);this.dispatchEvent(new Event('change'));}
+  setStemMute(id,name,enabled){const t=this.decks[id].track;if(!t?.stemBuffer||!stemNames.includes(name))return;t.stemMuted||={};t.stemMuted[name]=enabled===true;this.refreshStemMix(id);}
+  setStemSolo(id,name,enabled){const t=this.decks[id].track;if(!t?.stemBuffer||!stemNames.includes(name))return;t.stemSolo||={};t.stemSolo[name]=enabled===true;this.refreshStemMix(id);}
+  setStemPreset(id,preset){const t=this.decks[id].track;if(!t?.stemBuffer)return;applyStemPreset(t,preset);this.refreshStemMix(id);}
   async activateStems(id){const d=this.decks[id];if(!d.track?.stemBuffer||!d.playing)return;this.cancelTransition();this.pause(id);await this.play(id);}
   unload(id) {
     this.decks[id].playRequest=null;

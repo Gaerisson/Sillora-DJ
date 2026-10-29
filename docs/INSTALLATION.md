@@ -2,7 +2,7 @@
 
 ## Distribution Windows
 
-Le build produit `Sillora-DJ-Setup-0.28.0.exe` et `Sillora-DJ-0.28.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
+Le build produit `Sillora-DJ-Setup-0.29.0.exe` et `Sillora-DJ-0.29.0-Windows.exe`. Fermer le studio avant une mise à jour. Les binaires ne sont pas encore disponibles dans GitHub Releases.
 
 La version portable extrait ses dépendances au lancement et peut mettre davantage de temps à démarrer. Les préférences utilisent le profil historique ; le changement de nom ne crée pas une nouvelle bibliothèque.
 
@@ -75,3 +75,5 @@ Les gestes utilisent `.runtime/wave-gesture-proof`, avec profils isolés. Le cor
 La recette stems utilise le moteur embarqué sur un extrait réel de huit secondes et un encodage de 180 secondes en Worker. Elle vérifie budgets, annulation, cache, rechargement, lecture et réglages Remote dans un profil isolé. Résultats dans `.runtime/stems-proof/results`. Le calcul CPU peut prendre plusieurs minutes ; il ne faut pas assimiler l’encodage de 180 secondes à une séparation de cette durée. [Réglages](STEMS-0.27.md).
 
 Le [lanceur regroupé](QA-BATCH.md) organise les recettes et leur reprise, avec une ressource UI commune. Les nouveaux espaces se contrôlent par `test:workspace:windows`. Voir les [réglages d’affichage](WORKSPACES-0.28.md).
+
+La recette `test:stem-mix:windows` accepte les mêmes deux MP3 de plus de 52 s et utilise un extrait de huit secondes. Sans fixture, elle lance la séparation locale. Pour réutiliser un résultat déjà vérifié, `SILLORA_QA_STEM_FIXTURE` doit désigner un dossier contenant `input.wav`, les quatre WAV et `complete.json` avec les empreintes d’origine. Garder ces fichiers privés ; dans le lanceur regroupé, les déclarer comme `inputs` et fournir la variable par `env`. [Mixage](STEM-MIX-0.29.md) · [Cache](STEM-CACHE-0.29.md).
