@@ -5,6 +5,16 @@ import {transitionProgress} from '../public/transition-design.mjs';
 import {makeTransitionPlan} from '../public/analysis.mjs';
 import {readGrid,gridRevision} from '../public/grid-editor.mjs';
 import {tempoAt,tempoFraction} from '../public/tempo-automation.mjs';
+import {editPhraseCues,phraseRevision} from '../public/phrase-cues.mjs';
+
+test('prepared phrase relays hit both real transport heads through morphs and Next without rewriting an active passage',async()=>{
+ for(const shape of ['linear','smooth','early','late'])for(const [a,b]of [[110,98],[98,110]])for(const next of [false,true]){
+  const e=new StudioEngine();await e.init();const make=(id,bpm)=>({id,bpm,confidence:'generated',downbeat:.25,beatOffset:.25,buffer:{duration:180},audibleEnd:180,mixIn:.25,mixOut:160,envelope:Array(1800).fill(.1),bassEnvelope:Array(1800).fill(.03),keyRoot:0,keyMode:'major',keyConfidence:1});const A=make('a',a),B=make('b',b),sourcePoint=.25+56*240/a,targetPoint=.25+16*240/b;
+  for(const [t,id,time,role]of [[A,'out',sourcePoint,'exit'],[B,'in',targetPoint,'entry']]){t.phraseCues=editPhraseCues(t,{type:'add',id,time,label:id});t.phraseCues=editPhraseCues(t,{type:'assign',id,role});}
+  e.load(0,A);e.load(1,B);await e.play(0);await e.startTransition({style:'auto',profile:'musical',beats:16,automix:true,sync:true,tempoBlend:true,tempoShape:shape,quantize:true,startNow:next,skipBeats:4});const t=e.transition;assert.equal(t.incomingLanding?.origin,'manual');e.context.currentTime=t.handoffAt;assert.ok(Math.abs(e.position(1)-targetPoint)<1e-7);if(!next)assert.ok(Math.abs(e.position(0)-sourcePoint)<1e-7);
+  const source=e.decks[1].source,position=e.position(1),revision=phraseRevision(B),oldArrival=structuredClone(t.incomingLanding);e.editPhraseCue(1,{type:'update',id:'in',time:targetPoint+240/b},{expectedTrack:B,expectedRevision:revision});assert.equal(e.decks[1].source,source);assert.equal(e.position(1),position);assert.deepEqual(t.incomingLanding,oldArrival);assert.throws(()=>e.editPhraseCue(1,{type:'remove',id:'in'},{expectedRevision:revision}),/changé/);assert.throws(()=>e.editPhraseCue(1,{type:'remove',id:'in'},{expectedTrack:A}),/piste/);
+ }
+});
 
 test('nonlinear transitions keep both clocks and score landmarks coherent through Next, cancellation and completion',async()=>{
  for(const tempoShape of ['smooth','early','late'])for(const [a,b]of [[110,98],[98,110]])for(const startNow of [false,true]){

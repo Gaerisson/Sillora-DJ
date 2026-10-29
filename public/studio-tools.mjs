@@ -1,3 +1,4 @@
+import {readPhraseCues} from './phrase-cues.mjs';
 import {tempoLimit} from './tempo-policy.mjs';
 import {tempoShape} from './tempo-automation.mjs';
 import {transitionIds,profiles} from './transition-design.mjs';
@@ -46,13 +47,14 @@ const validManualKey=value=>value.manualKey===true&&Number.isInteger(value.keyRo
 const manualKeyFields=value=>({manualKey:true,keyRoot:value.keyRoot,keyMode:value.keyMode,key:keyNames[value.keyRoot]+(value.keyMode==='minor'?'m':''),keyConfidence:1});
 
 export function trackPreparation(track) {
-  return { contentKey:track.contentKey,regionAnalysisVersion:track.regionAnalysisVersion,analysisVersion:track.analysisVersion,manualGrid:Boolean(track.manualGrid),manualRegions:Boolean(track.manualRegions), bpm: track.bpm, downbeat: track.downbeat, beatOffset: track.beatOffset, mixIn: track.mixIn, mixOut: track.mixOut, hotCues: track.hotCues || [], confidence: track.confidence, favorite: Boolean(track.favorite),...(validManualKey(track)?manualKeyFields(track):{manualKey:false}) };
+  return { phraseCues:readPhraseCues(track),contentKey:track.contentKey,regionAnalysisVersion:track.regionAnalysisVersion,analysisVersion:track.analysisVersion,manualGrid:Boolean(track.manualGrid),manualRegions:Boolean(track.manualRegions), bpm: track.bpm, downbeat: track.downbeat, beatOffset: track.beatOffset, mixIn: track.mixIn, mixOut: track.mixOut, hotCues: track.hotCues || [], confidence: track.confidence, favorite: Boolean(track.favorite),...(validManualKey(track)?manualKeyFields(track):{manualKey:false}) };
 }
 
 export function restorePreparation(track, saved) {
   if (!saved || typeof saved !== 'object') return track;
   if(saved.contentKey&&track.contentKey&&audioContentId(saved.contentKey)!==audioContentId(track.contentKey))return track;
   const end = track.buffer.duration;
+  track.phraseCues=readPhraseCues({...track,phraseCues:saved.phraseCues});
   const grid=saved.manualGrid||saved.confidence==='manual'||saved.analysisVersion===track.analysisVersion;
   const legacyManualRegions=saved.manualRegions===undefined&&saved.manualGrid!==true&&saved.confidence==='manual';
   const regions=saved.manualRegions===true||legacyManualRegions||saved.analysisVersion===track.analysisVersion&&saved.regionAnalysisVersion===track.regionAnalysisVersion;track.manualGrid=Boolean(saved.manualGrid||saved.confidence==='manual');track.manualRegions=Boolean(saved.manualRegions||legacyManualRegions);

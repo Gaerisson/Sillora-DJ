@@ -13,6 +13,7 @@ import {DeckEffects,TextureBus,impulse} from './performance-fx.js';
 import {faderCurves,transitionProgress,textureNames} from './transition-design.mjs';
 import {makeTransitionScore,scheduleTransitionScore} from './transition-score.mjs';
 import {eqCurves} from './transition-envelopes.mjs';
+import {editPhraseCues,phraseRevision} from './phrase-cues.mjs';
 import {tempoAt,tempoMean,rampDistance,scheduleTempo,tempoBeats,tempoFraction,tempoDelay,warpTempoCurve} from './tempo-automation.mjs';
 import {cleanTiming,gridReliable} from './musical-plan.mjs';
 import {stemNames} from './stems.mjs';
@@ -455,6 +456,7 @@ export class StudioEngine extends EventTarget {
       const p = this.decks[i].fader.gain; p.cancelScheduledValues(this.context.currentTime);if(this.decks[i].playing)p.setTargetAtTime(v,this.context.currentTime,.008);else p.setValueAtTime(v,this.context.currentTime);
     });
   }
+  editPhraseCue(id,op,{expectedTrack,expectedRevision}={}){const t=this.decks[id]?.track;if(!t||expectedTrack&&t!==expectedTrack)throw Error('La piste a changé.');t.phraseCues=editPhraseCues(t,op,expectedRevision);this.dispatchEvent(new Event('change'));return {phraseCues:t.phraseCues,revision:phraseRevision(t)};}
   setVolume(id, volume) { const d = this.decks[id]; d.volume = volume; d.gain?.gain.setTargetAtTime(volume, this.context.currentTime, 0.01); }
   setProgramOptions(patch){this.programOptions=programOptions({...this.programOptions,...patch});this.programBus?.set(this.programOptions);this.pumping?.set(this.programOptions);this.peakLimiter?.port.postMessage({ceilingDb:this.programOptions.ceilingDb});try{globalThis.localStorage?.setItem('sillage:program-v13',JSON.stringify({...this.programOptions,muted:false,dim:false}));}catch{}this.dispatchEvent(new Event('change'));return this.programOptions;}
   setMaster(value) { this.masterVolume = value; this.master?.gain.setTargetAtTime(value, this.context.currentTime, 0.01); }

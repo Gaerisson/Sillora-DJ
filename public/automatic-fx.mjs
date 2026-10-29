@@ -32,7 +32,7 @@ function recentCandidates(scores, history) {
  * Scores express arrangement needs. The pair hash breaks score ties only.
  */
 export function selectMusicalFx({source, target, sync, trustworthy = true, harmonic = true, keyKnown = false,
- dense = false, intensity = .45, history = [], stemsAvailable = false, tempoBlend = false, beats = 16} = {}) {
+ dense = false, intensity = .45, history = [], stemsAvailable = false, tempoBlend = false, beats = 16,preparedPhrases=false} = {}) {
  const amount = clamp(Number.isFinite(intensity) ? intensity : .45, 0, 1), requested = requestedLength(beats);
  const uncertain = !trustworthy, measured = knownTempo(source) && knownTempo(target);
  const safeRelay = !sync || uncertain && (!tempoBlend || !measured);
@@ -76,6 +76,7 @@ export function selectMusicalFx({source, target, sync, trustworthy = true, harmo
   if(energetic&&amount>=.7)scores.hydrant=energyDelta!==null&&energyDelta>.05?14:7;
   if(stemsAvailable){scores.stemfade=11;scores.stemecho=8;if(keyKnown)scores.stemsustain=9;}
  }
+ if(preparedPhrases)scores=Object.fromEntries(Object.entries(scores).filter(([style])=>['bass','phrase','filter','riser','echo'].includes(style)));
  const eligibility=recentCandidates(scores,history),seed=[identity(source),identity(target)].join('→');
  const order=[...eligibility.allowed].sort((a,b)=>scores[b]-scores[a] || hash(seed+'|'+a)-hash(seed+'|'+b));
  const style=order[0],short=['echo','lunarecho','tremolo','hydrant','stemecho'].includes(style);

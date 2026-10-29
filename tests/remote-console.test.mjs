@@ -2,6 +2,13 @@ import test from 'node:test';import assert from 'node:assert/strict';import {cre
 const require=createRequire(import.meta.url),{RemoteHost,sanitizeState,sanitizeCommand}=require('../desktop/remote-host.cjs'),{sanitizeResult}=require('../desktop/remote-protocol.cjs');
 const state=()=>sanitizeState({decks:[{loaded:true,duration:200},{loaded:true,duration:180}],catalog:[{id:'auto',label:'Automatique'},{id:'clean',label:'Relais'}],library:[{id:'known',title:'Titre'}]});
 
+test('phrase editing carries bounded point data, track identity and a stale-edit token through Remote',()=>{
+ const s=state();s.decks[0].trackId='song';const command={type:'deck:phraseCue',deck:0,trackId:'song',expectedRevision:'0123456789abcdef',value:{type:'add',id:'point',time:12,label:'Couplet',snap:true}};assert.deepEqual(sanitizeCommand(command,s).value,command.value);
+ for(const patch of [{trackId:'other'},{trackId:undefined},{expectedRevision:''},{value:{type:'add',id:'bad',time:Infinity}},{value:{type:'assign',id:'point',role:'invented'}},{value:{type:'update',id:'point',snap:'yes'}}])assert.throws(()=>sanitizeCommand({...command,...patch},s));
+ const snapshot=sanitizeState({decks:[{trackId:'song',duration:100,phraseCues:{version:1,points:[{id:'point',time:12,label:'Couplet',path:'/private'}],entryId:'point'}}],transition:{incomingLanding:{version:1,trackId:'song',index:0,time:12,label:'fake',origin:'manual',confidence:1}}});assert.equal(snapshot.decks[0].phraseCues.points[0].label,'Couplet');assert.equal(snapshot.transition.incomingLanding.label,'P1');assert.equal(snapshot.transition.incomingLanding.origin,'manual');assert.doesNotMatch(JSON.stringify(snapshot),/private/);
+ const result=sanitizeResult('deck:phraseCue',{duration:100,phraseCues:snapshot.decks[0].phraseCues,revision:'0123456789abcdef',path:'/private'});assert.equal(result.phraseCues.entryId,'point');assert.equal(result.revision,'0123456789abcdef');
+});
+
 test('tempo ceiling commands reject unknown values and snapshots preserve only supported numeric ceilings',()=>{
  for(const maxTempoPercent of [3,5,8,12,16,20]){assert.equal(sanitizeCommand({type:'transition:configure',value:{maxTempoPercent}},state()).value.maxTempoPercent,maxTempoPercent);assert.equal(sanitizeState({transitionSettings:{maxTempoPercent}}).transitionSettings.maxTempoPercent,maxTempoPercent);}
  for(const maxTempoPercent of [0,-5,50,'5',NaN,null,{}])assert.throws(()=>sanitizeCommand({type:'transition:configure',value:{maxTempoPercent}},state()));assert.equal(sanitizeState({transitionSettings:{maxTempoPercent:90}}).transitionSettings.maxTempoPercent,20);

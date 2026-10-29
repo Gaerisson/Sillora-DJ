@@ -1,3 +1,4 @@
+import {phraseAnchor} from './phrase-cues.mjs';
 import {clamp} from './audio-math.mjs';
 import {arrangementFor} from './arrangement.mjs';
 
@@ -55,7 +56,7 @@ export function cleanTiming(duration){
  return {handoffFraction,incomingStartFraction:handoffFraction,fadeSeconds,incomingFullFraction:handoffFraction+fadeSeconds/seconds,sourceStopFraction:handoffFraction+fadeSeconds/seconds};
 }
 
-export function musicalExit(track,duration,position=0,{handoffFraction=1}={}){
+export function musicalExit(track,duration,position=0,{handoffFraction=1,preparedPhrases=false,quantize=true}={}){
  const {start,end}=bounds(track),bar=barLength(track);
  if(track.manualRegions)return clamp(finite(track.mixOut,end-duration*handoffFraction),start,Math.max(start,end-.05));
  const threshold=Math.max(.0001,bodyLevel(track)*.5),tailStart=Math.max(start,end-Math.max(60,bar*32,trackDuration(track)*.35));
@@ -71,6 +72,8 @@ export function musicalExit(track,duration,position=0,{handoffFraction=1}={}){
   if(windows.length)activeEnd=Math.min(end,windows.at(-1).time+bar);
  }
  const fraction=clamp(finite(handoffFraction,1),0,1),latest=Math.min(activeEnd-.08,end-Math.max(0,duration)*(1-fraction)-.04);
+ const prepared=phraseAnchor(track,'exit',{enabled:preparedPhrases,quantize});
+ if(prepared&&prepared.time>=position+duration*fraction+.12&&prepared.time<=latest+.001)return prepared.time-duration*fraction;
  let handoff=snap(track,Math.max(start,latest),'floor');
  const landmark=arrangementFor(track).landmarks.filter(p=>p.time<=handoff+.001&&p.time>=handoff-bar*8&&p.time>=start).at(-1);
  if(landmark)handoff=landmark.time;

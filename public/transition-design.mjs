@@ -1,3 +1,4 @@
+import {phraseAnchor} from './phrase-cues.mjs';
 import {transitionTempo} from './tempo-policy.mjs';
 import {selectIncomingLanding} from './incoming-landing.mjs';
 import {clamp} from './audio-math.mjs';
@@ -69,7 +70,7 @@ export function resolveTransition(a,b,options={}){
   if(profile==='musical'){
    composition=composedPlan({source:A,target:B,sync,harmonic,keyKnown:harmony.known,dense:dense>.45,stems:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),beats:Number(options.beats)||32,position:options.position||0,bpmA});
    if(composition.style!=='clean'||sync){
-    effectSelection=selectMusicalFx({source:{...A,bpm:bpmA},target:{...B,bpm:bpmB},sync,trustworthy,harmonic,keyKnown:harmony.known,dense:dense>.45,intensity:clamp(Number(options.intensity??.45),0,1),history:options.history||[],stemsAvailable:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),tempoBlend:morph,beats:Number(options.beats)||32});
+    effectSelection=selectMusicalFx({source:{...A,bpm:bpmA},target:{...B,bpm:bpmB},sync,trustworthy,harmonic,keyKnown:harmony.known,dense:dense>.45,intensity:clamp(Number(options.intensity??.45),0,1),history:options.history||[],stemsAvailable:options.stemsAvailable??Boolean(A.stemBuffer&&B.stemBuffer),tempoBlend:morph,beats:Number(options.beats)||32,preparedPhrases:automatic&&profile==='musical'&&options.alignArrival!==false&&!A.manualRegions&&Boolean(phraseAnchor(A,'exit',{quantize:options.quantize!==false})||phraseAnchor(B,'entry',{quantize:options.quantize!==false}))});
     composition={...composition,style:effectSelection.style,beats:effectSelection.beats,seconds:effectSelection.beats*60/bpmA,reason:effectSelection.reason,stages:effectSelection.stages,harmonicGuard:effectSelection.harmonicGuard};
    }
    style=composition.style;beats=composition.beats;reason=composition.reason;
@@ -79,7 +80,7 @@ export function resolveTransition(a,b,options={}){
  const bridge=['bridge','landing'].includes(style),separated=bridge||style==='clean',tempoBlend=Boolean(!separated&&sync&&morph&&Math.abs(ratio-1)>.001),nominal=beats*60/(tempoBlend?tempoMean(bpmA,bpmB,shape):bpmA),seconds=composition&&!tempoBlend?composition.seconds:bridge?clamp(nominal,7,12):automatic&&!sync?clamp(nominal,1.2,3):nominal;
  if(!automatic&&!reason)reason=sync&&!separated?(tempoBlend?'Tempo commun '+bpmA.toFixed(1)+' → '+bpmB.toFixed(1)+' BPM pendant le passage. ':'Tempo entrant calé à '+bpmA.toFixed(1)+' BPM. ')+(!trustworthy?'Grille estimée : vérifiez le premier temps.':'Mesures alignées.'):(options.sync===false?'Sync désactivée : tempos naturels.':separated?'Reprise au tempo naturel du prochain titre.':'Écart supérieur à la plage de synchronisation : tempos naturels.');
  const score=makeTransitionScore({style,seconds,beats,bpmA,bpmB,tempoBlend,tempoShape:shape,harmonicGuard:composition?.harmonicGuard},{intensity:options.intensity});
- const timing=style==='clean'?cleanTiming(seconds):{},inPoint=musicalEntry(B),sourceSpanSeconds=tempoBlend?beats*60/(A.bpm||120):seconds*(a.rate||1),outPoint=musicalExit(A,sourceSpanSeconds,options.position||0,score&&gridReliable(A)?{handoffFraction:score.handoffFraction}:timing);
+ const timing=style==='clean'?cleanTiming(seconds):{},inPoint=musicalEntry(B),sourceSpanSeconds=tempoBlend?beats*60/(A.bpm||120):seconds*(a.rate||1),outPoint=musicalExit(A,sourceSpanSeconds,options.position||0,score&&gridReliable(A)?{handoffFraction:score.handoffFraction,preparedPhrases:automatic&&profile==='musical'&&options.alignArrival!==false,quantize:options.quantize!==false}:{...timing,preparedPhrases:automatic&&profile==='musical'&&options.alignArrival!==false,quantize:options.quantize!==false});
  const ea=regionEnergy(A,true,outPoint,Math.min(4,seconds*(a.rate||1))),eb=regionEnergy(B,false,inPoint,Math.min(4,seconds));
  const gainA=(A.autoGain||1)*(a.volume??.85),gainB=(B.autoGain||1)*(b.volume??.85),trimDb=ea&&eb?clamp(20*Math.log10(ea*gainA/(eb*gainB)),-3,3):0;
  const referenceStages={lunarecho:[[0,'Installer le groove'],[.25,'Ouvrir l’écho orbital'],[.55,'Relayer les graves'],[.82,'Laisser les répétitions']],sweep:[[0,'Préparer le filtre'],[.25,'Balayer le spectre'],[.60,'Ouvrir le nouveau titre'],[.86,'Relâcher la réverbération']],hydrant:[[0,'Installer le jet'],[.30,'Faire monter la pression'],[.60,'Relayer les graves'],[.80,'Relâcher le souffle']],stemsustain:[[0,'Séparer les voix'],[.32,'Suspendre les instruments'],[.56,'Relayer le groove'],[.80,'Poser la nouvelle voix']]};
@@ -90,7 +91,7 @@ export function resolveTransition(a,b,options={}){
  if(!sync)result.reason=tempo.reason+' '+result.reason;
  result.tempoPolicy={status:tempo.status,gapPercent:tempo.gapPercent,limitPercent:tempo.effectiveLimitPercent};
  result.baseReason=result.reason;
- result.incomingLanding=selectIncomingLanding(B,result,{enabled:options.alignArrival!==false&&!A.manualRegions});
+ result.incomingLanding=selectIncomingLanding(B,result,{enabled:options.alignArrival!==false&&!A.manualRegions,quantize:options.quantize!==false});
  if(result.incomingLanding){result.inPoint=result.incomingLanding.cue;result.preserveInPoint=true;result.reason+=' Arrivée sur le repère '+result.incomingLanding.label+' au relais.';}
  return result;
 }

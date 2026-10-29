@@ -105,4 +105,8 @@ Deux titres chargés, pochettes sur les vinyles, onde globale, détail rythmique
 
 ![Plafond partagé avec les propositions](images/tempo-policy-031.png)
 
+## Phrases préparées — 0.32
+
+![Annotation et rôle d’un repère de relais](images/phrase-editor-032.png)
+
 [Retour au projet](../README.md)

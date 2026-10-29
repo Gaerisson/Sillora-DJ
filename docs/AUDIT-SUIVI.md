@@ -1,4 +1,4 @@
-# Suivi de l’audit — Sillora DJ 0.31.0
+# Suivi de l’audit — Sillora DJ 0.32.0
 
 Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFONTE.md) reste une photographie de la 0.17.0. Ce suivi décrit les évolutions effectivement testées depuis cette base. Il ne requalifie pas les autres sections et ne mesure pas un pourcentage d’achèvement.
 
@@ -20,6 +20,7 @@ Mise à jour du 29 octobre 2026. Le [registre initial de 374 points](AUDIT-REFON
 | L · 0.29.0 | Mute/Solo PC/Remote, presets atomiques, quota/nettoyage du cache ; identité des données de test | 369 tests ; 52 cas natifs source, 42 depuis le paquet. [Mixage](STEM-MIX-0.29.md) · [Cache](STEM-CACHE-0.29.md) |
 | M · 0.30.0 | Quatre courbes de tempo, partition/horloges/repères communs et contrôle PC/Remote | 375 tests ; 61 cas natifs source, 27 depuis le paquet. [Courbes](TEMPO-CURVES-0.30.md) · [Mesures](CHANGELOG-0.30.0.md) |
 | N · 0.31.0 | Plafond partagé moteur/propositions, BPM réel et phase des courbes mesurée | 383 tests ; 32 cas natifs source, 20 depuis le paquet. [Politique](TEMPO-POLICY-0.31.md) · [Mesures](CHANGELOG-0.31.0.md) |
+| O · 0.32.0 | Repères de phrase nommés PC/Remote, sauvegarde, ondes et relais préparés | 393 tests ; 25 cas natifs source, 19 depuis le paquet. [Repères](PHRASE-CUES-0.32.md) · [Recette](CHANGELOG-0.32.0.md) |
 
 V = couvert dans le périmètre décrit ; P = partiel ; A = à développer ; T = à valider. Les preuves ci-dessous sont les sources et recettes des versions indiquées. Les tests d’une file simulant 1 000 références utilisent les octets de deux vrais MP3 ; ils ne représentent pas une collection de 1 000 titres distincts analysés intégralement.
 
@@ -251,3 +252,13 @@ Quatre profils appliqués à l’audio, aux horloges, au score, aux échos et au
 ## Lot N — plafond et propositions — 0.31.0
 
 Les suggestions et le moteur partagent la mesure réciproque de l’écart, la limite et les contrôles de grille. Le classement suit le BPM actuel de la platine, préserve les choix Ordre/Aléatoire et ne réécrit pas la file préparée. Le pourcentage de classement cède sa place à Beatmatch/Tempo naturel. 383 tests, 32 scénarios natifs ciblés source et 20 depuis le paquet passent, avec contrôle de phase sur trois courbes et deux profils. Une correction CSS est rejouée séparément ; les empreintes DSP restent identiques. R3.3.D-03 reste partiel pour la validation perceptive générale. Phrases, longues sessions et refonte complète restent ouverts. [Recette et limites](CHANGELOG-0.31.0.md).
+
+## Lot O — phrases préparées — 0.32.0
+
+| Référence | État | Évolution et limite |
+| :--- | :---: | :--- |
+| R3.1-03 | P · préparation manuelle | Repères nommés, rôle de relais et représentation sur les ondes. La détection automatique des phrases reste à développer. |
+| R3.3.A-02 | P | L’arrivée peut atteindre une phrase choisie par l’utilisateur, avec avance recalculée et relais source préparé. Les tests utilisent des points de grille, pas une annotation sémantique à l’écoute. |
+| Corrections et Remote | V dans ce périmètre | Édition avec identité/révision, sauvegarde, rôles, affichage et passage actif figé ; IN/OUT manuels prioritaires. |
+
+393 tests, 25 scénarios natifs source et 19 depuis le paquet passent. Douze rendus sur quatre titres comparent l’activation, les deux sens et Next. Le périmètre Auto musical a été corrigé puis contrôlé sur le runtime final. Le jeu annoté humain, la reconnaissance sémantique, les longues sessions et la refonte complète restent ouverts. [Recette et limites](CHANGELOG-0.32.0.md).

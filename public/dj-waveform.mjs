@@ -1,3 +1,4 @@
+import {readPhraseCues} from './phrase-cues.mjs';
 import {transitionSourceOffset} from './transition-score.mjs';
 const peakCache = new WeakMap();
 const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
@@ -186,6 +187,7 @@ export function drawDJWaveform(ctx, {
     ctx.globalAlpha=.25;ctx.fillStyle=color;ctx.fillRect(x,28,1,Math.max(0,height-28));ctx.globalAlpha=1;
     if(height>=70&&x-lastArrangementLabel>=32){label(ctx,'R'+(index+1),x+2,39,color,width,panel);lastArrangementLabel=x;}
   }
+  const phrases=readPhraseCues(track);let lastPhrase=-40;for(const [index,p]of phrases.points.entries()){if(p.time<from||p.time>to)continue;const x=xAt(p.time),role=p.id===phrases.entryId?' ↗':p.id===phrases.exitId?' ↘':'';ctx.globalAlpha=.7;ctx.fillStyle=warm;ctx.fillRect(x,0,2,height);ctx.globalAlpha=1;if(height>=70&&x-lastPhrase>=35){label(ctx,'P'+(index+1)+role,x+3,Math.min(height-8,53),warm,width,panel);lastPhrase=x;}}
   const cueColors = colors.cues || [deckColor, '#c1adff', warm, green];
   const markers = [
     ...(transitionPlan?.score&&Number.isFinite(planStart)?[[planStart+(transitionPlan.sourceSpanSeconds??planSeconds)*transitionPlan.score.handoffFraction,'RELAIS',deckColor]]:[]),

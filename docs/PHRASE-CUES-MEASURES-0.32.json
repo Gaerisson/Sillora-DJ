@@ -1,0 +1,302 @@
+{
+  "version": "0.32.0",
+  "scope": "Four real music files, computed grids, explicit test markers on bar boundaries. These are repeatable manual-reference fixtures, not listening-annotated semantic phrase ground truth.",
+  "renders": [
+    {
+      "pair": "phrases-mp3",
+      "reverse": false,
+      "next": false,
+      "preparedEnabled": true,
+      "style": "riser",
+      "seconds": 9.23076923076923,
+      "sourcePoint": 213.0706604053108,
+      "targetPoint": 39.67691072489991,
+      "actualSourceHandoff": 213.0706604053108,
+      "selectedArrival": {
+        "time": 39.67691072489991,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.4748695194721222,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.6645352591003757e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-mp3",
+      "reverse": true,
+      "next": false,
+      "preparedEnabled": true,
+      "style": "bass",
+      "seconds": 4.615384615384615,
+      "sourcePoint": 196.41160460245095,
+      "targetPoint": 36.3433876780381,
+      "actualSourceHandoff": 196.41160460245095,
+      "selectedArrival": {
+        "time": 36.3433876780381,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.4045122563838959,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7052982290155505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-mp3",
+      "reverse": false,
+      "next": true,
+      "preparedEnabled": true,
+      "style": "riser",
+      "seconds": 2.3076923076923075,
+      "sourcePoint": 213.0706604053108,
+      "targetPoint": 39.67691072489991,
+      "actualSourceHandoff": 206.52520585985624,
+      "selectedArrival": {
+        "time": 39.67691072489991,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.47460660338401794,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-mp3",
+      "reverse": true,
+      "next": true,
+      "preparedEnabled": true,
+      "style": "bass",
+      "seconds": 2.3076923076923075,
+      "sourcePoint": 196.41160460245095,
+      "targetPoint": 36.3433876780381,
+      "actualSourceHandoff": 193.9626250106142,
+      "selectedArrival": {
+        "time": 36.3433876780381,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.4045122563838959,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.9531932455029164e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-mp3",
+      "reverse": false,
+      "next": false,
+      "preparedEnabled": false,
+      "style": "riser",
+      "seconds": 9.23076923076923,
+      "sourcePoint": 213.0706604053108,
+      "targetPoint": 39.67691072489991,
+      "actualSourceHandoff": 228.34338767803806,
+      "selectedArrival": null,
+      "peak": 0.45055949687957764,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7763568394002505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-mp3",
+      "reverse": true,
+      "next": false,
+      "preparedEnabled": false,
+      "style": "bass",
+      "seconds": 4.615384615384615,
+      "sourcePoint": 196.41160460245095,
+      "targetPoint": 36.3433876780381,
+      "actualSourceHandoff": 233.14629848000195,
+      "selectedArrival": null,
+      "peak": 0.40191665291786194,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 1.7052982290155505e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-pop",
+      "reverse": false,
+      "next": false,
+      "preparedEnabled": true,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "sourcePoint": 245.5764094837851,
+      "targetPoint": 34.12091538865143,
+      "actualSourceHandoff": 245.5764094837851,
+      "selectedArrival": {
+        "time": 34.12091538865143,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.4726383686065674,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 4.263256414560601e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-pop",
+      "reverse": true,
+      "next": false,
+      "preparedEnabled": true,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "sourcePoint": 156.18988090589284,
+      "targetPoint": 32.89348265451681,
+      "actualSourceHandoff": 156.1898809058928,
+      "selectedArrival": {
+        "time": 32.89348265451681,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.41258278489112854,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 0,
+      "maxClockPhaseErrorBeats": 2.1316282072803006e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-pop",
+      "reverse": false,
+      "next": true,
+      "preparedEnabled": true,
+      "style": "filter",
+      "seconds": 2.00836820083682,
+      "sourcePoint": 245.5764094837851,
+      "targetPoint": 34.12091538865143,
+      "actualSourceHandoff": 239.72275094719973,
+      "selectedArrival": {
+        "time": 34.12091538865143,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.44480666518211365,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 3.6415315207705135e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-pop",
+      "reverse": true,
+      "next": true,
+      "preparedEnabled": true,
+      "style": "filter",
+      "seconds": 2.00836820083682,
+      "sourcePoint": 156.18988090589284,
+      "targetPoint": 32.89348265451681,
+      "actualSourceHandoff": 149.9829843541687,
+      "selectedArrival": {
+        "time": 32.89348265451681,
+        "origin": "manual",
+        "label": "P1"
+      },
+      "peak": 0.34341001510620117,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 2.842170943040401e-14,
+      "maxClockPhaseErrorBeats": 2.7533531010703882e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-pop",
+      "reverse": false,
+      "next": false,
+      "preparedEnabled": false,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "sourcePoint": 245.5764094837851,
+      "targetPoint": 34.12091538865143,
+      "actualSourceHandoff": 272.8934826545168,
+      "selectedArrival": null,
+      "peak": 0.5452338457107544,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 5.684341886080802e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    },
+    {
+      "pair": "phrases-pop",
+      "reverse": true,
+      "next": false,
+      "preparedEnabled": false,
+      "style": "filter",
+      "seconds": 8.03347280334728,
+      "sourcePoint": 156.18988090589284,
+      "targetPoint": 32.89348265451681,
+      "actualSourceHandoff": 189.29332918175487,
+      "selectedArrival": null,
+      "peak": 0.4086277186870575,
+      "clipped": 0,
+      "nonFinite": 0,
+      "silent50ms": 0,
+      "maxClockBpmError": 1.4210854715202004e-14,
+      "maxClockPhaseErrorBeats": 2.842170943040401e-14,
+      "manualGrids": [
+        false,
+        false
+      ]
+    }
+  ]
+}
